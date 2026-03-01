@@ -2,5 +2,5 @@ import pg from 'pg';
 
 const { Pool } = pg;
 
-// Init DB pool
+// Temp init of pg pool (e.g migrate to drizzle or prisma)
 export const dbPool = new Pool();
