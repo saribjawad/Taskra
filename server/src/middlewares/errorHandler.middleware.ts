@@ -20,7 +20,6 @@ export function ErrorHandlerMiddleware(
     });
   }
 
-  console.log(err);
   res.send({
     message: 'Error',
     errors: err,
