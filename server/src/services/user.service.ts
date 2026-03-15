@@ -7,16 +7,14 @@ import { dbPool } from '../db';
  * @returns The user row if found, otherwise undefined
  */
 const findUserByEmail = async (email: string) => {
-  const result = await dbPool.query(
-    'SELECT email FROM users WHERE email = $1',
-    [email],
-  );
+  const result = await dbPool.query('SELECT * FROM users WHERE email = $1', [
+    email,
+  ]);
 
   return result.rows[0];
 };
 
-/**
- * Find user with username
+/** Find user with username
  *
  * @param username - User username
  * @returns The user row if found, otherwise undefined

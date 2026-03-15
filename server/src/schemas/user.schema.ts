@@ -2,9 +2,6 @@ import z from 'zod';
 
 // Login user payload schema
 export const LoginUserSchema = z.object({
-  username: z
-    .string('Username is required')
-    .max(50, 'Username can not be more then 50 characters'),
   email: z.email('Invalid email'),
   password: z
     .string('Password is required')
