@@ -30,4 +30,28 @@ const findUserByUsername = async (username: string) => {
   return result.rows[0];
 };
 
-export { findUserByEmail, findUserByUsername };
+/**
+ * Create user in database
+ *
+ * @param username - User username
+ * @param email - User email
+ * @param hashedPassword - User hashedpassword
+ * @returns The user row if found, otherwise undefined
+ */
+const createUser = async (
+  username: string,
+  email: string,
+  hashedPassword: string,
+) => {
+  const result = await dbPool.query(
+    `
+    INSERT INTO users(username, email, hashed_password)
+    VALUES ($1, $2, $3)
+    RETURNING *`,
+    [username, email, hashedPassword],
+  );
+
+  return result.rows[0];
+};
+
+export { findUserByEmail, findUserByUsername, createUser };
