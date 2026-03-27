@@ -20,8 +20,9 @@ export function ErrorHandlerMiddleware(
     });
   }
 
+  // TODO: Log the unexpected error
   res.send({
     message: 'Error',
-    errors: err,
+    errors: err.message || 'An unexpected error occurred!',
   });
 }
