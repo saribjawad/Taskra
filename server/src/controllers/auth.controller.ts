@@ -10,6 +10,10 @@ import { comparePassoword, hashPassword } from '../utils/bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 
+// ===============================================
+// Controllers
+// ===============================================
+
 export const LoginUser = async (req: Request, res: Response) => {
   try {
     const parsedBody = LoginUserSchema.parse(req.body);
@@ -36,22 +40,12 @@ export const LoginUser = async (req: Request, res: Response) => {
       });
     }
 
-    // Create a JWT and refresh token
-    const token = jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, {
-      expiresIn: '5000ms',
-    });
-    const refreshToken = jwt.sign(
-      { id: user.id, email: user.email },
-      env.REFRESH_SECRET,
-      {
-        expiresIn: '7d',
-      },
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+      user.id,
+      user.email,
     );
 
-    // Save refresh token in DB
-    await saveRefreshToken(email, refreshToken);
-
-    res.cookie('jwtToken', token, {
+    res.cookie('accessToken', accessToken, {
       httpOnly: true,
     });
     res.cookie('refreshToken', refreshToken, {
@@ -102,3 +96,24 @@ export const SignUpUser = async (req: Request, res: Response) => {
     throw error;
   }
 };
+// ===============================================
+// Helpers
+// ===============================================
+
+async function generateAccessAndRefreshToken(id: string, email: string) {
+  // Create a access and refresh token
+  const accessToken = jwt.sign({ id: id, email: email }, env.JWT_SECRET, {
+    expiresIn: '5000ms',
+  });
+  const refreshToken = jwt.sign({ id: id, email: email }, env.REFRESH_SECRET, {
+    expiresIn: '7d',
+  });
+
+  // Save refresh token in DB
+  await saveRefreshToken(email, refreshToken);
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+}
