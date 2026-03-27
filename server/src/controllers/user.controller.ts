@@ -4,45 +4,66 @@ import {
   createUser,
   findUserByEmail,
   findUserByUsername,
+  saveRefreshToken,
 } from '../services/user.service';
 import { comparePassoword, hashPassword } from '../utils/bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 
 export const LoginUser = async (req: Request, res: Response) => {
-  const parsedBody = LoginUserSchema.parse(req.body);
+  try {
+    const parsedBody = LoginUserSchema.parse(req.body);
 
-  const { email, password } = parsedBody;
+    const { email, password } = parsedBody;
 
-  // Check credientials
-  const user = await findUserByEmail(email);
-  if (!user) {
-    return res.send({
-      message: 'failed',
-      body: 'Invalid credentials',
+    // Check credientials
+    const user = await findUserByEmail(email);
+    if (!user) {
+      return res.send({
+        message: 'failed',
+        body: 'Invalid credentials',
+      });
+    }
+
+    const isValidPassword = await comparePassoword(
+      password,
+      user.hashed_password,
+    );
+    if (!isValidPassword) {
+      return res.send({
+        message: 'failed',
+        body: 'Invalid credentials',
+      });
+    }
+
+    // Create a JWT and refresh token
+    const token = jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET, {
+      expiresIn: '5000ms',
     });
-  }
+    const refreshToken = jwt.sign(
+      { id: user.id, email: user.email },
+      env.REFRESH_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
 
-  const isValidPassword = await comparePassoword(
-    password,
-    user.hashed_password,
-  );
-  if (!isValidPassword) {
-    return res.send({
-      message: 'failed',
-      body: 'Invalid credentials',
+    // Save refresh token in DB
+    await saveRefreshToken(email, refreshToken);
+
+    res.cookie('jwtToken', token, {
+      httpOnly: true,
     });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+    });
+
+    res.send({
+      message: 'Logged in',
+    });
+  } catch (error) {
+    throw error;
   }
-
-  // Create a JWT token
-  const token = jwt.sign({ id: user.id, email: user.email }, env.JWT_SECRET);
-  res.cookie('jwtToken', token, {
-    httpOnly: true,
-  });
-
-  res.send({
-    message: 'Logged in',
-  });
 };
 
 export const SignUpUser = async (req: Request, res: Response) => {

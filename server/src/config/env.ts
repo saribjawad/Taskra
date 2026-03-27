@@ -11,6 +11,7 @@ const envSchema = z.object({
   PGDATABASE: z.string(),
   PGPORT: z.string(),
   JWT_SECRET: z.string(),
+  REFRESH_SECRET: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

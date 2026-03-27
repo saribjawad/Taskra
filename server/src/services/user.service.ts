@@ -52,4 +52,23 @@ const createUser = async (
   return result.rows[0];
 };
 
-export { findUserByEmail, findUserByUsername, createUser };
+/**
+ * Save refresh token in database
+ *
+ * @param email - User email
+ * @param refreshToken - User's refresh token
+ * @returns The updated row count
+ */
+const saveRefreshToken = async (email: string, refreshToken: string) => {
+  const result = await dbPool.query(
+    `
+    UPDATE users
+    SET refresh_token = ($1)
+    WHERE email = ($2)`,
+    [refreshToken, email],
+  );
+
+  return result.rowCount;
+};
+
+export { findUserByEmail, findUserByUsername, createUser, saveRefreshToken };
