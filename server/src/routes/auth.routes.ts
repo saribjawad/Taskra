@@ -2,9 +2,9 @@ import { Router } from 'express';
 import { LoginUser, SignUpUser } from '../controllers/auth.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 
-const userRouter = Router();
+const authRouter = Router();
 
-userRouter.post('/sign-in', asyncHandler(LoginUser));
-userRouter.post('/sign-up', asyncHandler(SignUpUser));
+authRouter.post('/sign-in', asyncHandler(LoginUser));
+authRouter.post('/sign-up', asyncHandler(SignUpUser));
 
-export default userRouter;
+export default authRouter;
