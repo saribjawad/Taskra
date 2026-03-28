@@ -7,7 +7,7 @@ import {
   saveRefreshToken,
 } from '../services/user.service';
 import { comparePassoword, hashPassword } from '../utils/bcrypt';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
 
