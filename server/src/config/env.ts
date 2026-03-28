@@ -12,6 +12,7 @@ const envSchema = z.object({
   PGPORT: z.string(),
   JWT_SECRET: z.string(),
   REFRESH_SECRET: z.string(),
+  RESEND_SECRET: z.string(),
 });
 
 export const env = envSchema.parse(process.env);
