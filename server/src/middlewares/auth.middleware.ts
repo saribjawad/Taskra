@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { env } from '../config/env';
 
-interface JwtPayloadUser extends JwtPayload {
+export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
 }
@@ -12,15 +12,15 @@ export function AuthMiddleware(
   res: Response,
   next: NextFunction,
 ) {
-  const jwtTokenCookie = req.cookies.jwtToken;
+  const accessToken = req.cookies.accessToken;
 
-  if (!jwtTokenCookie) {
+  if (!accessToken) {
     throw Error('UnAuthorized');
   }
 
   let decoded;
   try {
-    decoded = jwt.verify(jwtTokenCookie, env.JWT_SECRET) as JwtPayloadUser;
+    decoded = jwt.verify(accessToken, env.JWT_SECRET) as JwtPayloadUser;
   } catch (err) {
     return res.status(401).json({ message: 'Invalid or missing token' });
   }

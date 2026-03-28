@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { LoginUserSchema, SignUpUserSchema } from '../schemas/user.schema';
+import { LoginUserSchema, SignUpUserSchema } from '../schemas/auth.schema';
 import {
   createUser,
   findUserByEmail,
@@ -7,8 +7,9 @@ import {
   saveRefreshToken,
 } from '../services/user.service';
 import { comparePassoword, hashPassword } from '../utils/bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { env } from '../config/env';
+import { JwtPayloadUser } from '../middlewares/auth.middleware';
 
 // ===============================================
 // Controllers
@@ -50,6 +51,7 @@ export const LoginUser = async (req: Request, res: Response) => {
     });
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
+      path: '/api/v1/refresh-access-token',
     });
 
     res.send({
@@ -96,6 +98,43 @@ export const SignUpUser = async (req: Request, res: Response) => {
     throw error;
   }
 };
+
+export const RefreshAccessToken = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    throw new Error('No refresh token');
+  }
+
+  let decoded;
+
+  try {
+    decoded = jwt.verify(refreshToken, env.REFRESH_SECRET) as JwtPayloadUser;
+  } catch (err) {
+    console.log(err);
+    throw new Error('Invalid or expired token');
+  }
+
+  const user = await findUserByEmail(decoded.email);
+
+  if (user.refresh_token !== refreshToken) {
+    throw new Error('Invalid or expired token');
+  }
+
+  const { accessToken, refreshToken: newRefreshToken } =
+    await generateAccessAndRefreshToken(user.id, user.email);
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', newRefreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
+
+  res.send('refreshed token');
+};
+
 // ===============================================
 // Helpers
 // ===============================================
