@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { LoginUserSchema, SignUpUserSchema } from '../schemas/auth.schema';
 import {
   createUser,
+  createVerification,
   findUserByEmail,
   findUserByUsername,
   saveRefreshToken,
@@ -10,6 +11,8 @@ import { comparePassoword, hashPassword } from '../utils/bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
+import { sendVerificationEmail } from '../lib/resend';
+import moment from 'moment';
 
 // ===============================================
 // Controllers
@@ -28,6 +31,11 @@ export const LoginUser = async (req: Request, res: Response) => {
         message: 'failed',
         body: 'Invalid credentials',
       });
+    }
+
+    if (!user.is_verified) {
+      // TODO: send the verification code if prev one is expired
+      throw new Error('User is not verified');
     }
 
     const isValidPassword = await comparePassoword(
@@ -87,11 +95,18 @@ export const SignUpUser = async (req: Request, res: Response) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await hashPassword(password);
-
-    // Create user
     const createdUser = await createUser(username, email, hashedPassword);
+
+    // Generate verification code
+    const verificationCode = generateCode();
+
+    const oldDateObj = new Date();
+    const expiryDate = moment(oldDateObj).add(10, 'm').toDate();
+
+    // Save verification code in DB, and send to mail
+    await createVerification(verificationCode, createdUser.id, expiryDate);
+    await sendVerificationEmail(verificationCode);
 
     res.send(createdUser);
   } catch (error) {
@@ -155,4 +170,15 @@ async function generateAccessAndRefreshToken(id: string, email: string) {
     accessToken,
     refreshToken,
   };
+}
+
+function generateCode() {
+  let numbers = [];
+
+  for (let i = 0; i < 6; i++) {
+    const code = Math.floor(Math.random() * 9);
+    numbers.push(code);
+  }
+
+  return numbers.join('');
 }

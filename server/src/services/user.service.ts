@@ -71,4 +71,34 @@ const saveRefreshToken = async (email: string, refreshToken: string) => {
   return result.rowCount;
 };
 
-export { findUserByEmail, findUserByUsername, createUser, saveRefreshToken };
+/**
+ * Create verification in database
+ *
+ * @param code - Verification code
+ * @param userId - User id to which verification code belongs to
+ * @param expiresAt - Expiry time for code
+ * @returns The verification created
+ */
+const createVerification = async (
+  code: string,
+  userId: string,
+  expiresAt: Date,
+) => {
+  const result = await dbPool.query(
+    `
+    INSERT INTO verifications(code, user_id, expires_at)
+    VALUES($1, $2, $3)
+    RETURNING *`,
+    [code, userId, expiresAt],
+  );
+
+  return result.rows[0];
+};
+
+export {
+  findUserByEmail,
+  findUserByUsername,
+  createUser,
+  saveRefreshToken,
+  createVerification,
+};
