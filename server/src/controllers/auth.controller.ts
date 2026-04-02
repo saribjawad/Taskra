@@ -4,7 +4,6 @@ import {
   SignUpUserSchema,
   VerifyEmailSchema,
 } from '../schemas/auth.schema';
-import type { StringValue } from 'ms';
 import {
   createUser,
   findUserByEmail,
@@ -14,6 +13,7 @@ import {
 } from '../services/user.service';
 import {
   createVerification,
+  deleteUserVerificationsCode,
   getVerification,
 } from '../services/verification.service';
 import { comparePassoword, hashPassword } from '../utils/bcrypt';
@@ -114,13 +114,9 @@ export const SignUpUser = async (req: Request, res: Response) => {
     await createVerification(verificationCode, createdUser.id, expiryDate);
     await sendVerificationEmail(verificationCode);
 
-    const accessToken = generateAccessToken(
-      createdUser.id,
-      createdUser.email,
-      '60000ms',
-    );
+    const verifyToken = generateVerifyToken(createdUser.id, createdUser.email);
 
-    res.cookie('verifyToken', accessToken);
+    res.cookie('verifyToken', verifyToken);
     res.send(createdUser);
   } catch (error) {
     throw error;
@@ -139,7 +135,6 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
   try {
     decoded = jwt.verify(refreshToken, env.REFRESH_SECRET) as JwtPayloadUser;
   } catch (err) {
-    console.log(err);
     throw new Error('Invalid or expired token');
   }
 
@@ -189,18 +184,43 @@ export const VerifyEmail = async (req: Request, res: Response) => {
   res.send('Email verified');
 };
 
+export const ResendCode = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  // Delete the previous verfication codes of the user
+  await deleteUserVerificationsCode(user.id);
+
+  // send the resend code obv, save in DB
+  const verificationCode = generateCode();
+
+  const oldDateObj = new Date();
+  const expiryDate = moment(oldDateObj).add(10, 'm').toDate();
+
+  await createVerification(verificationCode, user.id, expiryDate);
+  await sendVerificationEmail(verificationCode);
+
+  // TODO: add rate limiting
+
+  res.send({
+    message: 'Code has been re-send',
+  });
+};
+
 // ===============================================
 // Helpers
 // ===============================================
 
-async function generateAccessToken(
-  id: string,
-  email: string,
-  expiresIn: StringValue = '5000ms',
-) {
-  // Create a access and refresh token
+function generateVerifyToken(id: string, email: string) {
+  const accessToken = jwt.sign({ id, email }, env.VERIFY_TOKEN_SECRET, {
+    expiresIn: '1h',
+  });
+
+  return accessToken;
+}
+
+function generateAccessToken(id: string, email: string) {
   const accessToken = jwt.sign({ id, email }, env.JWT_SECRET, {
-    expiresIn,
+    expiresIn: '5000ms',
   });
 
   return accessToken;

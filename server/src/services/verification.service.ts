@@ -42,4 +42,20 @@ const createVerification = async (
   return result.rows[0];
 };
 
-export { getVerification, createVerification };
+/**
+ * Delete user's verification in database
+ *
+ * @param userId - User id to which verification code belongs to
+ * @returns The number of rows deleted
+ */
+const deleteUserVerificationsCode = async (userId: string) => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM verifications WHERE user_id = $1`,
+    [userId],
+  );
+
+  return result.rowCount;
+};
+
+export { getVerification, createVerification, deleteUserVerificationsCode };

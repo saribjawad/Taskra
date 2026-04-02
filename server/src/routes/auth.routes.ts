@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   LoginUser,
   RefreshAccessToken,
+  ResendCode,
   SignUpUser,
   VerifyEmail,
 } from '../controllers/auth.controller';
@@ -17,6 +18,11 @@ authRouter.patch(
   '/verify-email',
   RequireVerifyMiddleware,
   asyncHandler(VerifyEmail),
+);
+authRouter.get(
+  '/resend-code',
+  RequireVerifyMiddleware,
+  asyncHandler(ResendCode),
 );
 
 export default authRouter;
