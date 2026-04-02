@@ -24,3 +24,13 @@ export const SignUpUserSchema = z
     message: "Passwords don't match",
     path: ['confirmPassword'],
   });
+
+// Verify email payload schema
+export const VerifyEmailSchema = z.object({
+  code: z
+    .string()
+    .min(1, 'Code is required')
+    .refine((val) => val.length === 6, {
+      error: 'Invalid code',
+    }),
+});

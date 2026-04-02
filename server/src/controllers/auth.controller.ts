@@ -1,12 +1,21 @@
 import { Request, Response } from 'express';
-import { LoginUserSchema, SignUpUserSchema } from '../schemas/auth.schema';
+import {
+  LoginUserSchema,
+  SignUpUserSchema,
+  VerifyEmailSchema,
+} from '../schemas/auth.schema';
+import type { StringValue } from 'ms';
 import {
   createUser,
-  createVerification,
   findUserByEmail,
   findUserByUsername,
   saveRefreshToken,
+  updateUser,
 } from '../services/user.service';
+import {
+  createVerification,
+  getVerification,
+} from '../services/verification.service';
 import { comparePassoword, hashPassword } from '../utils/bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
@@ -49,10 +58,8 @@ export const LoginUser = async (req: Request, res: Response) => {
       });
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
-      user.id,
-      user.email,
-    );
+    const accessToken = generateAccessToken(user.id, user.email);
+    const refreshToken = await generateRefreshToken(user.id, user.email);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -74,7 +81,6 @@ export const SignUpUser = async (req: Request, res: Response) => {
   try {
     // Validate incoming body
     const parsedBody = SignUpUserSchema.parse(req.body);
-
     const { username, password, email } = parsedBody;
 
     // Check duplicate user
@@ -108,6 +114,13 @@ export const SignUpUser = async (req: Request, res: Response) => {
     await createVerification(verificationCode, createdUser.id, expiryDate);
     await sendVerificationEmail(verificationCode);
 
+    const accessToken = generateAccessToken(
+      createdUser.id,
+      createdUser.email,
+      '60000ms',
+    );
+
+    res.cookie('verifyToken', accessToken);
     res.send(createdUser);
   } catch (error) {
     throw error;
@@ -136,8 +149,8 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     throw new Error('Invalid or expired token');
   }
 
-  const { accessToken, refreshToken: newRefreshToken } =
-    await generateAccessAndRefreshToken(user.id, user.email);
+  const accessToken = generateAccessToken(user.id, user.email);
+  const newRefreshToken = await generateRefreshToken(user.id, user.email);
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -150,15 +163,50 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
   res.send('refreshed token');
 };
 
+export const VerifyEmail = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  const parsedBody = VerifyEmailSchema.parse(req.body);
+  const { code } = parsedBody;
+
+  const verificationCode = await getVerification(code, user.id);
+
+  if (!verificationCode || verificationCode.code !== code) {
+    throw new Error('Invalid code');
+  }
+
+  // Check for expiry
+  if (verificationCode.expires_at < Date.now()) {
+    throw new Error('Verification code has been expired, request another');
+  }
+
+  // Mark user as verified
+  await updateUser(user.id, {
+    is_verified: true,
+  });
+
+  res.clearCookie('verifyToken');
+  res.send('Email verified');
+};
+
 // ===============================================
 // Helpers
 // ===============================================
 
-async function generateAccessAndRefreshToken(id: string, email: string) {
+async function generateAccessToken(
+  id: string,
+  email: string,
+  expiresIn: StringValue = '5000ms',
+) {
   // Create a access and refresh token
-  const accessToken = jwt.sign({ id: id, email: email }, env.JWT_SECRET, {
-    expiresIn: '5000ms',
+  const accessToken = jwt.sign({ id, email }, env.JWT_SECRET, {
+    expiresIn,
   });
+
+  return accessToken;
+}
+
+async function generateRefreshToken(id: string, email: string) {
   const refreshToken = jwt.sign({ id: id, email: email }, env.REFRESH_SECRET, {
     expiresIn: '7d',
   });
@@ -166,10 +214,7 @@ async function generateAccessAndRefreshToken(id: string, email: string) {
   // Save refresh token in DB
   await saveRefreshToken(email, refreshToken);
 
-  return {
-    accessToken,
-    refreshToken,
-  };
+  return refreshToken;
 }
 
 function generateCode() {

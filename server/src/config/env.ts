@@ -13,6 +13,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   REFRESH_SECRET: z.string(),
   RESEND_SECRET: z.string(),
+  VERIFY_TOKEN_SECRET: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

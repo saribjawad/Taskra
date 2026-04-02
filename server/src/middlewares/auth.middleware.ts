@@ -5,6 +5,7 @@ import { env } from '../config/env';
 export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
+  purpose?: string;
 }
 
 export function AuthMiddleware(

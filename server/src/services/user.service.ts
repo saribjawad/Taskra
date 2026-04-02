@@ -72,27 +72,37 @@ const saveRefreshToken = async (email: string, refreshToken: string) => {
 };
 
 /**
- * Create verification in database
+ * Update the user in database
  *
- * @param code - Verification code
- * @param userId - User id to which verification code belongs to
- * @param expiresAt - Expiry time for code
- * @returns The verification created
+ * @param id - User ID
+ * @param data - Object containing the fields to update
+ * @param data.email - The user's email address (optional)
+ * @param data.username - The user's unique username (optional)
+ * @param data.is_verified - The user's verification status (optional)
+ * @returns The updated row count
  */
-const createVerification = async (
-  code: string,
-  userId: string,
-  expiresAt: Date,
+const updateUser = async (
+  id: string,
+  data: {
+    email?: string;
+    username?: string;
+    is_verified?: boolean;
+  },
 ) => {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+
   const result = await dbPool.query(
     `
-    INSERT INTO verifications(code, user_id, expires_at)
-    VALUES($1, $2, $3)
-    RETURNING *`,
-    [code, userId, expiresAt],
+    UPDATE users
+    SET ${keys
+      .map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)
+      .join(' ')}
+    WHERE id = ${keys.length + 1}`,
+    [...values, id],
   );
 
-  return result.rows[0];
+  return result.rowCount;
 };
 
 export {
@@ -100,5 +110,5 @@ export {
   findUserByUsername,
   createUser,
   saveRefreshToken,
-  createVerification,
+  updateUser,
 };
