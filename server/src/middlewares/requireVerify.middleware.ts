@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { VerifyErrors } from 'jsonwebtoken';
 import { env } from '../config/env';
 import { JwtPayloadUser } from './auth.middleware';
 
 export function RequireVerifyMiddleware(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction,
 ) {
   const verifyToken = req.cookies.verifyToken;
@@ -14,16 +14,21 @@ export function RequireVerifyMiddleware(
     throw new Error('Invalid verify token');
   }
 
-  const decodedVerifyToken = jwt.verify(
-    verifyToken,
-    env.VERIFY_TOKEN_SECRET,
-  ) as JwtPayloadUser;
+  let decoded;
 
-  if (!decodedVerifyToken) {
-    throw new Error('Your session has been expired');
+  try {
+    decoded = jwt.verify(
+      verifyToken,
+      env.VERIFY_TOKEN_SECRET,
+    ) as JwtPayloadUser;
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid or missing verify token' });
   }
 
-  req.user = decodedVerifyToken;
+  req.user = {
+    id: decoded.id,
+    email: decoded.email,
+  };
 
   next();
 }
