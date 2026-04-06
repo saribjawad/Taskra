@@ -23,10 +23,14 @@ import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { sendVerificationEmail } from '../lib/resend';
 import moment from 'moment';
 
-// ===============================================
+// ==================================================================================
 // Controllers
-// ===============================================
+// ==================================================================================
 
+/**
+ * Authenticates user credentials and issues JWT cookies.
+ * Checks verification status before allowing full session access.
+ */
 export const LoginUser = async (req: Request, res: Response) => {
   try {
     const parsedBody = LoginUserSchema.parse(req.body);
@@ -43,8 +47,12 @@ export const LoginUser = async (req: Request, res: Response) => {
     }
 
     if (!user.is_verified) {
-      // TODO: send the verification code if prev one is expired
-      throw new Error('User is not verified');
+      // Delete the previous verfication codes of the user
+      await deleteUserVerificationsCode(user.id);
+      // Send and create verification code
+      await sendVerificationCode(user.id);
+
+      throw new Error('Please verify the user to get started');
     }
 
     const isValidPassword = await comparePassoword(
@@ -77,6 +85,11 @@ export const LoginUser = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Creates new user credentials and initiates the email verification process.
+ * * If the user exists but is unverified, it updates their profile (password/username)
+ * and re-issues a verification code instead of creating a duplicate record.
+ */
 export const SignUpUser = async (req: Request, res: Response) => {
   try {
     // Validate incoming body
@@ -86,6 +99,31 @@ export const SignUpUser = async (req: Request, res: Response) => {
     // Check duplicate user
     const userWithUsernameExist = await findUserByUsername(username);
     const userWithEmailExist = await findUserByEmail(email);
+
+    if (userWithEmailExist && !userWithEmailExist.is_verified) {
+      console.log('User is there but isnot verfied');
+      const hashedPassword = await hashPassword(password);
+      console.log(userWithEmailExist);
+
+      // Update user with new password and username
+      try {
+        await updateUser(userWithEmailExist.id, {
+          email,
+          username,
+          hashed_password: hashedPassword,
+        });
+      } catch (err) {
+        console.log(err);
+        throw err;
+      }
+
+      // Delete the previous verfication codes of the user
+      await deleteUserVerificationsCode(userWithEmailExist.id);
+      // Send and create verification code
+      await sendVerificationCode(userWithEmailExist.id);
+
+      return res.send('Verify your email to get started');
+    }
 
     if (userWithUsernameExist) {
       return res.send({
@@ -104,15 +142,8 @@ export const SignUpUser = async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
     const createdUser = await createUser(username, email, hashedPassword);
 
-    // Generate verification code
-    const verificationCode = generateCode();
-
-    const oldDateObj = new Date();
-    const expiryDate = moment(oldDateObj).add(10, 'm').toDate();
-
-    // Save verification code in DB, and send to mail
-    await createVerification(verificationCode, createdUser.id, expiryDate);
-    await sendVerificationEmail(verificationCode);
+    // Send and create verification code
+    await sendVerificationCode(createdUser.id);
 
     const verifyToken = generateVerifyToken(createdUser.id, createdUser.email);
 
@@ -123,6 +154,12 @@ export const SignUpUser = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Issues a new access token using a valid refresh token.
+ * Implements "Refresh Token Rotation" by invalidating the old token.
+ * generating a new one, and persisting it to the database.
+ * Updates the response cookies with the new token pair.
+ */
 export const RefreshAccessToken = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
 
@@ -158,6 +195,11 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
   res.send('refreshed token');
 };
 
+/**
+ * Verifies the user's email by using a 6-digit code.
+ * * Validates the code againsts the database, checks for the expiration,
+ * and marks the user account as verified.
+ */
 export const VerifyEmail = async (req: Request, res: Response) => {
   const user = req.user;
 
@@ -184,20 +226,18 @@ export const VerifyEmail = async (req: Request, res: Response) => {
   res.send('Email verified');
 };
 
+/**
+ * Regenerates and sends a new 6-digit verification code.
+ * Invalidate all existing codes for the user to prevent multi-code
+ */
 export const ResendCode = async (req: Request, res: Response) => {
   const user = req.user;
 
   // Delete the previous verfication codes of the user
   await deleteUserVerificationsCode(user.id);
 
-  // send the resend code obv, save in DB
-  const verificationCode = generateCode();
-
-  const oldDateObj = new Date();
-  const expiryDate = moment(oldDateObj).add(10, 'm').toDate();
-
-  await createVerification(verificationCode, user.id, expiryDate);
-  await sendVerificationEmail(verificationCode);
+  // Send and create verification code
+  await sendVerificationCode(user.id);
 
   // TODO: add rate limiting
 
@@ -206,26 +246,47 @@ export const ResendCode = async (req: Request, res: Response) => {
   });
 };
 
-// ===============================================
+// ==================================================================================
 // Helpers
-// ===============================================
+// ==================================================================================
 
+/**
+ * Generates a signed JWT for the initial email verification phase.
+ *
+ * @param id - Internal User UUID
+ * @param email - User email
+ * @returns A HS256 signed JWT signed valid for 1 hour
+ */
 function generateVerifyToken(id: string, email: string) {
   const accessToken = jwt.sign({ id, email }, env.VERIFY_TOKEN_SECRET, {
-    expiresIn: '1h',
+    expiresIn: '1h', // 1 hour
   });
 
   return accessToken;
 }
 
+/**
+ * Generates a signed JWT for authorization.
+ *
+ * @param id - Internal User UUID
+ * @param email - User email
+ * @returns A HS256 signed JWT signed valid for 10 minutes
+ */
 function generateAccessToken(id: string, email: string) {
   const accessToken = jwt.sign({ id, email }, env.JWT_SECRET, {
-    expiresIn: '5000ms',
+    expiresIn: '600000ms', // 10 minutes
   });
 
   return accessToken;
 }
 
+/**
+ * Generates and persists a long-lived JWT for session refreshing.
+ *
+ * @param id - Internal User ID
+ * @param email - User email
+ * @returns A HS256 signed JWT signed valid for 7 days
+ */
 async function generateRefreshToken(id: string, email: string) {
   const refreshToken = jwt.sign({ id: id, email: email }, env.REFRESH_SECRET, {
     expiresIn: '7d',
@@ -237,6 +298,11 @@ async function generateRefreshToken(id: string, email: string) {
   return refreshToken;
 }
 
+/**
+ * Generates a 6-digit code
+ *
+ * @returns  Generated code
+ */
 function generateCode() {
   let numbers = [];
 
@@ -246,4 +312,22 @@ function generateCode() {
   }
 
   return numbers.join('');
+}
+
+/**
+ * Orchestrates the generation, persistence, and delivery of a verification code.
+ * * 1. Generates a random 6-digit code.
+ * 2. Persists the code with a 10-minute expiration.
+ * 3. Dispatches the code to the user's email via Resend.
+ *
+ * @param userIb - Interal user UUID
+ * @returns Promise<Void>
+ */
+async function sendVerificationCode(userId: string) {
+  const verificationCode = generateCode();
+
+  const expiryDate = moment().add(10, 'm').toDate();
+
+  await createVerification(verificationCode, userId, expiryDate);
+  await sendVerificationEmail(verificationCode);
 }
