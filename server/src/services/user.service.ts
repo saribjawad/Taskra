@@ -79,6 +79,7 @@ const saveRefreshToken = async (email: string, refreshToken: string) => {
  * @param data.email - The user's email address (optional)
  * @param data.username - The user's unique username (optional)
  * @param data.is_verified - The user's verification status (optional)
+ * @param data.hashed_password - The user's hash password (optional)
  * @returns The updated row count
  */
 const updateUser = async (
@@ -87,6 +88,7 @@ const updateUser = async (
     email?: string;
     username?: string;
     is_verified?: boolean;
+    hashed_password?: string;
   },
 ) => {
   const keys = Object.keys(data);
@@ -98,7 +100,7 @@ const updateUser = async (
     SET ${keys
       .map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)
       .join(' ')}
-    WHERE id = ${keys.length + 1}`,
+    WHERE id = $${keys.length + 1}`,
     [...values, id],
   );
 
