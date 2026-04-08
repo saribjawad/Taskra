@@ -23,6 +23,7 @@ import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { sendVerificationEmail } from '../lib/resend';
 import moment from 'moment';
+import bcrypt from 'bcryptjs';
 
 // ==================================================================================
 // Controllers
@@ -102,9 +103,7 @@ export const SignUpUser = async (req: Request, res: Response) => {
     const userWithEmailExist = await findUserByEmail(email);
 
     if (userWithEmailExist && !userWithEmailExist.is_verified) {
-      console.log('User is there but isnot verfied');
       const hashedPassword = await hashPassword(password);
-      console.log(userWithEmailExist);
 
       // Update user with new password and username
       try {
