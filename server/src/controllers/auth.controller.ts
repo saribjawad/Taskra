@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import {
   LoginUserSchema,
+  ResendCodeSchema,
   SignUpUserSchema,
   VerifyEmailSchema,
 } from '../schemas/auth.schema';
@@ -145,9 +146,6 @@ export const SignUpUser = async (req: Request, res: Response) => {
     // Send and create verification code
     await sendVerificationCode(createdUser.id);
 
-    const verifyToken = generateVerifyToken(createdUser.id, createdUser.email);
-
-    res.cookie('verifyToken', verifyToken);
     res.send(createdUser);
   } catch (error) {
     throw error;
@@ -201,10 +199,14 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
  * and marks the user account as verified.
  */
 export const VerifyEmail = async (req: Request, res: Response) => {
-  const user = req.user;
-
   const parsedBody = VerifyEmailSchema.parse(req.body);
-  const { code } = parsedBody;
+  const { email, code } = parsedBody;
+
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw new Error('Invalid or expired verification code.');
+  }
 
   const verificationCode = await getVerification(code, user.id);
 
@@ -231,7 +233,14 @@ export const VerifyEmail = async (req: Request, res: Response) => {
  * Invalidate all existing codes for the user to prevent multi-code
  */
 export const ResendCode = async (req: Request, res: Response) => {
-  const user = req.user;
+  const parsedBody = ResendCodeSchema.parse(req.body);
+  const { email } = parsedBody;
+
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    throw Error('If an account exists, a verification code has been sent.');
+  }
 
   // Delete the previous verfication codes of the user
   await deleteUserVerificationsCode(user.id);
@@ -240,30 +249,14 @@ export const ResendCode = async (req: Request, res: Response) => {
   await sendVerificationCode(user.id);
 
   // TODO: add rate limiting
-
   res.send({
-    message: 'Code has been re-send',
+    message: 'If an account exists, a verification code has been sent.',
   });
 };
 
 // ==================================================================================
 // Helpers
 // ==================================================================================
-
-/**
- * Generates a signed JWT for the initial email verification phase.
- *
- * @param id - Internal User UUID
- * @param email - User email
- * @returns A HS256 signed JWT signed valid for 1 hour
- */
-function generateVerifyToken(id: string, email: string) {
-  const accessToken = jwt.sign({ id, email }, env.VERIFY_TOKEN_SECRET, {
-    expiresIn: '1h', // 1 hour
-  });
-
-  return accessToken;
-}
 
 /**
  * Generates a signed JWT for authorization.

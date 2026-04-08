@@ -27,10 +27,16 @@ export const SignUpUserSchema = z
 
 // Verify email payload schema
 export const VerifyEmailSchema = z.object({
+  email: z.string('Email is required'),
   code: z
     .string()
     .min(1, 'Code is required')
     .refine((val) => val.length === 6, {
       error: 'Invalid code',
     }),
+});
+
+// Resend code payload schema
+export const ResendCodeSchema = z.object({
+  email: z.string('Email is required'),
 });
