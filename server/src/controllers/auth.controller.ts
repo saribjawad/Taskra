@@ -3,6 +3,7 @@ import {
   ForgotPasswordPayloadSchema,
   LoginUserSchema,
   ResendCodeSchema,
+  ResetPasswordPayloadSchema,
   SignUpUserSchema,
   VerifyEmailSchema,
 } from '../schemas/auth.schema';
@@ -28,7 +29,12 @@ import {
 } from '../lib/resend';
 import moment from 'moment';
 import * as crypto from 'crypto';
-import { createPasswordResetToken } from '../services/passwordResetToken.service';
+import {
+  createPasswordResetToken,
+  getPasswordResetToken,
+} from '../services/passwordResetToken.service';
+import { hash } from 'bcryptjs';
+import { toJSONSchema } from 'zod';
 
 // ==================================================================================
 // Controllers
@@ -259,8 +265,9 @@ export const ResendCode = async (req: Request, res: Response) => {
 };
 
 /**
- * Generates 32 byte hash token and sends a forgot password link.
- * Persist tokenHash in database.
+ * Initiates the password recovery process.
+ * Generates a secure random token, persists its SHA-256 hash to prevent database
+ * sends a reset link to the user's email.
  */
 export const ForgotPassword = async (req: Request, res: Response) => {
   const parsedBody = ForgotPasswordPayloadSchema.parse(req.body);
@@ -286,6 +293,36 @@ export const ForgotPassword = async (req: Request, res: Response) => {
   );
 
   res.send('If an account exists, a reset password link has been sent.');
+};
+
+/**
+ * Finalizes the password reset using a raw recovery token.
+ * Validates the token's hash against the database, checks for expiration,
+ * and updates the user's credentials with the new hashed password.
+ */
+export const ResetPassword = async (req: Request, res: Response) => {
+  const parsedBody = ResetPasswordPayloadSchema.parse(req.body);
+  const { token, newPassword } = parsedBody;
+
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  const passwordResetToken = await getPasswordResetToken(tokenHash);
+
+  if (passwordResetToken.expires_at < Date.now()) {
+    throw new Error('Verification token has been expired');
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  const updatedUser = await updateUser(passwordResetToken.user_id, {
+    hashed_password: hashedPassword,
+  });
+
+  if (updatedUser && updatedUser < 1) {
+    throw new Error('Invalid or expired token');
+  }
+
+  res.send('Password reseted succesfully');
 };
 
 // ==================================================================================

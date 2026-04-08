@@ -4,6 +4,7 @@ import {
   LoginUser,
   RefreshAccessToken,
   ResendCode,
+  ResetPassword,
   SignUpUser,
   VerifyEmail,
 } from '../controllers/auth.controller';
@@ -17,5 +18,6 @@ authRouter.post('/refresh-access-token', asyncHandler(RefreshAccessToken));
 authRouter.patch('/verify-email', asyncHandler(VerifyEmail));
 authRouter.get('/resend-code', asyncHandler(ResendCode));
 authRouter.get('/forgot-password', asyncHandler(ForgotPassword));
+authRouter.patch('/reset-password', asyncHandler(ResetPassword));
 
 export default authRouter;

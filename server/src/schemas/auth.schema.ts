@@ -43,3 +43,14 @@ export const ResendCodeSchema = z.object({
 
 // Forgot password payload schema
 export const ForgotPasswordPayloadSchema = ResendCodeSchema;
+
+// Reset password payload schema
+export const ResetPasswordPayloadSchema = z.object({
+  token: z
+    .string()
+    .length(64)
+    .regex(/^[0-9a-fA-F]+$/, 'Must be a hexadecimal string'),
+  newPassword: z
+    .string('New password is required')
+    .min(8, 'New password should be minimum of 8 characters'),
+});
