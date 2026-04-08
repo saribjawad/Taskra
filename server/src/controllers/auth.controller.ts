@@ -270,7 +270,9 @@ export const ForgotPassword = async (req: Request, res: Response) => {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    return res.send('If an account exists, a verification code has been sent.');
+    return res.send(
+      'If an account exists, a reset password link has been sent.',
+    );
   }
 
   const rawToken = crypto.randomBytes(32).toString('hex');
@@ -283,7 +285,7 @@ export const ForgotPassword = async (req: Request, res: Response) => {
     `http://localhost:3000/reset-password/${rawToken}`,
   );
 
-  res.send('If an account exists, a verification code has been sent.');
+  res.send('If an account exists, a reset password link has been sent.');
 };
 
 // ==================================================================================
