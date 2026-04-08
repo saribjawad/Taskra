@@ -40,3 +40,6 @@ export const VerifyEmailSchema = z.object({
 export const ResendCodeSchema = z.object({
   email: z.string('Email is required'),
 });
+
+// Forgot password payload schema
+export const ForgotPasswordPayloadSchema = ResendCodeSchema;

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import {
+  ForgotPasswordPayloadSchema,
   LoginUserSchema,
   ResendCodeSchema,
   SignUpUserSchema,
@@ -21,9 +22,13 @@ import { comparePassoword, hashPassword } from '../utils/bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
-import { sendVerificationEmail } from '../lib/resend';
+import {
+  sendResetPasswordLinkEmail,
+  sendVerificationEmail,
+} from '../lib/resend';
 import moment from 'moment';
-import bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import { createPasswordResetToken } from '../services/passwordResetToken.service';
 
 // ==================================================================================
 // Controllers
@@ -251,6 +256,34 @@ export const ResendCode = async (req: Request, res: Response) => {
   res.send({
     message: 'If an account exists, a verification code has been sent.',
   });
+};
+
+/**
+ * Generates 32 byte hash token and sends a forgot password link.
+ * Persist tokenHash in database.
+ */
+export const ForgotPassword = async (req: Request, res: Response) => {
+  const parsedBody = ForgotPasswordPayloadSchema.parse(req.body);
+
+  const { email } = parsedBody;
+
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    return res.send('If an account exists, a verification code has been sent.');
+  }
+
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const expiresAt = moment().add(15, 'm').toDate();
+
+  await createPasswordResetToken(user.id, tokenHash, expiresAt);
+
+  await sendResetPasswordLinkEmail(
+    `http://localhost:3000/reset-password/${rawToken}`,
+  );
+
+  res.send('If an account exists, a verification code has been sent.');
 };
 
 // ==================================================================================

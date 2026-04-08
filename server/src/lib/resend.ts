@@ -21,3 +21,21 @@ export async function sendVerificationEmail(code: string) {
     throw new Error('Something went wrong while sending email');
   }
 }
+
+export async function sendResetPasswordLinkEmail(link: string) {
+  const { error } = await resend.emails.send({
+    from: 'Acme <onboarding@resend.dev>',
+    to: ['msssarib12@gmail.com'],
+    template: {
+      id: 'reset-password-link-template',
+      variables: {
+        RESET_LINK: link,
+      },
+    },
+  });
+
+  if (error) {
+    console.log('Error while sending email', error);
+    throw new Error('Something went wrong while sending email');
+  }
+}

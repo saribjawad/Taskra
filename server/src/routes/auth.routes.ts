@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  ForgotPassword,
   LoginUser,
   RefreshAccessToken,
   ResendCode,
@@ -15,5 +16,6 @@ authRouter.post('/sign-up', asyncHandler(SignUpUser));
 authRouter.post('/refresh-access-token', asyncHandler(RefreshAccessToken));
 authRouter.patch('/verify-email', asyncHandler(VerifyEmail));
 authRouter.get('/resend-code', asyncHandler(ResendCode));
+authRouter.get('/forgot-password', asyncHandler(ForgotPassword));
 
 export default authRouter;
