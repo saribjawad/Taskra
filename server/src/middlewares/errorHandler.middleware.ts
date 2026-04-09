@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import z, { ZodError } from 'zod';
+import { ApiError } from '../utils/ApiErrors';
+import { env } from '../config/env';
 
 export function ErrorHandlerMiddleware(
   err: Error,
@@ -17,6 +19,13 @@ export function ErrorHandlerMiddleware(
         form: flattenError.formErrors,
         fields: flattenError.fieldErrors,
       },
+    });
+  }
+
+  if (err instanceof ApiError) {
+    return res.status(err.status).send({
+      message: err.message,
+      stack: env.APP_ENV === 'DEV' ? err.stack : '',
     });
   }
 
