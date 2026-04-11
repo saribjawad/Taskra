@@ -1,21 +1,35 @@
 export class ApiError extends Error {
   statusCode: number;
-  success: boolean;
+  isOperational: boolean;
+  errors: any;
 
   constructor(
     statusCode: number,
-    message: string = 'Something went wrong',
-    stack?: string,
+    message = 'Something went wrong',
+    errors?: any,
+    isOperational = true,
   ) {
     super(message);
 
     this.statusCode = statusCode;
-    this.success = false;
+    this.isOperational = isOperational;
+    this.errors = errors;
+    Error.captureStackTrace(this, this.constructor);
+  }
 
-    if (stack) {
-      this.stack = stack;
-    } else {
-      Error.captureStackTrace(this, this.constructor); // if no stack capture one
-    }
+  static notFound(message = 'Resource not found') {
+    return new ApiError(404, message);
+  }
+
+  static unauthorized(message = 'Unauthorized') {
+    return new ApiError(401, message);
+  }
+
+  static badRequest(message = 'Bad request', errors: any) {
+    return new ApiError(400, message, errors);
+  }
+
+  static internal(message = 'Internal server error') {
+    return new ApiError(500, message, [], false); // not operational
   }
 }

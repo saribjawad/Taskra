@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import z, { ZodError } from 'zod';
 import { ApiError } from '../utils/ApiErrors';
-import { env } from '../config/env';
 
 export function ErrorHandlerMiddleware(
   err: Error,
@@ -12,26 +11,35 @@ export function ErrorHandlerMiddleware(
   // Handler zod errors
   if (err instanceof ZodError) {
     const flattenError = z.flattenError(err);
+    const errors = Object.entries(flattenError.fieldErrors).map(
+      ([field, messages]) => ({
+        field,
+        message: (messages as string[])?.[0] ?? 'Invalid',
+      }),
+    );
 
-    return res.send({
-      message: 'Validation error',
-      errors: {
-        form: flattenError.formErrors,
-        fields: flattenError.fieldErrors,
-      },
+    return res.status(400).json({
+      statusCode: 400,
+      success: false,
+      message: 'Validation Error',
+      errors,
     });
   }
 
   if (err instanceof ApiError) {
-    return res.status(err.statusCode).send({
+    return res.status(err.statusCode).json({
+      statusCode: err.statusCode,
+      success: false,
       message: err.message,
-      stack: env.APP_ENV === 'DEV' ? err.stack : '',
+      errors: err.errors ?? [],
     });
   }
 
   // TODO: Log the unexpected error
-  res.send({
-    message: 'Error',
-    errors: err.message || 'An unexpected error occurred!',
+  res.status(500).json({
+    statusCode: 500,
+    success: false,
+    message: 'Internal Server Error',
+    errors: [],
   });
 }
