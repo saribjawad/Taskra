@@ -23,7 +23,7 @@ export function ErrorHandlerMiddleware(
   }
 
   if (err instanceof ApiError) {
-    return res.status(err.status).send({
+    return res.status(err.statusCode).send({
       message: err.message,
       stack: env.APP_ENV === 'DEV' ? err.stack : '',
     });
