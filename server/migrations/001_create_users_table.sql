@@ -1,7 +1,0 @@
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(250) UNIQUE NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    hashed_password TEXT NOT NULL
-);

@@ -33,8 +33,6 @@ import {
   createPasswordResetToken,
   getPasswordResetToken,
 } from '../services/passwordResetToken.service';
-import { hash } from 'bcryptjs';
-import { toJSONSchema } from 'zod';
 
 // ==================================================================================
 // Controllers
