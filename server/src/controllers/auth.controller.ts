@@ -33,6 +33,8 @@ import {
   createPasswordResetToken,
   getPasswordResetToken,
 } from '../services/passwordResetToken.service';
+import { ApiResponse } from '../utils/ApiResponse';
+import { ApiError } from '../utils/ApiErrors';
 
 // ==================================================================================
 // Controllers
@@ -50,11 +52,9 @@ export const LoginUser = async (req: Request, res: Response) => {
 
     // Check credientials
     const user = await findUserByEmail(email);
+
     if (!user) {
-      return res.send({
-        message: 'failed',
-        body: 'Invalid credentials',
-      });
+      throw ApiError.unauthorized('Invalid credentials');
     }
 
     if (!user.is_verified) {
@@ -63,7 +63,7 @@ export const LoginUser = async (req: Request, res: Response) => {
       // Send and create verification code
       await sendVerificationCode(user.id);
 
-      throw new Error('Please verify the user to get started');
+      throw new ApiError(403, 'Please verify the user to get started');
     }
 
     const isValidPassword = await comparePassoword(
@@ -71,10 +71,7 @@ export const LoginUser = async (req: Request, res: Response) => {
       user.hashed_password,
     );
     if (!isValidPassword) {
-      return res.send({
-        message: 'failed',
-        body: 'Invalid credentials',
-      });
+      throw ApiError.unauthorized('Invalid credentials');
     }
 
     const accessToken = generateAccessToken(user.id, user.email);
@@ -88,9 +85,7 @@ export const LoginUser = async (req: Request, res: Response) => {
       path: '/api/v1/refresh-access-token',
     });
 
-    res.send({
-      message: 'Logged in',
-    });
+    res.status(200).json(new ApiResponse(200, 'Logged in'));
   } catch (error) {
     throw error;
   }
@@ -115,37 +110,28 @@ export const SignUpUser = async (req: Request, res: Response) => {
       const hashedPassword = await hashPassword(password);
 
       // Update user with new password and username
-      try {
-        await updateUser(userWithEmailExist.id, {
-          email,
-          username,
-          hashed_password: hashedPassword,
-        });
-      } catch (err) {
-        console.log(err);
-        throw err;
-      }
+      await updateUser(userWithEmailExist.id, {
+        email,
+        username,
+        hashed_password: hashedPassword,
+      });
 
       // Delete the previous verfication codes of the user
       await deleteUserVerificationsCode(userWithEmailExist.id);
       // Send and create verification code
       await sendVerificationCode(userWithEmailExist.id);
 
-      return res.send('Verify your email to get started');
+      res
+        .status(201)
+        .json(new ApiResponse(201, 'Verify your email to get started'));
     }
 
     if (userWithUsernameExist) {
-      return res.send({
-        message: 'failed',
-        body: 'Username already taken',
-      });
+      throw new ApiError(409, 'Username already taken');
     }
 
     if (userWithEmailExist) {
-      return res.send({
-        message: 'failed',
-        body: 'Email already registered',
-      });
+      throw new ApiError(409, 'Email already registered');
     }
 
     const hashedPassword = await hashPassword(password);
@@ -154,7 +140,9 @@ export const SignUpUser = async (req: Request, res: Response) => {
     // Send and create verification code
     await sendVerificationCode(createdUser.id);
 
-    res.send(createdUser);
+    res
+      .status(201)
+      .json(new ApiResponse(201, 'Verify your email to get started'));
   } catch (error) {
     throw error;
   }
@@ -170,7 +158,7 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    throw new Error('No refresh token');
+    throw ApiError.unauthorized('Invalid refresh token');
   }
 
   let decoded;
@@ -178,13 +166,13 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
   try {
     decoded = jwt.verify(refreshToken, env.REFRESH_SECRET) as JwtPayloadUser;
   } catch (err) {
-    throw new Error('Invalid or expired token');
+    throw ApiError.unauthorized('Invalid or expired token');
   }
 
   const user = await findUserByEmail(decoded.email);
 
   if (user.refresh_token !== refreshToken) {
-    throw new Error('Invalid or expired token');
+    throw ApiError.unauthorized('Invalid or expired token');
   }
 
   const accessToken = generateAccessToken(user.id, user.email);
@@ -198,7 +186,7 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     path: '/api/v1/refresh-access-token',
   });
 
-  res.send('refreshed token');
+  res.status(200).json(new ApiResponse(200, 'Token refreshed'));
 };
 
 /**
@@ -213,18 +201,21 @@ export const VerifyEmail = async (req: Request, res: Response) => {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    throw new Error('Invalid or expired verification code.');
+    throw new ApiError(403, 'Invalid or expired verification code');
   }
 
   const verificationCode = await getVerification(code, user.id);
 
   if (!verificationCode || verificationCode.code !== code) {
-    throw new Error('Invalid code');
+    throw new ApiError(403, 'Invalid code');
   }
 
   // Check for expiry
   if (verificationCode.expires_at < Date.now()) {
-    throw new Error('Verification code has been expired, request another');
+    throw new ApiError(
+      403,
+      'Verification code has been expired, request another',
+    );
   }
 
   // Mark user as verified
@@ -232,8 +223,9 @@ export const VerifyEmail = async (req: Request, res: Response) => {
     is_verified: true,
   });
 
-  res.clearCookie('verifyToken');
-  res.send('Email verified');
+  // TODO: invalidate the verify tokens
+
+  res.status(200).json(new ApiResponse(200, 'Email verified'));
 };
 
 /**
@@ -247,7 +239,14 @@ export const ResendCode = async (req: Request, res: Response) => {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    throw Error('If an account exists, a verification code has been sent.');
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          'If an account exists, a verification code has been sent.',
+        ),
+      );
   }
 
   // Delete the previous verfication codes of the user
@@ -257,9 +256,14 @@ export const ResendCode = async (req: Request, res: Response) => {
   await sendVerificationCode(user.id);
 
   // TODO: add rate limiting
-  res.send({
-    message: 'If an account exists, a verification code has been sent.',
-  });
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        'If an account exists, a verification code has been sent.',
+      ),
+    );
 };
 
 /**
@@ -275,9 +279,14 @@ export const ForgotPassword = async (req: Request, res: Response) => {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    return res.send(
-      'If an account exists, a reset password link has been sent.',
-    );
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          'If an account exists, a reset password link has been sent.',
+        ),
+      );
   }
 
   const rawToken = crypto.randomBytes(32).toString('hex');
@@ -290,7 +299,14 @@ export const ForgotPassword = async (req: Request, res: Response) => {
     `http://localhost:3000/reset-password/${rawToken}`,
   );
 
-  res.send('If an account exists, a reset password link has been sent.');
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        'If an account exists, a reset password link has been sent.',
+      ),
+    );
 };
 
 /**
@@ -306,6 +322,10 @@ export const ResetPassword = async (req: Request, res: Response) => {
 
   const passwordResetToken = await getPasswordResetToken(tokenHash);
 
+  if (!passwordResetToken) {
+    throw new Error('Invalid or expired token');
+  }
+
   if (passwordResetToken.expires_at < Date.now()) {
     throw new Error('Verification token has been expired');
   }
@@ -320,7 +340,9 @@ export const ResetPassword = async (req: Request, res: Response) => {
     throw new Error('Invalid or expired token');
   }
 
-  res.send('Password reseted succesfully');
+  // TODO: invalidate the reset tokens
+
+  res.status(200).json(new ApiResponse(200, 'Password reseted succesfully'));
 };
 
 // ==================================================================================
