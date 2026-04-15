@@ -18,7 +18,7 @@ export const up = (pgm) => {
     username: { type: 'varchar(50)', notNull: true, unique: true },
     email: { type: 'varchar(250)', notNull: true, unique: true },
     is_verified: { type: 'boolean', notNull: true, default: false },
-    hashed_passwrd: { type: 'text', notNull: true },
+    hashed_password: { type: 'text', notNull: true },
     refresh_token: { type: 'text' },
     createdAt: {
       type: 'timestamp',
