@@ -121,7 +121,7 @@ export const SignUpUser = async (req: Request, res: Response) => {
       // Send and create verification code
       await sendVerificationCode(userWithEmailExist.id);
 
-      res
+      return res
         .status(201)
         .json(new ApiResponse(201, 'Verify your email to get started'));
     }
@@ -171,7 +171,7 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
 
   const user = await findUserByEmail(decoded.email);
 
-  if (user.refresh_token !== refreshToken) {
+  if (!user || user.refresh_token !== refreshToken) {
     throw ApiError.unauthorized('Invalid or expired token');
   }
 
@@ -323,11 +323,11 @@ export const ResetPassword = async (req: Request, res: Response) => {
   const passwordResetToken = await getPasswordResetToken(tokenHash);
 
   if (!passwordResetToken) {
-    throw new Error('Invalid or expired token');
+    throw ApiError.unauthorized('Invalid or expired token');
   }
 
   if (passwordResetToken.expires_at < Date.now()) {
-    throw new Error('Verification token has been expired');
+    throw ApiError.unauthorized('Verification token has been expired');
   }
 
   const hashedPassword = await hashPassword(newPassword);
@@ -337,7 +337,7 @@ export const ResetPassword = async (req: Request, res: Response) => {
   });
 
   if (updatedUser && updatedUser < 1) {
-    throw new Error('Invalid or expired token');
+    throw ApiError.unauthorized('Invalid or expired token');
   }
 
   // TODO: invalidate the reset tokens
