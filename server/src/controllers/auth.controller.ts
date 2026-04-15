@@ -45,50 +45,46 @@ import { ApiError } from '../utils/ApiErrors';
  * Checks verification status before allowing full session access.
  */
 export const LoginUser = async (req: Request, res: Response) => {
-  try {
-    const parsedBody = LoginUserSchema.parse(req.body);
+  const parsedBody = LoginUserSchema.parse(req.body);
 
-    const { email, password } = parsedBody;
+  const { email, password } = parsedBody;
 
-    // Check credientials
-    const user = await findUserByEmail(email);
+  // Check credientials
+  const user = await findUserByEmail(email);
 
-    if (!user) {
-      throw ApiError.unauthorized('Invalid credentials');
-    }
-
-    if (!user.is_verified) {
-      // Delete the previous verfication codes of the user
-      await deleteUserVerificationsCode(user.id);
-      // Send and create verification code
-      await sendVerificationCode(user.id);
-
-      throw new ApiError(403, 'Please verify the user to get started');
-    }
-
-    const isValidPassword = await comparePassoword(
-      password,
-      user.hashed_password,
-    );
-    if (!isValidPassword) {
-      throw ApiError.unauthorized('Invalid credentials');
-    }
-
-    const accessToken = generateAccessToken(user.id, user.email);
-    const refreshToken = await generateRefreshToken(user.id, user.email);
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-    });
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      path: '/api/v1/refresh-access-token',
-    });
-
-    res.status(200).json(new ApiResponse(200, 'Logged in'));
-  } catch (error) {
-    throw error;
+  if (!user) {
+    throw ApiError.unauthorized('Invalid credentials');
   }
+
+  if (!user.is_verified) {
+    // Delete the previous verfication codes of the user
+    await deleteUserVerificationsCode(user.id);
+    // Send and create verification code
+    await sendVerificationCode(user.id);
+
+    throw new ApiError(403, 'Please verify the user to get started');
+  }
+
+  const isValidPassword = await comparePassoword(
+    password,
+    user.hashed_password,
+  );
+  if (!isValidPassword) {
+    throw ApiError.unauthorized('Invalid credentials');
+  }
+
+  const accessToken = generateAccessToken(user.id, user.email);
+  const refreshToken = await generateRefreshToken(user.id, user.email);
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
+
+  res.status(200).json(new ApiResponse(200, 'Logged in'));
 };
 
 /**
@@ -97,55 +93,51 @@ export const LoginUser = async (req: Request, res: Response) => {
  * and re-issues a verification code instead of creating a duplicate record.
  */
 export const SignUpUser = async (req: Request, res: Response) => {
-  try {
-    // Validate incoming body
-    const parsedBody = SignUpUserSchema.parse(req.body);
-    const { username, password, email } = parsedBody;
+  // Validate incoming body
+  const parsedBody = SignUpUserSchema.parse(req.body);
+  const { username, password, email } = parsedBody;
 
-    // Check duplicate user
-    const userWithUsernameExist = await findUserByUsername(username);
-    const userWithEmailExist = await findUserByEmail(email);
+  // Check duplicate user
+  const userWithUsernameExist = await findUserByUsername(username);
+  const userWithEmailExist = await findUserByEmail(email);
 
-    if (userWithEmailExist && !userWithEmailExist.is_verified) {
-      const hashedPassword = await hashPassword(password);
-
-      // Update user with new password and username
-      await updateUser(userWithEmailExist.id, {
-        email,
-        username,
-        hashed_password: hashedPassword,
-      });
-
-      // Delete the previous verfication codes of the user
-      await deleteUserVerificationsCode(userWithEmailExist.id);
-      // Send and create verification code
-      await sendVerificationCode(userWithEmailExist.id);
-
-      return res
-        .status(201)
-        .json(new ApiResponse(201, 'Verify your email to get started'));
-    }
-
-    if (userWithUsernameExist) {
-      throw new ApiError(409, 'Username already taken');
-    }
-
-    if (userWithEmailExist) {
-      throw new ApiError(409, 'Email already registered');
-    }
-
+  if (userWithEmailExist && !userWithEmailExist.is_verified) {
     const hashedPassword = await hashPassword(password);
-    const createdUser = await createUser(username, email, hashedPassword);
 
+    // Update user with new password and username
+    await updateUser(userWithEmailExist.id, {
+      email,
+      username,
+      hashed_password: hashedPassword,
+    });
+
+    // Delete the previous verfication codes of the user
+    await deleteUserVerificationsCode(userWithEmailExist.id);
     // Send and create verification code
-    await sendVerificationCode(createdUser.id);
+    await sendVerificationCode(userWithEmailExist.id);
 
-    res
+    return res
       .status(201)
       .json(new ApiResponse(201, 'Verify your email to get started'));
-  } catch (error) {
-    throw error;
   }
+
+  if (userWithUsernameExist) {
+    throw new ApiError(409, 'Username already taken');
+  }
+
+  if (userWithEmailExist) {
+    throw new ApiError(409, 'Email already registered');
+  }
+
+  const hashedPassword = await hashPassword(password);
+  const createdUser = await createUser(username, email, hashedPassword);
+
+  // Send and create verification code
+  await sendVerificationCode(createdUser.id);
+
+  res
+    .status(201)
+    .json(new ApiResponse(201, 'Verify your email to get started'));
 };
 
 /**
