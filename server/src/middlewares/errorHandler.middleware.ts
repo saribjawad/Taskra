@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import z, { ZodError } from 'zod';
 import { ApiError } from '../utils/ApiErrors';
+import logger from '../utils/logger';
 
 export function ErrorHandlerMiddleware(
   err: Error,
@@ -35,7 +36,8 @@ export function ErrorHandlerMiddleware(
     });
   }
 
-  // TODO: Log the unexpected error
+  logger.error(err);
+
   res.status(500).json({
     statusCode: 500,
     success: false,
