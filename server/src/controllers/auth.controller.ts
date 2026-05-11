@@ -56,6 +56,14 @@ export const LoginUser = async (req: Request, res: Response) => {
     throw ApiError.unauthorized('Invalid credentials');
   }
 
+  const isValidPassword = await comparePassoword(
+    password,
+    user.hashed_password,
+  );
+  if (!isValidPassword) {
+    throw ApiError.unauthorized('Invalid credentials');
+  }
+
   if (!user.is_verified) {
     // Delete the previous verfication codes of the user
     await deleteUserVerificationsCode(user.id);
@@ -63,14 +71,6 @@ export const LoginUser = async (req: Request, res: Response) => {
     await sendVerificationCode(user.id);
 
     throw new ApiError(403, 'Please verify the user to get started');
-  }
-
-  const isValidPassword = await comparePassoword(
-    password,
-    user.hashed_password,
-  );
-  if (!isValidPassword) {
-    throw ApiError.unauthorized('Invalid credentials');
   }
 
   const accessToken = generateAccessToken(user.id, user.email);
