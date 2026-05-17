@@ -47,5 +47,7 @@ export const RateLimitMiddleware = (
         throw new ApiError(403, 'Request limit reached');
       }
     }
+  } else {
+    next();
   }
 };

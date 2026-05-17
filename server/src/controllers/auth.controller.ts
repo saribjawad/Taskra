@@ -104,6 +104,10 @@ export const SignUpUser = async (req: Request, res: Response) => {
   if (userWithEmailExist && !userWithEmailExist.is_verified) {
     const hashedPassword = await hashPassword(password);
 
+    if (userWithUsernameExist && userWithUsernameExist.email !== email) {
+      throw new ApiError(409, 'Username not available');
+    }
+
     // Update user with new password and username
     await updateUser(userWithEmailExist.id, {
       email,
@@ -117,16 +121,16 @@ export const SignUpUser = async (req: Request, res: Response) => {
     await sendVerificationCode(userWithEmailExist.id);
 
     return res
-      .status(201)
-      .json(new ApiResponse(201, 'Verify your email to get started'));
+      .status(200)
+      .json(new ApiResponse(200, 'Verify your email to get started'));
   }
 
   if (userWithUsernameExist) {
-    throw new ApiError(409, 'Username already taken');
+    throw new ApiError(409, 'Username not available');
   }
 
   if (userWithEmailExist) {
-    throw new ApiError(409, 'Email already registered');
+    throw new ApiError(409, 'Email not available');
   }
 
   const hashedPassword = await hashPassword(password);
@@ -215,7 +219,7 @@ export const VerifyEmail = async (req: Request, res: Response) => {
     is_verified: true,
   });
 
-  // TODO: invalidate the verify tokens
+  await deleteUserVerificationsCode(user.id);
 
   res.status(200).json(new ApiResponse(200, 'Email verified'));
 };
@@ -383,7 +387,7 @@ function generateCode() {
   let numbers = [];
 
   for (let i = 0; i < 6; i++) {
-    const code = Math.floor(Math.random() * 9);
+    const code = Math.floor(Math.random() * 10);
     numbers.push(code);
   }
 

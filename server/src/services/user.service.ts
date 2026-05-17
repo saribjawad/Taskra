@@ -20,10 +20,9 @@ const findUserByEmail = async (email: string) => {
  * @returns The user row if found, otherwise undefined
  */
 const findUserByUsername = async (username: string) => {
-  const result = await dbPool.query(
-    'SELECT username FROM users WHERE username = $1',
-    [username],
-  );
+  const result = await dbPool.query('SELECT * FROM users WHERE username = $1', [
+    username,
+  ]);
 
   return result.rows[0];
 };
