@@ -102,11 +102,11 @@ export const SignUpUser = async (req: Request, res: Response) => {
   const userWithEmailExist = await findUserByEmail(email);
 
   if (userWithEmailExist && !userWithEmailExist.is_verified) {
-    const hashedPassword = await hashPassword(password);
-
     if (userWithUsernameExist && userWithUsernameExist.email !== email) {
       throw new ApiError(409, 'Username not available');
     }
+
+    const hashedPassword = await hashPassword(password);
 
     // Update user with new password and username
     await updateUser(userWithEmailExist.id, {
