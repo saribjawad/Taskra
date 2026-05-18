@@ -29,7 +29,7 @@ export const up = (pgm) => {
       type: 'timestamp',
       notNull: true,
     },
-    createdAt: {
+    created_at: {
       type: 'timestamp',
       notNull: true,
       default: pgm.func('current_timestamp'),

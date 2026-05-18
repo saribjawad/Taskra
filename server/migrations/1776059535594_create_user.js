@@ -20,7 +20,7 @@ export const up = (pgm) => {
     is_verified: { type: 'boolean', notNull: true, default: false },
     hashed_password: { type: 'text', notNull: true },
     refresh_token: { type: 'text' },
-    createdAt: {
+    created_at: {
       type: 'timestamp',
       notNull: true,
       default: pgm.func('current_timestamp'),
