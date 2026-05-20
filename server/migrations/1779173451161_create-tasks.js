@@ -29,12 +29,12 @@ export const up = (pgm) => {
     priority: {
       type: 'text',
       notNull: true,
-      check: "status IN ('urgent', 'high', 'medium', 'low', 'no_priority')",
+      check: "priority IN ('urgent', 'high', 'medium', 'low', 'no_priority')",
       default: 'no_priority',
     },
     label: {
       type: 'text',
-      check: "status IN ('bug', 'feature', 'improvement')",
+      check: "label IN ('bug', 'feature', 'improvement')",
       default: null,
     },
     assignee: {
