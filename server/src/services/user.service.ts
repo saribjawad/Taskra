@@ -1,6 +1,18 @@
 import { dbPool } from '../db';
 
 /**
+ * Find user with id
+ *
+ * @param id - User ID
+ * @returns The user row if found, otherwise undefined
+ */
+const findUserById = async (id: string) => {
+  const result = await dbPool.query('SELECT * FROM users WHERE id = $1', [id]);
+
+  return result.rows[0];
+};
+
+/**
  * Find user with email
  *
  * @param email - User email
@@ -107,6 +119,7 @@ const updateUser = async (
 };
 
 export {
+  findUserById,
   findUserByEmail,
   findUserByUsername,
   createUser,

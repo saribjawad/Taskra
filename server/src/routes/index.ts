@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import authRouter from './auth.routes';
 import { ApiResponse } from '../utils/ApiResponse';
+import taskRouter from './task.routes';
 
 const router = Router();
 
@@ -9,7 +10,8 @@ router.get('/health', (_req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(200, 'Server running!'));
 });
 
-// User routes
+// App routes
 router.use(authRouter);
+router.use(taskRouter);
 
 export default router;
