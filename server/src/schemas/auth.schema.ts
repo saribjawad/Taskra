@@ -1,6 +1,5 @@
 import z from 'zod';
 
-// Login user payload schema
 export const LoginUserSchema = z.object({
   email: z.email('Invalid email'),
   password: z
@@ -8,7 +7,6 @@ export const LoginUserSchema = z.object({
     .min(8, 'Password should be minimum of 8 characters'),
 });
 
-// Signup user payload schema
 export const SignUpUserSchema = z
   .object({
     username: z
@@ -25,7 +23,6 @@ export const SignUpUserSchema = z
     path: ['confirmPassword'],
   });
 
-// Verify email payload schema
 export const VerifyEmailSchema = z.object({
   email: z.string('Email is required'),
   code: z
@@ -36,15 +33,12 @@ export const VerifyEmailSchema = z.object({
     }),
 });
 
-// Resend code payload schema
 export const ResendCodeSchema = z.object({
   email: z.string('Email is required'),
 });
 
-// Forgot password payload schema
 export const ForgotPasswordPayloadSchema = ResendCodeSchema;
 
-// Reset password payload schema
 export const ResetPasswordPayloadSchema = z.object({
   token: z
     .string()
