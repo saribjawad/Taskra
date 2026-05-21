@@ -1,4 +1,16 @@
 import { dbPool } from '../db';
+import { UpdateSchema } from '../schemas/task.schema';
+
+export const findTaskById = async (id: string) => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM tasks WHERE id = $1
+    `,
+    [id],
+  );
+
+  return result.rows[0];
+};
 
 /**
  * Create task in database
@@ -28,4 +40,35 @@ export const createTask = async (
   );
 
   return result.rows[0];
+};
+
+/**
+ * Update task in database
+ *
+ * @param id - Task ID
+ * @param data - Object containing the fields to upgrade
+ * @param data.title - Task title (optional)
+ * @param description - Task description (optional)
+ * @param status - Task status (optional)
+ * @param priority - Task priority (optional)
+ * @param label - Task label (optional)
+ * @param assignee - Task assignee (optional)
+ * @returns Count of updated row
+ */
+export const updateTask = async (id: string, data: UpdateSchema) => {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+
+  const result = await dbPool.query(
+    `
+    UPDATE tasks
+    SET ${keys
+      .map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)
+      .join(' ')}
+    WHERE id = $${keys.length + 1}
+    `,
+    [...values, id],
+  );
+
+  return result.rowCount;
 };
