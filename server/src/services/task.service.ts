@@ -72,3 +72,24 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
 
   return result.rowCount;
 };
+
+/**
+ * Get tasks from database
+ *
+ * @param limit - Query limit
+ * @param offset - Query offet
+ * @returns Tasks
+ */
+export const getTasks = async (limit: number, offset: number) => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM tasks
+    ORDER BY created_at DESC
+    LIMIT $1
+    OFFSET $2;
+    `,
+    [limit, offset],
+  );
+
+  return result.rows;
+};

@@ -4,6 +4,15 @@ export const TaskParamsSchema = z.object({
   taskId: z.uuid('Invalid task UUID'),
 });
 
+export const GetTaskQuerySchema = z.object({
+  page: z.coerce
+    .number('Invalid number')
+    .positive('Should be a positive number.'),
+  limit: z.coerce
+    .number('Invalid number')
+    .positive('Should be a positive number'),
+});
+
 export const CreateTaskSchema = z.object({
   title: z
     .string('Invalid title')

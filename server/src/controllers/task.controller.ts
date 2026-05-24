@@ -1,13 +1,20 @@
 import { Request, Response } from 'express';
 import {
   CreateTaskSchema,
+  GetTaskQuerySchema,
   TaskParamsSchema,
   UpdateTaskSchema,
 } from '../schemas/task.schema';
 import { findUserById } from '../services/user.service';
 import { ApiError } from '../utils/ApiErrors';
-import { createTask, findTaskById, updateTask } from '../services/task.service';
+import {
+  createTask,
+  findTaskById,
+  getTasks,
+  updateTask,
+} from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
+import { dbPool } from '../db';
 
 // ==================================================================================
 // Task Controllers
@@ -58,4 +65,33 @@ export const UpdateTask = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Task updated'));
+};
+
+export const GetTasks = async (req: Request, res: Response) => {
+  /*
+  TODO: Update into accordingly
+   cursor pagination
+   caching counts
+  */
+  const parsedQueries = GetTaskQuerySchema.parse(req.query);
+
+  const { page, limit } = parsedQueries;
+  const offset = (page - 1) * limit;
+
+  // Adding one to check will there be a next page
+  const tasks = await getTasks(limit + 1, offset);
+
+  const hasNextPage = tasks.length > limit;
+
+  res.status(200).json(
+    new ApiResponse(200, 'Tasks fetched', {
+      metadata: {
+        hasNextPage,
+        page,
+        limit,
+        offset,
+      },
+      tasks,
+    }),
+  );
 };
