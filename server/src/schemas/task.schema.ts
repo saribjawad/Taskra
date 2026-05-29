@@ -26,7 +26,9 @@ export const CreateTaskSchema = z.object({
 });
 
 export const UpdateTaskSchema = z.object({
-  title: z.string('Invalid title'),
+  title: z
+    .string('Invalid title')
+    .max(250, 'Title cannot be more than 250 words'),
   description: z.string('Invalid description'),
   status: z.enum(['backlog', 'todo', 'in_progress', 'done', 'cancelled']),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'no_priority']),

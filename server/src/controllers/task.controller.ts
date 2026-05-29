@@ -58,6 +58,14 @@ export const UpdateTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
+  const { assignee } = parsedBody;
+
+  const assigneeUser = await findUserById(assignee);
+
+  if (!assigneeUser) {
+    throw ApiError.notFound('Invalid assignee');
+  }
+
   const count = await updateTask(taskId, parsedBody);
 
   if (!count || count <= 0) {
