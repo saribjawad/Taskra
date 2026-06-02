@@ -14,7 +14,6 @@ import {
   updateTask,
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
-import { dbPool } from '../db';
 
 // ==================================================================================
 // Task Controllers
