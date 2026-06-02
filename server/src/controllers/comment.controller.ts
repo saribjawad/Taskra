@@ -2,11 +2,17 @@ import { Request, Response } from 'express';
 import {
   CommentParamSchema,
   CreateCommentSchema,
+  UpdateCommentParamSchema,
+  UpdateCommentSchema,
 } from '../schemas/comment.schema';
 import { ApiResponse } from '../utils/ApiResponse';
 import { findTaskById } from '../services/task.service';
 import { ApiError } from '../utils/ApiErrors';
-import { createComment } from '../services/comment.service';
+import {
+  createComment,
+  findCommentById,
+  updateComment,
+} from '../services/comment.service';
 
 // ==================================================================================
 // Task Controllers
@@ -37,4 +43,37 @@ export const CreateComment = async (req: Request, res: Response) => {
   }
 
   return res.status(201).json(new ApiResponse(201, 'Comment created'));
+};
+
+export const UpdateComment = async (req: Request, res: Response) => {
+  const parsedParams = UpdateCommentParamSchema.parse(req.params);
+  const { taskId, commentId } = parsedParams;
+
+  const parsedBody = UpdateCommentSchema.parse(req.body);
+  const { content } = parsedBody;
+
+  // Check if taskId is valid
+  const task = await findTaskById(taskId);
+
+  // Throw error 404 if not found
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  // Check if commentId is valid
+  const comment = await findCommentById(commentId);
+
+  // Throw error 404 if not found
+  if (!comment) {
+    throw ApiError.notFound('Comment not found');
+  }
+
+  // Update comment
+  const updatedRowsCount = await updateComment(commentId, content);
+
+  if (!updatedRowsCount || updatedRowsCount <= 0) {
+    throw ApiError.internal('Something went wrong while updating the comment');
+  }
+
+  return res.status(200).json(new ApiResponse(200, 'Comment updated'));
 };
