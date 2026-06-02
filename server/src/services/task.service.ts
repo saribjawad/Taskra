@@ -1,6 +1,12 @@
 import { dbPool } from '../db';
 import { UpdateSchema } from '../schemas/task.schema';
 
+/**
+ * Find task by ID in database
+ *
+ * @param id - Task uuid
+ * @returns The task row if found, otherwise undefined
+ */
 export const findTaskById = async (id: string) => {
   const result = await dbPool.query(
     `
