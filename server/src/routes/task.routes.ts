@@ -8,14 +8,13 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 
 const taskRouter = Router();
+taskRouter.use(AuthMiddleware);
 
 taskRouter
   .route('/tasks')
-  .post(AuthMiddleware, asyncHandler(CreateTask))
-  .get(AuthMiddleware, asyncHandler(GetTasks));
+  .post(asyncHandler(CreateTask))
+  .get(asyncHandler(GetTasks));
 
-taskRouter
-  .route('/task/:taskId')
-  .patch(AuthMiddleware, asyncHandler(UpdateTask));
+taskRouter.route('/tasks/:taskId').patch(asyncHandler(UpdateTask));
 
 export default taskRouter;
