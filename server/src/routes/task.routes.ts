@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   CreateTask,
+  DeleteTask,
   GetTasks,
   UpdateTask,
 } from '../controllers/task.controller';
@@ -15,6 +16,9 @@ taskRouter
   .post(asyncHandler(CreateTask))
   .get(asyncHandler(GetTasks));
 
-taskRouter.route('/tasks/:taskId').patch(asyncHandler(UpdateTask));
+taskRouter
+  .route('/tasks/:taskId')
+  .patch(asyncHandler(UpdateTask))
+  .delete(asyncHandler(DeleteTask));
 
 export default taskRouter;

@@ -9,6 +9,7 @@ import { findUserById } from '../services/user.service';
 import { ApiError } from '../utils/ApiErrors';
 import {
   createTask,
+  deleteTask,
   findTaskById,
   getTasks,
   updateTask,
@@ -101,4 +102,25 @@ export const GetTasks = async (req: Request, res: Response) => {
       tasks,
     }),
   );
+};
+
+export const DeleteTask = async (req: Request, res: Response) => {
+  const parsedParams = TaskParamsSchema.parse(req.params);
+  const { taskId } = parsedParams;
+
+  // Check if taskId is valid
+  const task = await findTaskById(taskId);
+
+  // Throw error 404 if not found
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  const rowsDeleted = await deleteTask(taskId);
+
+  if (!rowsDeleted || rowsDeleted <= 0) {
+    throw ApiError.internal('Something went wrong while deleting the task');
+  }
+
+  return res.status(200).json(new ApiResponse(200, 'Task deleted'));
 };

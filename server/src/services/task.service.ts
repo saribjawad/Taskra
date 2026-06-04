@@ -99,3 +99,20 @@ export const getTasks = async (limit: number, offset: number) => {
 
   return result.rows;
 };
+
+/**
+ * Delete task in database
+ *
+ * @param id - Task ID
+ * @returns Number of deleted rows
+ */
+export const deleteTask = async (id: string) => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM tasks
+    WHERE id = $1 `,
+    [id],
+  );
+
+  return result.rowCount;
+};
