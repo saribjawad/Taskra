@@ -1,4 +1,5 @@
 import { dbPool } from '../db';
+import { User } from '../models/user.model';
 
 /**
  * Find user with id
@@ -6,7 +7,7 @@ import { dbPool } from '../db';
  * @param id - User ID
  * @returns The user row if found, otherwise undefined
  */
-const findUserById = async (id: string) => {
+const findUserById = async (id: string): Promise<User> => {
   const result = await dbPool.query('SELECT * FROM users WHERE id = $1', [id]);
 
   return result.rows[0];
