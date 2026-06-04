@@ -10,6 +10,7 @@ import { findTaskById } from '../services/task.service';
 import { ApiError } from '../utils/ApiErrors';
 import {
   createComment,
+  deleteComment,
   findCommentById,
   updateComment,
 } from '../services/comment.service';
@@ -76,4 +77,33 @@ export const UpdateComment = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(new ApiResponse(200, 'Comment updated'));
+};
+
+export const DeleteComment = async (req: Request, res: Response) => {
+  const parsedParams = UpdateCommentParamSchema.parse(req.params);
+  const { taskId, commentId } = parsedParams;
+
+  // Check if taskId is valid
+  const task = await findTaskById(taskId);
+
+  // Throw error 404 if not found
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  // Check if commentId is valid
+  const comment = await findCommentById(commentId);
+
+  // Throw error 404 if not found
+  if (!comment) {
+    throw ApiError.notFound('Comment not found');
+  }
+
+  const rowsDeleted = await deleteComment(commentId);
+
+  if (!rowsDeleted || rowsDeleted <= 0) {
+    throw ApiError.internal('Something went wrong while deleting the comment');
+  }
+
+  return res.status(200).json(new ApiResponse(200, 'Comment deleted'));
 };

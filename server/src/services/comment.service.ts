@@ -61,3 +61,20 @@ export const updateComment = async (id: string, content: string) => {
 
   return result.rowCount;
 };
+
+/**
+ * Delete comment in database
+ *
+ * @param id - Task ID
+ * @returns Number of deleted rows
+ */
+export const deleteComment = async (id: string) => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM comments
+    WHERE id = $1 `,
+    [id],
+  );
+
+  return result.rowCount;
+};
