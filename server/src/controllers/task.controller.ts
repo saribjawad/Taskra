@@ -104,6 +104,15 @@ export const GetTasks = async (req: Request, res: Response) => {
   );
 };
 
+export const GetTask = async (req: Request, res: Response) => {
+  const parsedParam = TaskParamsSchema.parse(req.params);
+  const { taskId } = parsedParam;
+
+  const task = await findTaskById(taskId);
+
+  return res.status(200).json(new ApiResponse(200, 'success', task));
+};
+
 export const DeleteTask = async (req: Request, res: Response) => {
   const parsedParams = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParams;

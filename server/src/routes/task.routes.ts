@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   CreateTask,
   DeleteTask,
+  GetTask,
   GetTasks,
   UpdateTask,
 } from '../controllers/task.controller';
@@ -18,6 +19,7 @@ taskRouter
 
 taskRouter
   .route('/tasks/:taskId')
+  .get(asyncHandler(GetTask))
   .patch(asyncHandler(UpdateTask))
   .delete(asyncHandler(DeleteTask));
 
