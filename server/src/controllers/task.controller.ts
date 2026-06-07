@@ -15,6 +15,7 @@ import {
   updateTask,
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
+import { findCommentsByTaskId } from '../services/comment.service';
 
 // ==================================================================================
 // Task Controllers
@@ -109,8 +110,29 @@ export const GetTask = async (req: Request, res: Response) => {
   const { taskId } = parsedParam;
 
   const task = await findTaskById(taskId);
+  const { email, username, id } = await findUserById(task.assignee);
+  const comments = await findCommentsByTaskId(taskId);
 
-  return res.status(200).json(new ApiResponse(200, 'success', task));
+  return res.status(200).json(
+    new ApiResponse(200, 'success', {
+      ...task,
+      comments: comments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        user: {
+          id: c.user_id,
+          username: c.username,
+        },
+        updated_at: c.updated_at,
+        created_at: c.created_at,
+      })),
+      assignee: {
+        id,
+        username,
+        email,
+      },
+    }),
+  );
 };
 
 export const DeleteTask = async (req: Request, res: Response) => {

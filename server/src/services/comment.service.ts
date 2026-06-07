@@ -1,4 +1,28 @@
 import { dbPool } from '../db';
+import { Comment, CommentWithAuthor } from '../models/comment.model';
+
+/**
+ * Find comments by task ID in database
+ *
+ * @param id - taskk uuid
+ * @returns The task row if found, otherwise undefined
+ */
+export const findCommentsByTaskId = async (
+  id: string,
+): Promise<CommentWithAuthor[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT
+      c.id, c.content, c.updated_at, c.created_at, u.id AS user_id, u.username
+    FROM comments AS c
+    INNER JOIN users AS u ON c.user_id = u.id
+    WHERE task_id = $1
+    `,
+    [id],
+  );
+
+  return result.rows;
+};
 
 /**
  * Find comment by ID in database
@@ -6,7 +30,7 @@ import { dbPool } from '../db';
  * @param id - comment uuid
  * @returns The task row if found, otherwise undefined
  */
-export const findCommentById = async (id: string) => {
+export const findCommentById = async (id: string): Promise<Comment> => {
   const result = await dbPool.query(
     `
     SELECT * FROM comments WHERE id = $1
@@ -23,13 +47,13 @@ export const findCommentById = async (id: string) => {
  * @param taskId - Task uuid
  * @param userId - User uuid
  * @param content - Comment content
- * @returns The task row if found, otherwise undefined
+ * @returns The created comment
  */
 export const createComment = async (
   taskId: string,
   userId: string,
   content: string,
-) => {
+): Promise<Comment> => {
   const result = await dbPool.query(
     `
     INSERT INTO comments (task_id, user_id, content)
