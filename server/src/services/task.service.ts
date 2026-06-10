@@ -1,5 +1,5 @@
 import { dbPool } from '../db';
-import { UpdateSchema } from '../schemas/task.schema';
+import { Label, Priority, Status, UpdateSchema } from '../schemas/task.schema';
 
 /**
  * Find task by ID in database
@@ -86,15 +86,24 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
  * @param offset - Query offet
  * @returns Tasks
  */
-export const getTasks = async (limit: number, offset: number) => {
+export const getTasks = async (
+  limit: number,
+  offset: number,
+  status?: Status,
+  label?: Label,
+  priority?: Priority,
+) => {
   const result = await dbPool.query(
     `
-    SELECT * FROM tasks
-    ORDER BY created_at DESC
-    LIMIT $1
-    OFFSET $2;
+      SELECT * FROM tasks
+      WHERE ($3::text IS NULL OR status = $3)
+      AND ($4::text IS NULL OR label = $4)
+      AND ($5::text IS NULL OR priority = $5)
+      ORDER BY created_at DESC
+      LIMIT $1
+      OFFSET $2
     `,
-    [limit, offset],
+    [limit, offset, status, label, priority],
   );
 
   return result.rows;
