@@ -50,11 +50,12 @@ export const CreateTaskSchema = z.object({
 export const UpdateTaskSchema = z.object({
   title: z
     .string('Invalid title')
-    .max(250, 'Title cannot be more than 250 words'),
-  description: z.string('Invalid description'),
-  status: Status,
-  priority: Priority,
-  label: Label,
-  assignee: z.uuid('Invalid assignee'),
+    .max(250, 'Title cannot be more than 250 words')
+    .optional(),
+  description: z.string('Invalid description').optional(),
+  status: Status.optional(),
+  priority: Priority.optional(),
+  label: Label.optional(),
+  assignee: z.uuid('Invalid assignee').optional(),
 });
 export type UpdateSchema = z.infer<typeof UpdateTaskSchema>;

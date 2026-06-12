@@ -1,0 +1,14 @@
+-- Up Migration
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  username VARCHAR(50) NOT NULL UNIQUE,
+  email VARCHAR(250) NOT NULL UNIQUE,
+  is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+  hashed_password TEXT NOT NULL,
+  refresh_token TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Down Migration
+DROP TABLE IF EXISTS users;

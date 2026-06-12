@@ -61,9 +61,12 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   const { assignee } = parsedBody;
 
-  const assigneeUser = await findUserById(assignee);
+  let assigneeUser;
+  if (assignee) {
+    assigneeUser = await findUserById(assignee);
+  }
 
-  if (!assigneeUser) {
+  if (assignee && !assigneeUser) {
     throw ApiError.notFound('Invalid assignee');
   }
 
