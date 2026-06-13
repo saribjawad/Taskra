@@ -87,11 +87,18 @@ export const GetTasks = async (req: Request, res: Response) => {
   */
   const parsedQueries = GetTaskQuerySchema.parse(req.query);
 
-  const { page, limit, label, priority, status } = parsedQueries;
+  const { page, limit, label, priority, status, search } = parsedQueries;
   const offset = (page - 1) * limit;
 
   // Adding one to check will there be a next page
-  const tasks = await getTasks(limit + 1, offset, status, label, priority);
+  const tasks = await getTasks(
+    limit + 1,
+    offset,
+    status,
+    label,
+    priority,
+    search,
+  );
 
   const hasNextPage = tasks.length > limit;
 

@@ -84,6 +84,10 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
  *
  * @param limit - Query limit
  * @param offset - Query offet
+ * @param status - Task status
+ * @param label - Task label
+ * @param priority - Task priority
+ * @param search - Task seach query
  * @returns Tasks
  */
 export const getTasks = async (
@@ -92,18 +96,22 @@ export const getTasks = async (
   status?: Status,
   label?: Label,
   priority?: Priority,
+  search?: string,
 ) => {
+  if (search) search = `%${search}%`;
+
   const result = await dbPool.query(
     `
       SELECT * FROM tasks
       WHERE ($3::text IS NULL OR status = $3)
       AND ($4::text IS NULL OR label = $4)
       AND ($5::text IS NULL OR priority = $5)
+      AND ($6::text IS NULL OR title ILIKE $6)
       ORDER BY created_at DESC
       LIMIT $1
       OFFSET $2
     `,
-    [limit, offset, status, label, priority],
+    [limit, offset, status, label, priority, search],
   );
 
   return result.rows;

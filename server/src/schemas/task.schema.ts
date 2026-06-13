@@ -33,6 +33,7 @@ export const GetTaskQuerySchema = z.object({
   status: Status.optional(),
   priority: Priority.optional(),
   label: Label.optional(),
+  search: z.string('Invalid search').optional(),
 });
 
 export const CreateTaskSchema = z.object({
