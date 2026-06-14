@@ -1,0 +1,10 @@
+-- Up Migration
+CREATE TABLE workspace (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(250) NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Down Migration
+DROP TABLE IF EXISTS workspace
