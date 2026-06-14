@@ -6,6 +6,7 @@ import { ApiError } from '../utils/ApiErrors';
 export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
+  active_workspace: string;
   purpose?: string;
 }
 
@@ -30,6 +31,7 @@ export function AuthMiddleware(
   req.user = {
     id: decoded.id,
     email: decoded.email,
+    active_workspace: decoded.active_workspace,
   };
 
   next();

@@ -73,8 +73,16 @@ export const LoginUser = async (req: Request, res: Response) => {
     throw new ApiError(403, 'Please verify the user to get started');
   }
 
-  const accessToken = generateAccessToken(user.id, user.email);
-  const refreshToken = await generateRefreshToken(user.id, user.email);
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    user.active_workspace,
+  );
+  const refreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    user.active_workspace,
+  );
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -171,8 +179,16 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     throw ApiError.unauthorized('Invalid or expired token');
   }
 
-  const accessToken = generateAccessToken(user.id, user.email);
-  const newRefreshToken = await generateRefreshToken(user.id, user.email);
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    user.active_workspace,
+  );
+  const newRefreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    user.active_workspace,
+  );
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -350,12 +366,21 @@ export const ResetPassword = async (req: Request, res: Response) => {
  *
  * @param id - Internal User UUID
  * @param email - User email
+ * @param active_workspace - User's active workspace
  * @returns A HS256 signed JWT signed valid for 10 minutes
  */
-function generateAccessToken(id: string, email: string) {
-  const accessToken = jwt.sign({ id, email }, env.JWT_SECRET, {
-    expiresIn: '600000ms', // 10 minutes
-  });
+function generateAccessToken(
+  id: string,
+  email: string,
+  active_workspace: string | null,
+) {
+  const accessToken = jwt.sign(
+    { id, email, active_workspace },
+    env.JWT_SECRET,
+    {
+      expiresIn: '600000ms', // 10 minutes
+    },
+  );
 
   return accessToken;
 }
@@ -365,12 +390,21 @@ function generateAccessToken(id: string, email: string) {
  *
  * @param id - Internal User ID
  * @param email - User email
+ * @param active_workspace - User's active workspace
  * @returns A HS256 signed JWT signed valid for 7 days
  */
-async function generateRefreshToken(id: string, email: string) {
-  const refreshToken = jwt.sign({ id: id, email: email }, env.REFRESH_SECRET, {
-    expiresIn: '7d',
-  });
+async function generateRefreshToken(
+  id: string,
+  email: string,
+  active_workspace: string | null,
+) {
+  const refreshToken = jwt.sign(
+    { id, email, active_workspace },
+    env.REFRESH_SECRET,
+    {
+      expiresIn: '7d',
+    },
+  );
 
   // Save refresh token in DB
   await saveRefreshToken(email, refreshToken);

@@ -19,7 +19,7 @@ const findUserById = async (id: string): Promise<User> => {
  * @param email - User email
  * @returns The user row if found, otherwise undefined
  */
-const findUserByEmail = async (email: string) => {
+const findUserByEmail = async (email: string): Promise<User> => {
   const result = await dbPool.query('SELECT * FROM users WHERE email = $1', [
     email,
   ]);

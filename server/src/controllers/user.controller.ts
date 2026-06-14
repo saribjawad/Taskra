@@ -7,14 +7,14 @@ import { ApiError } from '../utils/ApiErrors';
 export const GetCurrentUser = async (req: Request, res: Response) => {
   const userId = req.user.id;
 
-  const { id, email, username, created_at } = await findUserById(userId);
+  const { id, email, username, active_workspace } = await findUserById(userId);
 
   return res.status(200).json(
     new ApiResponse(200, 'Success', {
       id,
       email,
       username,
-      created_at,
+      active_workspace,
     }),
   );
 };
