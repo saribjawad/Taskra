@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse';
 import taskRouter from './task.routes';
 import commentRouter from './comment.route';
 import userRouter from './user.routes';
+import workspaceRouter from './workspace.routes';
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use(authRouter);
 router.use(userRouter);
 router.use(taskRouter);
 router.use(commentRouter);
+router.use(workspaceRouter);
 
 export default router;

@@ -101,6 +101,7 @@ const updateUser = async (
     username?: string;
     is_verified?: boolean;
     hashed_password?: string;
+    active_workspace?: string;
   },
 ) => {
   const keys = Object.keys(data);
