@@ -22,6 +22,7 @@ import { findCommentsByTaskId } from '../services/comment.service';
 // ==================================================================================
 
 export const CreateTask = async (req: Request, res: Response) => {
+  const activeWorkspace = req.user.activeWorkspace;
   const parsedBody = CreateTaskSchema.parse(req.body);
 
   const { assignee, description, label, priority, status, title } = parsedBody;
@@ -30,6 +31,10 @@ export const CreateTask = async (req: Request, res: Response) => {
 
   if (!assigneeUser) {
     throw ApiError.notFound('Invalid assignee');
+  }
+
+  if (!activeWorkspace) {
+    throw ApiError.badRequest('No active workspace');
   }
 
   const createdTask = await createTask(

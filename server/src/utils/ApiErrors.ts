@@ -25,8 +25,8 @@ export class ApiError extends Error {
     return new ApiError(401, message);
   }
 
-  static badRequest(message = 'Bad request', errors: any) {
-    return new ApiError(400, message, errors);
+  static badRequest(message = 'Bad request') {
+    return new ApiError(400, message);
   }
 
   static internal(message = 'Internal server error') {

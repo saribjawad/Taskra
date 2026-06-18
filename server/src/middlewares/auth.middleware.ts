@@ -31,7 +31,7 @@ export function AuthMiddleware(
   req.user = {
     id: decoded.id,
     email: decoded.email,
-    active_workspace: decoded.active_workspace,
+    activeWorkspace: decoded.active_workspace,
   };
 
   next();
