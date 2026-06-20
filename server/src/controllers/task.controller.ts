@@ -33,10 +33,6 @@ export const CreateTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Invalid assignee');
   }
 
-  if (!activeWorkspace) {
-    throw ApiError.badRequest('No active workspace');
-  }
-
   const createdTask = await createTask(
     title,
     description,
@@ -44,6 +40,7 @@ export const CreateTask = async (req: Request, res: Response) => {
     priority,
     label,
     assignee,
+    activeWorkspace,
   );
 
   if (!createdTask) {
@@ -54,11 +51,13 @@ export const CreateTask = async (req: Request, res: Response) => {
 };
 
 export const UpdateTask = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParams = TaskParamsSchema.parse(req.params);
 
   const { taskId } = parsedParams;
   const parsedBody = UpdateTaskSchema.parse(req.body);
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -90,6 +89,8 @@ export const GetTasks = async (req: Request, res: Response) => {
    cursor pagination
    caching counts
   */
+
+  const workspaceId = req.user.activeWorkspace;
   const parsedQueries = GetTaskQuerySchema.parse(req.query);
 
   const { page, limit, label, priority, status, search } = parsedQueries;
@@ -98,6 +99,7 @@ export const GetTasks = async (req: Request, res: Response) => {
   // Adding one to check will there be a next page
   const tasks = await getTasks(
     limit + 1,
+    workspaceId,
     offset,
     status,
     label,
@@ -121,11 +123,19 @@ export const GetTasks = async (req: Request, res: Response) => {
 };
 
 export const GetTask = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParam = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParam;
 
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
   const { email, username, id } = await findUserById(task.assignee);
+
   const comments = await findCommentsByTaskId(taskId);
 
   return res.status(200).json(
@@ -151,11 +161,13 @@ export const GetTask = async (req: Request, res: Response) => {
 };
 
 export const DeleteTask = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParams = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParams;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {

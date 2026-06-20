@@ -1,18 +1,24 @@
 import { dbPool } from '../db';
+import { Task } from '../models/task.model';
 import { Label, Priority, Status, UpdateSchema } from '../schemas/task.schema';
 
 /**
  * Find task by ID in database
  *
  * @param id - Task uuid
+ * @param workspaceId - Workspace uuid task belongs to
  * @returns The task row if found, otherwise undefined
  */
-export const findTaskById = async (id: string) => {
+export const findTaskById = async (
+  id: string,
+  workspaceId?: string,
+): Promise<Task> => {
   const result = await dbPool.query(
     `
     SELECT * FROM tasks WHERE id = $1
+    AND workspace_id = $2
     `,
-    [id],
+    [id, workspaceId],
   );
 
   return result.rows[0];
@@ -27,6 +33,7 @@ export const findTaskById = async (id: string) => {
  * @param priority - Task priority
  * @param label - Task label
  * @param assignee - Task assignee
+ * @param workspaceId - Workspace ID tasks belongs to
  * @returns The task row if found, otherwise undefined
  */
 export const createTask = async (
@@ -36,13 +43,14 @@ export const createTask = async (
   priority: string,
   label: string,
   assignee: string,
+  workspaceId: string,
 ) => {
   const result = await dbPool.query(
     `
-    INSERT INTO tasks(title, description, status, priority, label, assignee)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *`,
-    [title, description, status, priority, label, assignee],
+    [title, description, status, priority, label, assignee, workspaceId],
   );
 
   return result.rows[0];
@@ -83,6 +91,7 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
  * Get tasks from database
  *
  * @param limit - Query limit
+ * @param workspaceId - UUID of workspace to which task belongs to
  * @param offset - Query offet
  * @param status - Task status
  * @param label - Task label
@@ -92,6 +101,7 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
  */
 export const getTasks = async (
   limit: number,
+  workspaceId: string,
   offset: number,
   status?: Status,
   label?: Label,
@@ -107,11 +117,12 @@ export const getTasks = async (
       AND ($4::text IS NULL OR label = $4)
       AND ($5::text IS NULL OR priority = $5)
       AND ($6::text IS NULL OR title ILIKE $6)
+      AND ($7::uuid IS NULL OR workspace_id = $7)
       ORDER BY created_at DESC
       LIMIT $1
       OFFSET $2
     `,
-    [limit, offset, status, label, priority, search],
+    [limit, offset, status, label, priority, search, workspaceId],
   );
 
   return result.rows;

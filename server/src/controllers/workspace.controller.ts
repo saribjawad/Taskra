@@ -11,9 +11,10 @@ import {
 import { ApiError } from '../utils/ApiErrors';
 import { updateUser } from '../services/user.service';
 import { createWorkspaceMember } from '../services/workspaceMember.service';
+import { generateAccessToken, generateRefreshToken } from '../utils/token';
 
 export const CreateWorkspace = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  const user = req.user;
   const { name } = CreateWorkspaceSchema.parse(req.body);
 
   const workspace = await createWorkspace(name);
@@ -23,7 +24,7 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   }
 
   // Update the user's active workspace
-  const updatedUser = await updateUser(userId, {
+  const updatedUser = await updateUser(user.id, {
     active_workspace: workspace.id,
   });
 
@@ -32,13 +33,28 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   }
 
   // Create the workspace member
-  const workspaceMember = await createWorkspaceMember(userId, workspace.id);
+  const workspaceMember = await createWorkspaceMember(user.id, workspace.id);
 
   if (!workspaceMember) {
     throw ApiError.internal(
       'Something went wrong while creating workspace member',
     );
   }
+
+  const accessToken = generateAccessToken(user.id, user.email, workspace.id);
+  const refreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    workspace.id,
+  );
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
 
   res.status(201).json(new ApiResponse(200, 'Workspace created'));
 };

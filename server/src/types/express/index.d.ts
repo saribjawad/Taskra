@@ -3,7 +3,7 @@ declare namespace Express {
     user: {
       id: string;
       email: string;
-      activeWorkspace?: string;
+      activeWorkspace: string;
     };
   }
 }
