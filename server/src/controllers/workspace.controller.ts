@@ -2,7 +2,9 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   createWorkspace,
+  createWorkspaceMember,
   deleteWorkspace,
+  getUserWorkspaces,
 } from '../services/workspace.service';
 import {
   CreateWorkspaceSchema,
@@ -10,8 +12,15 @@ import {
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
 import { updateUser } from '../services/user.service';
-import { createWorkspaceMember } from '../services/workspaceMember.service';
 import { generateAccessToken, generateRefreshToken } from '../utils/token';
+
+export const GetUserWorkspaces = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+
+  const workspaces = await getUserWorkspaces(userId);
+
+  res.status(200).json(new ApiResponse(200, "User's workspaces", workspaces));
+};
 
 export const CreateWorkspace = async (req: Request, res: Response) => {
   const user = req.user;
