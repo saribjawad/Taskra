@@ -11,7 +11,7 @@ import { Label, Priority, Status, UpdateSchema } from '../schemas/task.schema';
  */
 export const findTaskById = async (
   id: string,
-  workspaceId?: string,
+  workspaceId: string,
 ): Promise<Task> => {
   const result = await dbPool.query(
     `
