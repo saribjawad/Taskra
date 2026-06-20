@@ -20,6 +20,8 @@ import {
 // ==================================================================================
 
 export const CreateComment = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParams = CommentParamSchema.parse(req.params);
   const userId = req.user.id;
 
@@ -29,7 +31,7 @@ export const CreateComment = async (req: Request, res: Response) => {
   const { content } = parsedBody;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
@@ -47,6 +49,8 @@ export const CreateComment = async (req: Request, res: Response) => {
 };
 
 export const UpdateComment = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParams = UpdateCommentParamSchema.parse(req.params);
   const { taskId, commentId } = parsedParams;
 
@@ -54,7 +58,7 @@ export const UpdateComment = async (req: Request, res: Response) => {
   const { content } = parsedBody;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
@@ -80,11 +84,13 @@ export const UpdateComment = async (req: Request, res: Response) => {
 };
 
 export const DeleteComment = async (req: Request, res: Response) => {
+  const workspaceId = req.user.activeWorkspace;
+
   const parsedParams = UpdateCommentParamSchema.parse(req.params);
   const { taskId, commentId } = parsedParams;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId);
+  const task = await findTaskById(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
