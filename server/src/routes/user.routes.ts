@@ -7,7 +7,7 @@ const userRouter = Router();
 userRouter.use(AuthMiddleware);
 
 userRouter
-  .route('/users/me')
+  .route('/me')
   .get(asyncHandler(GetCurrentUser))
   .patch(asyncHandler(UpdateUser));
 

@@ -10,12 +10,10 @@ import { AuthMiddleware } from '../middlewares/auth.middleware';
 const commentRouter = Router();
 commentRouter.use(AuthMiddleware);
 
-commentRouter
-  .route('/tasks/:taskId/comments')
-  .post(asyncHandler(CreateComment));
+commentRouter.route('/:taskId/comments').post(asyncHandler(CreateComment));
 
 commentRouter
-  .route('/tasks/:taskId/comments/:commentId')
+  .route('/:taskId/comments/:commentId')
   .patch(asyncHandler(UpdateComment))
   .delete(asyncHandler(DeleteComment));
 

@@ -10,9 +10,7 @@ const workspaceRouter = Router();
 
 workspaceRouter.use(AuthMiddleware);
 
-workspaceRouter.route('/workspace').post(asyncHandler(CreateWorkspace));
-workspaceRouter
-  .route('/workspace/:workspaceId')
-  .delete(asyncHandler(DeleteWorkspace));
+workspaceRouter.route('/').post(asyncHandler(CreateWorkspace));
+workspaceRouter.route('/:workspaceId').delete(asyncHandler(DeleteWorkspace));
 
 export default workspaceRouter;

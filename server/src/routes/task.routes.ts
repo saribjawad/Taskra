@@ -8,17 +8,19 @@ import {
 } from '../controllers/task.controller';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const taskRouter = Router();
 taskRouter.use(AuthMiddleware);
+taskRouter.use(RequrieActiveWorkspace);
 
 taskRouter
-  .route('/tasks')
+  .route('/')
   .post(asyncHandler(CreateTask))
   .get(asyncHandler(GetTasks));
 
 taskRouter
-  .route('/tasks/:taskId')
+  .route('/:taskId')
   .get(asyncHandler(GetTask))
   .patch(asyncHandler(UpdateTask))
   .delete(asyncHandler(DeleteTask));

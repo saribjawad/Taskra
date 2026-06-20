@@ -15,9 +15,9 @@ router.get('/health', (_req: Request, res: Response) => {
 
 // App routes
 router.use(authRouter);
-router.use(userRouter);
-router.use(taskRouter);
-router.use(commentRouter);
-router.use(workspaceRouter);
+router.use('/users', userRouter);
+router.use('/tasks', taskRouter);
+router.use('/tasks', commentRouter);
+router.use('/workspace', workspaceRouter);
 
 export default router;

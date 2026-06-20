@@ -5,6 +5,7 @@ import {
   RefreshAccessToken,
   ResendCode,
   ResetPassword,
+  SignOutUser,
   SignUpUser,
   VerifyEmail,
 } from '../controllers/auth.controller';
@@ -15,6 +16,7 @@ const authRouter = Router();
 
 authRouter.post('/sign-in', asyncHandler(LoginUser));
 authRouter.post('/sign-up', asyncHandler(SignUpUser));
+authRouter.post('/sign-out', asyncHandler(SignOutUser));
 authRouter.post('/refresh-access-token', asyncHandler(RefreshAccessToken));
 authRouter.patch('/verify-email', asyncHandler(VerifyEmail));
 authRouter.post('/resend-code', RateLimitMiddleware, asyncHandler(ResendCode));
