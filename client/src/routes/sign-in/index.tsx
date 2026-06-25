@@ -19,17 +19,22 @@ import { Input } from '#/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
+import { useSignIn } from '#/hooks/auth.hooks'
 
 const SignInFormSchema = z.object({
   email: z.email('Invalid email'),
   password: z.string('Invalid password'),
 })
 
+export type SignInFormPayload = z.infer<typeof SignInFormSchema>
+
 export const Route = createFileRoute('/sign-in/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { mutate: signInMutate, isPending } = useSignIn()
+
   const form = useForm({
     resolver: zodResolver(SignInFormSchema),
     defaultValues: {
@@ -39,21 +44,10 @@ function RouteComponent() {
   })
 
   function onSubmit(data: z.infer<typeof SignInFormSchema>) {
-    console.log(data)
-    // toast('You submitted the following values:', {
-    //   description: (
-    //     <pre className="mt-2 w-[320px] overflow-x-auto rounded-md bg-code p-4 text-code-foreground">
-    //       <code>{JSON.stringify(data, null, 2)}</code>
-    //     </pre>
-    //   ),
-    //   position: 'bottom-right',
-    //   classNames: {
-    //     content: 'flex flex-col gap-2',
-    //   },
-    //   style: {
-    //     '--border-radius': 'calc(var(--radius)  + 4px)',
-    //   } as React.CSSProperties,
-    // })
+    signInMutate(data)
+
+    // TODO: add loading state
+    console.log('is pending', isPending)
   }
 
   return (

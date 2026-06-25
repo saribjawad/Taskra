@@ -19,6 +19,7 @@ import { Input } from '#/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
+import { useSignUp } from '#/hooks/auth.hooks'
 
 const SignUpFormSchema = z
   .object({
@@ -32,11 +33,15 @@ const SignUpFormSchema = z
     path: ['confirmPassword'],
   })
 
+export type SignUpFormPayload = z.infer<typeof SignUpFormSchema>
+
 export const Route = createFileRoute('/sign-up/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const { mutate: signUpMutation, isPending } = useSignUp()
+
   const form = useForm({
     resolver: zodResolver(SignUpFormSchema),
     defaultValues: {
@@ -48,7 +53,10 @@ function RouteComponent() {
   })
 
   function onSubmit(data: z.infer<typeof SignUpFormSchema>) {
-    console.log(data)
+    signUpMutation(data)
+
+    // TODO: add loading state
+    console.log('is pending', isPending)
   }
 
   return (
