@@ -1,8 +1,19 @@
 import { api } from '#/lib/api'
 import type { CreateWorkspaceFormPayload } from '#/routes/_authenticated/create-workspace'
 
-export async function createWorkspace(payload: CreateWorkspaceFormPayload) {
+interface CreateWorkspaceResponse {
+  statusCode: number
+  message: string
+  data: {
+    workspaceId: string
+  }
+  success: boolean
+}
+
+export async function createWorkspace(
+  payload: CreateWorkspaceFormPayload,
+): Promise<CreateWorkspaceResponse> {
   const resp = await api.post('/workspace', payload)
 
-  console.log(resp)
+  return resp.data.data
 }
