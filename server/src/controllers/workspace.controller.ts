@@ -65,7 +65,11 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
     path: '/api/v1/refresh-access-token',
   });
 
-  res.status(201).json(new ApiResponse(200, 'Workspace created'));
+  res.status(201).json(
+    new ApiResponse(200, 'Workspace created', {
+      workspaceId: workspace.id,
+    }),
+  );
 };
 
 export const DeleteWorkspace = async (req: Request, res: Response) => {
