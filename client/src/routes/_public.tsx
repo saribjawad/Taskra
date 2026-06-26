@@ -12,7 +12,11 @@ function PublicRoutesLayout() {
 
   useEffect(() => {
     if (!isLoading && user) {
-      navigate({ to: '/' })
+      if (user.activeWorkspace) {
+        navigate({ to: '/' })
+      } else {
+        navigate({ to: '/create-workspace' })
+      }
     }
   }, [user, isLoading, navigate])
 

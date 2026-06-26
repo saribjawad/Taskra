@@ -1,14 +1,14 @@
 import { router } from '#/main'
 import type { SignInFormPayload } from '#/routes/_public/sign-in'
-import { Route } from '#/routes/_public/sign-up'
 import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 import { signIn, signUp } from '#/service/auth.service'
 import type { ApiErrorResponse } from '#/type'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import type { AxiosError } from 'axios'
 
 export const useSignIn = () => {
-  const navigate = Route.useNavigate()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -31,7 +31,7 @@ export const useSignIn = () => {
 }
 
 export const useSignUp = () => {
-  const navigate = Route.useNavigate()
+  const navigate = useNavigate()
 
   return useMutation({
     mutationFn: (payload: SignUpFormPayload) => signUp(payload),
