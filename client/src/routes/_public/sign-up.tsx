@@ -35,7 +35,7 @@ const SignUpFormSchema = z
 
 export type SignUpFormPayload = z.infer<typeof SignUpFormSchema>
 
-export const Route = createFileRoute('/sign-up/')({
+export const Route = createFileRoute('/_public/sign-up')({
   component: RouteComponent,
 })
 

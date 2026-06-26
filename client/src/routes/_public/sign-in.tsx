@@ -28,7 +28,7 @@ const SignInFormSchema = z.object({
 
 export type SignInFormPayload = z.infer<typeof SignInFormSchema>
 
-export const Route = createFileRoute('/sign-in/')({
+export const Route = createFileRoute('/_public/sign-in')({
   component: RouteComponent,
 })
 

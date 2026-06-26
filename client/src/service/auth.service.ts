@@ -1,6 +1,6 @@
 import { api } from '#/lib/api'
-import type { SignInFormPayload } from '#/routes/sign-in'
-import type { SignUpFormPayload } from '#/routes/sign-up'
+import type { SignInFormPayload } from '#/routes/_public/sign-in'
+import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 
 export async function signIn(payload: SignInFormPayload) {
   const resp = await api.post('/sign-in', payload)

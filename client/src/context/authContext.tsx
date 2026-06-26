@@ -1,28 +1,33 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useGetMe } from '#/hooks/user.hooks'
+import { createContext, useContext } from 'react'
 import type { ReactNode } from 'react'
 
 interface IUser {
   id: string
   email: string
   username: string
-  active_workspace: string | null
+  activeWorkspace: string | null
 }
 
-interface IAuthContext {
+export interface IAuthContext {
   user: IUser | null
+  isLoading: boolean
 }
 
 const AuthContext = createContext<IAuthContext | null>(null)
 
 export function AuthContextProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<IUser | null>(null)
-
-  useEffect(() => {
-    setUser(null)
-  }, [])
+  const { data, isLoading } = useGetMe()
 
   return (
-    <AuthContext.Provider value={{ user }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider
+      value={{
+        user: data ?? null,
+        isLoading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   )
 }
 

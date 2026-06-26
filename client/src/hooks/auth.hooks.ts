@@ -1,11 +1,16 @@
-import type { SignInFormPayload } from '#/routes/sign-in'
-import type { SignUpFormPayload } from '#/routes/sign-up'
+import { router } from '#/main'
+import type { SignInFormPayload } from '#/routes/_public/sign-in'
+import { Route } from '#/routes/_public/sign-up'
+import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 import { signIn, signUp } from '#/service/auth.service'
 import type { ApiErrorResponse } from '#/type'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
 
 export const useSignIn = () => {
+  const navigate = Route.useNavigate()
+  const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (payload: SignInFormPayload) => signIn(payload),
     onError: (err: AxiosError<ApiErrorResponse>) => {
@@ -14,10 +19,20 @@ export const useSignIn = () => {
         err.response?.data.message || 'An error occurred'
       console.error('error inside the on error', serverErrorMessage)
     },
+    onSuccess: async () => {
+      // refetch useGetMe
+      await queryClient.invalidateQueries({ queryKey: ['me'] })
+      await router.invalidate() // re-runs beforeLoad with fresh auth
+      navigate({
+        to: '/',
+      })
+    },
   })
 }
 
 export const useSignUp = () => {
+  const navigate = Route.useNavigate()
+
   return useMutation({
     mutationFn: (payload: SignUpFormPayload) => signUp(payload),
     onError: (err: AxiosError<ApiErrorResponse>) => {
@@ -25,6 +40,12 @@ export const useSignUp = () => {
       const serverErrorMessage =
         err.response?.data.message || 'An error occurred'
       console.error('error inside the on error', serverErrorMessage)
+    },
+    onSuccess: async () => {
+      // TODO: add code message toast
+      navigate({
+        to: '/sign-in',
+      })
     },
   })
 }
