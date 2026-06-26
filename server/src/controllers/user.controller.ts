@@ -14,7 +14,7 @@ export const GetCurrentUser = async (req: Request, res: Response) => {
       id,
       email,
       username,
-      active_workspace,
+      activeWorkspace: active_workspace,
     }),
   );
 };
