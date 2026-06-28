@@ -1,0 +1,90 @@
+import * as React from 'react'
+import { NavUser } from '@/components/nav-user'
+import { WorkspaceSwitcher } from '#/components/workspace-switcher'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from '@/components/ui/sidebar'
+import {
+  GalleryVerticalEndIcon,
+  AudioLinesIcon,
+  TerminalIcon,
+  Inbox,
+  CircleDotDashed,
+} from 'lucide-react'
+import MyNav from './my-nav'
+
+// This is sample data.
+const data = {
+  user: {
+    name: 'shadcn',
+    email: 'm@example.com',
+    avatar: '/avatars/shadcn.jpg',
+  },
+  workspaces: [
+    {
+      name: 'Acme Inc',
+      logo: <GalleryVerticalEndIcon />,
+      plan: 'Enterprise',
+    },
+    {
+      name: 'Acme Corp.',
+      logo: <AudioLinesIcon />,
+      plan: 'Startup',
+    },
+    {
+      name: 'Evil Corp.',
+      logo: <TerminalIcon />,
+      plan: 'Free',
+    },
+  ],
+  workspaceNav: [
+    {
+      name: 'Acme Inc',
+      logo: <GalleryVerticalEndIcon />,
+      plan: 'Enterprise',
+    },
+    {
+      name: 'Acme Corp.',
+      logo: <AudioLinesIcon />,
+      plan: 'Startup',
+    },
+    {
+      name: 'Evil Corp.',
+      logo: <TerminalIcon />,
+      plan: 'Free',
+    },
+  ],
+  myNav: [
+    {
+      title: 'Inbox',
+      url: '#',
+      icon: <Inbox />,
+    },
+    {
+      title: 'My Issues',
+      url: '#',
+      icon: <CircleDotDashed />,
+    },
+  ],
+}
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <WorkspaceSwitcher workspaces={data.workspaces} />
+      </SidebarHeader>
+      <SidebarContent>
+        <MyNav items={data.myNav} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={data.user} />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
+}

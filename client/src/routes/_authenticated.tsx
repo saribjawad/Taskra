@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useAuth } from '#/context/authContext'
 import { useEffect } from 'react'
+import { TooltipProvider } from '#/components/ui/tooltip'
 
 export const Route = createFileRoute('/_authenticated')({
   component: AuthenticatedRoutesLayout,
@@ -20,5 +21,9 @@ function AuthenticatedRoutesLayout() {
 
   if (!user) return null // will redirect via effect
 
-  return <Outlet />
+  return (
+    <TooltipProvider>
+      <Outlet />
+    </TooltipProvider>
+  )
 }

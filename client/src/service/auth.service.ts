@@ -2,12 +2,30 @@ import { api } from '#/lib/api'
 import type { SignInFormPayload } from '#/routes/_public/sign-in'
 import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 
-export async function signIn(payload: SignInFormPayload) {
-  const resp = await api.post('/sign-in', payload)
-  console.log(resp)
+interface SignInResponse {
+  message: string
+  statusCode: 200
+  success: true
 }
 
-export async function signUp(payload: SignUpFormPayload) {
+interface SignUpResponse {
+  statusCode: 201
+  message: string
+  success: true
+}
+
+export async function signIn(
+  payload: SignInFormPayload,
+): Promise<SignInResponse> {
+  const resp = await api.post('/sign-in', payload)
+
+  return resp.data.data
+}
+
+export async function signUp(
+  payload: SignUpFormPayload,
+): Promise<SignUpResponse> {
   const resp = await api.post('/sign-up', payload)
-  console.log(resp)
+
+  return resp.data.data
 }
