@@ -5,6 +5,7 @@ import {
   CreateWorkspace,
   DeleteWorkspace,
   GetUserWorkspaces,
+  SwitchWorkspace,
 } from '../controllers/workspace.controller';
 
 const workspaceRouter = Router();
@@ -15,6 +16,9 @@ workspaceRouter
   .route('/')
   .get(asyncHandler(GetUserWorkspaces))
   .post(asyncHandler(CreateWorkspace));
-workspaceRouter.route('/:workspaceId').delete(asyncHandler(DeleteWorkspace));
+workspaceRouter
+  .route('/:workspaceId')
+  .delete(asyncHandler(DeleteWorkspace))
+  .post(asyncHandler(SwitchWorkspace));
 
 export default workspaceRouter;

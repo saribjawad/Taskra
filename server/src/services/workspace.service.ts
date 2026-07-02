@@ -3,6 +3,24 @@ import { Workspace } from '../models/workspace.model';
 import { WorkspaceMember } from '../models/workspace.model';
 
 /**
+ * Get workspace
+ *
+ * @param workspaceId - workspace UUID
+ * @returns the workspace created
+ */
+const getWorkspace = async (workspaceId: string) => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM workspace 
+    WHERE id = $1
+    `,
+    [workspaceId],
+  );
+
+  return result.rows;
+};
+
+/**
  * Get workspaces of a user
  *
  * @param userId - user UUID
@@ -20,6 +38,26 @@ const getUserWorkspaces = async (userId: string) => {
   );
 
   return result.rows;
+};
+
+/**
+ * Get workspaces of a user
+ *
+ * @param userId - user UUID
+ * @param workspaceId - workspace UUID
+ * @returns the workspace created
+ */
+const getWorkspaceMember = async (userId: string, workspaceId: string) => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM workspace_members
+    WHERE user_id = $1
+    AND workspace_id = $2;
+    `,
+    [userId, workspaceId],
+  );
+
+  return result.rows[0];
 };
 
 /**
@@ -83,8 +121,10 @@ const createWorkspaceMember = async (
 };
 
 export {
+  getWorkspace,
   createWorkspace,
   deleteWorkspace,
   getUserWorkspaces,
+  getWorkspaceMember,
   createWorkspaceMember,
 };
