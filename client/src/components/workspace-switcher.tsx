@@ -15,21 +15,28 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { ChevronsUpDownIcon, PlusIcon } from 'lucide-react'
+import { Check, ChevronsUpDownIcon, PlusIcon } from 'lucide-react'
+import { useAuth } from '#/context/authContext'
+import { useNavigate } from '@tanstack/react-router'
+import { useSwitchWorkspace } from '#/hooks/workspace.hooks'
 
-export function WorkspaceSwitcher({
-  workspaces,
-}: {
+interface WorkspaceSwitcherProps {
   workspaces: {
+    id: string
     name: string
-    logo: React.ReactNode
-    plan: string
   }[]
-}) {
-  const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(workspaces[0])
+}
 
-  if (!activeTeam) {
+export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
+  const { user } = useAuth()
+  const { isMobile } = useSidebar()
+  const activeWorkspace = workspaces.find((w) => w.id === user?.activeWorkspace)
+
+  // TODO: add loading indicator
+  const { mutate: switchWorkspace, isPending } = useSwitchWorkspace()
+  const navigate = useNavigate()
+
+  if (!activeWorkspace) {
     return null
   }
 
@@ -43,11 +50,12 @@ export function WorkspaceSwitcher({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                {activeTeam.logo}
+                {activeWorkspace.name[0]}
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate font-medium">
+                  {activeWorkspace.name}
+                </span>
               </div>
               <ChevronsUpDownIcon className="ml-auto" />
             </SidebarMenuButton>
@@ -61,24 +69,37 @@ export function WorkspaceSwitcher({
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Workspaces
             </DropdownMenuLabel>
-            {workspaces.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  {team.logo}
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
+            {workspaces.map((w, index) => {
+              const initials = w.name[0]
+
+              return (
+                <DropdownMenuItem
+                  key={w.name}
+                  onClick={() => switchWorkspace(w.id)}
+                  className="gap-2 p-2"
+                >
+                  <div className="flex size-6 items-center justify-center rounded-md border">
+                    {initials}
+                  </div>
+                  {w.name}
+                  {w.id === user?.activeWorkspace && <Check />}
+                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                </DropdownMenuItem>
+              )
+            })}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem
+              className="gap-2 p-2"
+              onClick={() => {
+                navigate({
+                  to: '/create-workspace',
+                })
+              }}
+            >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <PlusIcon className="size-4" />
               </div>
+
               <div className="font-medium text-muted-foreground">
                 Create workspace
               </div>

@@ -16,6 +16,7 @@ import {
   CircleDotDashed,
 } from 'lucide-react'
 import MyNav from './my-nav'
+import { useGetUserWorkspace } from '#/hooks/workspace.hooks'
 
 // This is sample data.
 const data = {
@@ -73,10 +74,12 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: userWorkspaces } = useGetUserWorkspace()
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <WorkspaceSwitcher workspaces={data.workspaces} />
+        {userWorkspaces && <WorkspaceSwitcher workspaces={userWorkspaces} />}
       </SidebarHeader>
       <SidebarContent>
         <MyNav items={data.myNav} />
