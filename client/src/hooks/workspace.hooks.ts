@@ -1,7 +1,7 @@
-import { router } from '#/main'
 import type { CreateWorkspaceFormPayload } from '#/routes/_authenticated/create-workspace'
 import {
   createWorkspace,
+  deleteWorkspace,
   getUsersWorkspaces,
   switchWorkspace,
 } from '#/service/workspace.service'
@@ -15,6 +15,38 @@ export const useGetUserWorkspace = () => {
     queryKey: ['users-workspaces'],
     queryFn: getUsersWorkspaces,
     retry: 2,
+  })
+}
+
+export const useDeleteWorkspace = () => {
+  const query = useQueryClient()
+  const navigate = useNavigate()
+
+  return useMutation({
+    mutationFn: (workspaceId: string) => deleteWorkspace(workspaceId),
+    onSuccess: (data, deletedWorkspaceId) => {
+      // Manually update the user's active workspace & remove deleted workspace from users workspaces
+      query.setQueryData(['me'], (old: any) => ({
+        ...old,
+        activeWorkspace: data.newActiveWorkspaceId,
+      }))
+
+      query.setQueryData(['users-workspaces'], (old: any) => {
+        return old.filter(
+          (w: { id: string; name: string }) => w.id !== deletedWorkspaceId,
+        )
+      })
+
+      if (data.newActiveWorkspaceId) {
+        navigate({
+          to: `/${data.newActiveWorkspaceId}`,
+        })
+      } else {
+        navigate({
+          to: '/create-workspace',
+        })
+      }
+    },
   })
 }
 
@@ -38,6 +70,7 @@ export const useSwitchWorkspace = () => {
 
 export const useCreateWorkspace = () => {
   const navigate = useNavigate()
+  const query = useQueryClient()
 
   return useMutation({
     mutationFn: (payload: CreateWorkspaceFormPayload) =>
@@ -49,12 +82,13 @@ export const useCreateWorkspace = () => {
       console.error('error inside the on error', serverErrorMessage)
     },
     onSuccess: async (data) => {
-      // TODO: use the workspaceId from data
-      console.log('On success', data)
+      query.setQueryData(['me'], (old: any) => ({
+        ...old,
+        activeWorkspace: data.workspaceId,
+      }))
 
-      // TODO: update the 'to' route
       navigate({
-        to: '/',
+        to: `/${data.workspaceId}`,
       })
     },
   })

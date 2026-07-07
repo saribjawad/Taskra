@@ -16,10 +16,22 @@ interface SwitchWorkspaceResponse {
   user_id: string
 }
 
+interface DeleteWorkspaceResponse {
+  newActiveWorkspaceId: string
+}
+
 export async function getUsersWorkspaces(): Promise<
   GetUserWorkspacesResponse[]
 > {
   const resp = await api.get('/workspace')
+
+  return resp.data.data
+}
+
+export async function deleteWorkspace(
+  workspaceId: string,
+): Promise<DeleteWorkspaceResponse> {
+  const resp = await api.delete(`/workspace/${workspaceId}`)
 
   return resp.data.data
 }

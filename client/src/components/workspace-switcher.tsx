@@ -1,5 +1,3 @@
-import * as React from 'react'
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,10 +13,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { Check, ChevronsUpDownIcon, PlusIcon } from 'lucide-react'
+import { Check, ChevronsUpDownIcon, PlusIcon, Trash2 } from 'lucide-react'
 import { useAuth } from '#/context/authContext'
 import { useNavigate } from '@tanstack/react-router'
-import { useSwitchWorkspace } from '#/hooks/workspace.hooks'
+import { useDeleteWorkspace, useSwitchWorkspace } from '#/hooks/workspace.hooks'
 
 interface WorkspaceSwitcherProps {
   workspaces: {
@@ -28,6 +26,8 @@ interface WorkspaceSwitcherProps {
 }
 
 export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
+  const { mutate: deleteWorkspace, isPending: isDeleteingWorkspacePending } =
+    useDeleteWorkspace()
   const { user } = useAuth()
   const { isMobile } = useSidebar()
   const activeWorkspace = workspaces.find((w) => w.id === user?.activeWorkspace)
@@ -74,7 +74,7 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
 
               return (
                 <DropdownMenuItem
-                  key={w.name}
+                  key={index}
                   onClick={() => switchWorkspace(w.id)}
                   className="gap-2 p-2"
                 >
@@ -83,7 +83,20 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
                   </div>
                   {w.name}
                   {w.id === user?.activeWorkspace && <Check />}
-                  <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                  <DropdownMenuShortcut
+                    className="text-red-500"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteWorkspace(w.id)
+                      // TODO: add loading spinners
+                      console.log(
+                        'Is deleteing workspace pending',
+                        isDeleteingWorkspacePending,
+                      )
+                    }}
+                  >
+                    <Trash2 />
+                  </DropdownMenuShortcut>
                 </DropdownMenuItem>
               )
             })}
