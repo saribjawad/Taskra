@@ -104,13 +104,40 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
 };
 
 export const DeleteWorkspace = async (req: Request, res: Response) => {
+  const userId = req.user.id;
   const { workspaceId } = WorkspaceIdParamsSchema.parse(req.params);
 
   const deletedRowsCount = await deleteWorkspace(workspaceId);
 
-  if (!deletedRowsCount || deletedRowsCount) {
+  if (!deletedRowsCount) {
     throw ApiError.internal('Something went wrong while deleting workspace');
   }
 
-  res.status(200).json(new ApiResponse(200, 'Workspace deleted'));
+  const userWorkspaces = await getUserWorkspaces(userId);
+
+  if (userWorkspaces.length === 0) {
+    return res.status(200).json(
+      new ApiResponse(200, 'Workspace deleted', {
+        newActiveWorkspace: null,
+      }),
+    );
+  }
+
+  const newActiveWorkspaceId = userWorkspaces[0].id;
+
+  const updatedUser = await updateUser(userId, {
+    active_workspace: newActiveWorkspaceId,
+  });
+
+  if (!updatedUser) {
+    throw ApiError.internal(
+      'Something went wrong while updating user active workspace',
+    );
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, 'Workspace deleted', {
+      newActiveWorkspaceId,
+    }),
+  );
 };

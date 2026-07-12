@@ -88,8 +88,8 @@ const createWorkspace = async (name: string): Promise<Workspace> => {
 const deleteWorkspace = async (workspaceId: string) => {
   const result = await dbPool.query(
     `
-    DELETE FROM workspace WHERE
-    id = $1
+    DELETE FROM workspace
+    WHERE id = $1
     `,
     [workspaceId],
   );
