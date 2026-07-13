@@ -22,6 +22,7 @@ import { findCommentsByTaskId } from '../services/comment.service';
 // ==================================================================================
 
 export const CreateTask = async (req: Request, res: Response) => {
+  const userId = req.user.id;
   const activeWorkspace = req.user.activeWorkspace;
   const parsedBody = CreateTaskSchema.parse(req.body);
 
@@ -39,8 +40,9 @@ export const CreateTask = async (req: Request, res: Response) => {
     status,
     priority,
     label,
-    assignee,
     activeWorkspace,
+    userId,
+    assignee,
   );
 
   if (!createdTask) {
@@ -90,10 +92,12 @@ export const GetTasks = async (req: Request, res: Response) => {
    caching counts
   */
 
+  const userId = req.user.id;
   const workspaceId = req.user.activeWorkspace;
   const parsedQueries = GetTaskQuerySchema.parse(req.query);
 
-  const { page, limit, label, priority, status, search } = parsedQueries;
+  const { page, limit, label, priority, status, search, filter } =
+    parsedQueries;
   const offset = (page - 1) * limit;
 
   // Adding one to check will there be a next page
@@ -105,6 +109,8 @@ export const GetTasks = async (req: Request, res: Response) => {
     label,
     priority,
     search,
+    userId,
+    filter,
   );
 
   const hasNextPage = tasks.length > limit;

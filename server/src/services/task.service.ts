@@ -1,6 +1,12 @@
 import { dbPool } from '../db';
 import { Task } from '../models/task.model';
-import { Label, Priority, Status, UpdateSchema } from '../schemas/task.schema';
+import {
+  FilterType,
+  LabelType,
+  Priority,
+  StatusType,
+  UpdateSchema,
+} from '../schemas/task.schema';
 
 /**
  * Find task by ID in database
@@ -34,6 +40,8 @@ export const findTaskById = async (
  * @param label - Task label
  * @param assignee - Task assignee
  * @param workspaceId - Workspace ID tasks belongs to
+ * @param userId - ID of the user who created the task
+ *
  * @returns The task row if found, otherwise undefined
  */
 export const createTask = async (
@@ -42,15 +50,25 @@ export const createTask = async (
   status: string,
   priority: string,
   label: string,
-  assignee: string,
   workspaceId: string,
+  userId: string,
+  assignee: string,
 ) => {
   const result = await dbPool.query(
     `
-    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, created_by)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *`,
-    [title, description, status, priority, label, assignee, workspaceId],
+    [
+      title,
+      description,
+      status,
+      priority,
+      label,
+      assignee,
+      workspaceId,
+      userId,
+    ],
   );
 
   return result.rows[0];
@@ -97,21 +115,28 @@ export const updateTask = async (id: string, data: UpdateSchema) => {
  * @param label - Task label
  * @param priority - Task priority
  * @param search - Task seach query
+ * @param userId - User Id for quering created and assigned tasks
+ * @param filter - Task filter query
  * @returns Tasks
  */
 export const getTasks = async (
   limit: number,
   workspaceId: string,
   offset: number,
-  status?: Status,
-  label?: Label,
+  status?: StatusType,
+  label?: LabelType,
   priority?: Priority,
   search?: string,
+  userId?: string,
+  filter: FilterType = 'all',
 ) => {
   if (search) search = `%${search}%`;
+  let result;
 
-  const result = await dbPool.query(
-    `
+  switch (filter) {
+    case 'all':
+      result = await dbPool.query(
+        `
       SELECT * FROM tasks
       WHERE ($3::text IS NULL OR status = $3)
       AND ($4::text IS NULL OR label = $4)
@@ -122,10 +147,49 @@ export const getTasks = async (
       LIMIT $1
       OFFSET $2
     `,
-    [limit, offset, status, label, priority, search, workspaceId],
-  );
+        [limit, offset, status, label, priority, search, workspaceId],
+      );
 
-  return result.rows;
+      return result.rows;
+
+    case 'created':
+      result = await dbPool.query(
+        `
+      SELECT * FROM tasks
+      WHERE ($3::text IS NULL OR status = $3)
+      AND ($4::text IS NULL OR label = $4)
+      AND ($5::text IS NULL OR priority = $5)
+      AND ($6::text IS NULL OR title ILIKE $6)
+      AND ($7::uuid IS NULL OR workspace_id = $7)
+      AND ($8::uuid IS NULL OR created_by = $8)
+      ORDER BY created_at DESC
+      LIMIT $1
+      OFFSET $2
+    `,
+        [limit, offset, status, label, priority, search, workspaceId, userId],
+      );
+
+      return result.rows;
+
+    case 'assigned':
+      result = await dbPool.query(
+        `
+      SELECT * FROM tasks
+      WHERE ($3::text IS NULL OR status = $3)
+      AND ($4::text IS NULL OR label = $4)
+      AND ($5::text IS NULL OR priority = $5)
+      AND ($6::text IS NULL OR title ILIKE $6)
+      AND ($7::uuid IS NULL OR workspace_id = $7)
+      AND ($8::uuid IS NULL OR assignee = $8)
+      ORDER BY created_at DESC
+      LIMIT $1
+      OFFSET $2
+    `,
+        [limit, offset, status, label, priority, search, workspaceId, userId],
+      );
+
+      return result.rows;
+  }
 };
 
 /**

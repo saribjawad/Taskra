@@ -6,7 +6,10 @@ const Status = z.enum(
   ['backlog', 'todo', 'in_progress', 'done', 'cancelled'],
   'Invalid status',
 );
-export type Status = z.infer<typeof Status>;
+export type StatusType = z.infer<typeof Status>;
+
+const Filter = z.enum(['assigned', 'created', 'all']);
+export type FilterType = z.infer<typeof Filter>;
 
 const Priority = z.enum(
   ['urgent', 'high', 'medium', 'low', 'no_priority'],
@@ -15,7 +18,7 @@ const Priority = z.enum(
 export type Priority = z.infer<typeof Priority>;
 
 const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label');
-export type Label = z.infer<typeof Label>;
+export type LabelType = z.infer<typeof Label>;
 
 // Schemas
 
@@ -30,6 +33,7 @@ export const GetTaskQuerySchema = z.object({
   limit: z.coerce
     .number('Invalid number')
     .positive('Should be a positive number'),
+  filter: Filter.optional().default('all'),
   status: Status.optional(),
   priority: Priority.optional(),
   label: Label.optional(),
