@@ -66,8 +66,8 @@ const data = {
       icon: <Inbox />,
     },
     {
-      title: 'My Issues',
-      url: '#',
+      title: 'My Tasks',
+      url: '/$workspaceId/tasks',
       icon: <CircleDotDashed />,
     },
   ],

@@ -1,0 +1,62 @@
+import { Button } from '#/components/ui/button'
+import { Separator } from '#/components/ui/separator'
+import { SidebarTrigger } from '#/components/ui/sidebar'
+import { useIsMobile } from '#/hooks/use-mobile'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useLocation,
+} from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_authenticated/$workspaceId/tasks')({
+  component: RouteComponent,
+})
+
+const filterButtons = [
+  { name: 'Assigned', to: '/$workspaceId/tasks/assigned' },
+  { name: 'Created', to: '/$workspaceId/tasks/created' },
+  { name: 'All', to: '/$workspaceId/tasks/all' },
+]
+
+function RouteComponent() {
+  const isMobile = useIsMobile()
+  const { workspaceId } = Route.useParams()
+  const { pathname } = useLocation()
+
+  return (
+    <main className="h-screen w-full p-3 flex flex-col gap-2">
+      {/* Header */}
+      <nav className="flex items-center gap-3">
+        {isMobile && <SidebarTrigger />}
+        <h5 className="text-sm">My tasks</h5>
+      </nav>
+      <Separator />
+
+      {/* Filter Buttons */}
+      <div className="flex items-center gap-1">
+        {filterButtons.map((btn) => {
+          const btnPathname = btn.to.split('/').pop()
+
+          return (
+            <Button
+              asChild
+              key={btn.name}
+              variant="secondary"
+              size="sm"
+              className={
+                pathname.split('/').pop() === btnPathname ? 'bg-zinc-600' : ''
+              }
+            >
+              {/* {btn.name} */}
+              <Link to={btn.to} params={{ workspaceId }}>
+                {btn.name}
+              </Link>
+            </Button>
+          )
+        })}
+      </div>
+      <Outlet />
+    </main>
+  )
+}

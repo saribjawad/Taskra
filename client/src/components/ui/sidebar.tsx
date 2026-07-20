@@ -263,7 +263,7 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon-sm"
-      className={cn(className)}
+      className={cn(`${className} text-zinc-500`)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()

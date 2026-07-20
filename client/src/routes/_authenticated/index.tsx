@@ -14,7 +14,7 @@ function Index() {
     if (isLoading) return
 
     navigate({
-      to: user?.activeWorkspace ? '/$workspaceId' : '/create-workspace',
+      to: user?.activeWorkspace ? '/$workspaceId/tasks' : '/create-workspace',
       params: user?.activeWorkspace
         ? { workspaceId: user.activeWorkspace }
         : undefined,

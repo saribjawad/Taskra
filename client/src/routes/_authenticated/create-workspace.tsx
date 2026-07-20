@@ -7,7 +7,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 
-export const Route = createFileRoute('/_authenticated/create-workspace/')({
+export const Route = createFileRoute('/_authenticated/create-workspace')({
   component: RouteComponent,
 })
 

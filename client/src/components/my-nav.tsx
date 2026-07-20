@@ -1,3 +1,4 @@
+import { useMatchRoute } from '@tanstack/react-router'
 import { SidebarGroup, SidebarMenu, SidebarMenuButton } from './ui/sidebar'
 
 function MyNav({
@@ -9,11 +10,23 @@ function MyNav({
     icon: React.ReactNode
   }[]
 }) {
+  const matchRoute = useMatchRoute()
+
   return (
     <SidebarGroup>
       <SidebarMenu>
         {items.map((item) => (
-          <SidebarMenuButton key={item.title}>
+          <SidebarMenuButton
+            key={item.title}
+            className={
+              matchRoute({
+                to: item.url,
+                fuzzy: true,
+              })
+                ? 'bg-zinc-800'
+                : ''
+            }
+          >
             {item.icon}
             <span>{item.title}</span>
           </SidebarMenuButton>
