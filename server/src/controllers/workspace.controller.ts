@@ -25,7 +25,7 @@ export const GetUserWorkspaces = async (req: Request, res: Response) => {
 };
 
 export const SwitchWorkspace = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  const user = req.user;
   const { workspaceId } = WorkspaceIdParamsSchema.parse(req.params);
 
   const workspace = await getWorkspace(workspaceId);
@@ -34,19 +34,38 @@ export const SwitchWorkspace = async (req: Request, res: Response) => {
     throw ApiError.notFound('Workspace not found');
   }
 
-  const workspaceMember = await getWorkspaceMember(userId, workspaceId);
+  const workspaceMember = await getWorkspaceMember(user.id, workspaceId);
 
   if (!workspaceMember) {
     throw new ApiError(403, 'You are not a member of this workspace');
   }
 
-  const updatedRowCount = await updateUser(userId, {
+  const updatedRowCount = await updateUser(user.id, {
     active_workspace: workspaceId,
   });
 
   if (updatedRowCount && updatedRowCount < 0) {
     throw ApiError.internal('Something went wrong while switching workspace');
   }
+
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    (user.activeWorkspace = workspaceId),
+  );
+  const refreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    (user.activeWorkspace = workspaceId),
+  );
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
 
   res
     .status(200)
@@ -104,8 +123,14 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
 };
 
 export const DeleteWorkspace = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  const user = req.user;
   const { workspaceId } = WorkspaceIdParamsSchema.parse(req.params);
+
+  const workspace = await getWorkspace(workspaceId);
+
+  if (!workspace) {
+    throw ApiError.notFound('Workspace not found');
+  }
 
   const deletedRowsCount = await deleteWorkspace(workspaceId);
 
@@ -113,9 +138,28 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
     throw ApiError.internal('Something went wrong while deleting workspace');
   }
 
-  const userWorkspaces = await getUserWorkspaces(userId);
+  const userWorkspaces = await getUserWorkspaces(user.id);
 
   if (userWorkspaces.length === 0) {
+    const accessToken = generateAccessToken(
+      user.id,
+      user.email,
+      (user.activeWorkspace = ''),
+    );
+    const refreshToken = await generateRefreshToken(
+      user.id,
+      user.email,
+      (user.activeWorkspace = ''),
+    );
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      path: '/api/v1/refresh-access-token',
+    });
+
     return res.status(200).json(
       new ApiResponse(200, 'Workspace deleted', {
         newActiveWorkspace: null,
@@ -125,7 +169,7 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
 
   const newActiveWorkspaceId = userWorkspaces[0].id;
 
-  const updatedUser = await updateUser(userId, {
+  const updatedUser = await updateUser(user.id, {
     active_workspace: newActiveWorkspaceId,
   });
 
@@ -134,6 +178,25 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
       'Something went wrong while updating user active workspace',
     );
   }
+
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    (user.activeWorkspace = newActiveWorkspaceId),
+  );
+  const refreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    (user.activeWorkspace = newActiveWorkspaceId),
+  );
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
 
   res.status(200).json(
     new ApiResponse(200, 'Workspace deleted', {

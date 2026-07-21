@@ -17,7 +17,7 @@ const getWorkspace = async (workspaceId: string) => {
     [workspaceId],
   );
 
-  return result.rows;
+  return result.rows[0];
 };
 
 /**
