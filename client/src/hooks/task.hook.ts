@@ -1,9 +1,13 @@
-import { getTasks } from '#/service/task.service'
+import { getTasks, type GetTasksParams } from '#/service/task.service'
 import { useQuery } from '@tanstack/react-query'
 
-export const useGetTasks = () => {
+export const useGetTasks = ({
+  page = 1,
+  limit = 10,
+  filter,
+}: GetTasksParams) => {
   return useQuery({
     queryKey: ['tasks'],
-    queryFn: () => getTasks(),
+    queryFn: () => getTasks({ filter, page, limit }),
   })
 }

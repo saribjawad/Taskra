@@ -1,4 +1,11 @@
 import { api } from '#/lib/api'
+import type {
+  Task,
+  TaskFilterType,
+  TaskLabelType,
+  TaskPriorityType,
+  TaskStatusType,
+} from '#/type'
 
 interface GetTasksResponse {
   metadata: {
@@ -7,38 +14,21 @@ interface GetTasksResponse {
     limit: number
     offset: number
   }
-  tasks: {
-    id: string
-    title: string
-    description: string
-    status: string
-    priority: string
-    label: string
-    assignee: string
-    updated_at: Date
-    created_at: Date
-    workspace_id: string
-    created_by: string
-  }[]
+  tasks: Task[]
 }
 
-interface GetTasksParams {
+export interface GetTasksParams {
   page?: number
   limit?: number
-  label?: string
-  priority?: string
-  status?: string
+  label?: TaskLabelType
+  priority?: TaskPriorityType
+  status?: TaskStatusType
   search?: string
-  filter?: string
+  filter?: TaskFilterType
 }
 
 export async function getTasks(
-  payload?: any,
-  params: GetTasksParams = {
-    page: 1,
-    limit: 10,
-    filter: 'assigned',
-  },
+  params: GetTasksParams,
 ): Promise<GetTasksResponse> {
   const queryParams = new URLSearchParams()
 
@@ -50,7 +40,7 @@ export async function getTasks(
 
   const queryString = new URLSearchParams(queryParams).toString()
 
-  const resp = await api.get(`/tasks?${queryString}`, payload)
+  const resp = await api.get(`/tasks?${queryString}`)
 
   return resp.data.data
 }

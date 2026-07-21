@@ -1,11 +1,34 @@
+import TaskCard from '#/components/tasks/TaskCard'
+import { Button } from '#/components/ui/button'
+import { useGetTasks } from '#/hooks/task.hook'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute(
-  '/_authenticated/$workspaceId/tasks/all',
-)({
+export const Route = createFileRoute('/_authenticated/$workspaceId/tasks/all')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <div>Hello "/_authenticated/$workspaceId/issues/activity"!</div>
+  const { data, isLoading } = useGetTasks({ filter: 'all' })
+
+  if (isLoading) {
+    return <div>loading</div>
+  }
+
+  if (!data?.tasks.length) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3">
+        <p className="text-muted-foreground">No tasks has been created yet.</p>
+
+        <Button size="sm">Create new task</Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {data.tasks.map((task) => (
+        <TaskCard {...task} />
+      ))}
+    </div>
+  )
 }
