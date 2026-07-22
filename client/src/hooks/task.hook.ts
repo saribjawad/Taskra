@@ -7,7 +7,7 @@ export const useGetTasks = ({
   filter,
 }: GetTasksParams) => {
   return useQuery({
-    queryKey: ['tasks'],
+    queryKey: [`${filter}-tasks`],
     queryFn: () => getTasks({ filter, page, limit }),
   })
 }

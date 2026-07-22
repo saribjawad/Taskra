@@ -30,7 +30,7 @@ function RouteComponent() {
   return (
     <div className="space-y-3">
       {data.tasks.map((task) => (
-        <TaskCard {...task} />
+        <TaskCard key={task.id} {...task} />
       ))}
     </div>
   )
