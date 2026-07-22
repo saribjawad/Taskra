@@ -140,7 +140,7 @@ export const GetTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
-  const { email, username, id } = await findUserById(task.assignee);
+  const assignee = await findUserById(task.assignee);
 
   const comments = await findCommentsByTaskId(taskId);
 
@@ -157,11 +157,19 @@ export const GetTask = async (req: Request, res: Response) => {
         updated_at: c.updated_at,
         created_at: c.created_at,
       })),
-      assignee: {
-        id,
-        username,
-        email,
-      },
+      // In case of no assignee
+
+      ...(assignee
+        ? {
+            assignee: {
+              id: assignee?.id ?? '',
+              username: assignee?.username ?? '',
+              email: assignee?.email ?? '',
+            },
+          }
+        : {
+            assignee: null,
+          }),
     }),
   );
 };

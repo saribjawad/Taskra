@@ -1,4 +1,4 @@
-import { useMatchRoute } from '@tanstack/react-router'
+import { useMatchRoute, useNavigate, useParams } from '@tanstack/react-router'
 import { SidebarGroup, SidebarMenu, SidebarMenuButton } from './ui/sidebar'
 
 function MyNav({
@@ -11,6 +11,10 @@ function MyNav({
   }[]
 }) {
   const matchRoute = useMatchRoute()
+  const params = useParams({
+    strict: false,
+  })
+  const navigate = useNavigate()
 
   return (
     <SidebarGroup>
@@ -26,6 +30,14 @@ function MyNav({
                 ? 'bg-zinc-800'
                 : ''
             }
+            onClick={() => {
+              navigate({
+                to: item.url,
+                params: {
+                  workspaceId: params.workspaceId,
+                },
+              })
+            }}
           >
             {item.icon}
             <span>{item.title}</span>

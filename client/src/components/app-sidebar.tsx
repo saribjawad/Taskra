@@ -62,12 +62,12 @@ const data = {
   myNav: [
     {
       title: 'Inbox',
-      url: '#',
+      url: '/$workspaceId/inbox',
       icon: <Inbox />,
     },
     {
       title: 'My Tasks',
-      url: '/$workspaceId/tasks',
+      url: '/$workspaceId/my-tasks',
       icon: <CircleDotDashed />,
     },
   ],

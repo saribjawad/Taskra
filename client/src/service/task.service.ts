@@ -44,3 +44,38 @@ export async function getTasks(
 
   return resp.data.data
 }
+
+interface GetTaskResponse {
+  id: string
+  title: string
+  description: string
+  status: TaskStatusType
+  priority: TaskPriorityType
+  label: TaskLabelType
+  assignee: {
+    id: string
+    username: string
+    email: string
+  }
+  updated_at: string
+  created_at: string
+  workspace_id: string
+  created_by: Date
+  comments: [
+    {
+      id: string
+      content: string
+      user: {
+        id: string
+        username: string
+      }
+      updated_at: Date
+      created_at: Date
+    },
+  ]
+}
+
+export async function getTaskById(taskId: string): Promise<GetTaskResponse> {
+  const resp = await api.get(`/tasks/${taskId}`)
+  return resp.data.data
+}

@@ -1,4 +1,5 @@
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 
@@ -13,8 +14,17 @@ interface TaskCardProps {
 }
 
 function TaskCard(props: TaskCardProps) {
+  const { workspaceId } = useParams({ strict: false })
+  const navigate = useNavigate()
+
   return (
     <div
+      onClick={() => {
+        navigate({
+          to: '/$workspaceId/tasks/$taskId',
+          params: { workspaceId: workspaceId!!, taskId: props.id },
+        })
+      }}
       key={props.id}
       className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent/40"
     >

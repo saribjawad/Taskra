@@ -9,14 +9,14 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/_authenticated/$workspaceId/tasks')({
+export const Route = createFileRoute('/_authenticated/$workspaceId/my-tasks')({
   component: RouteComponent,
 })
 
 const filterButtons = [
-  { name: 'Assigned', to: '/$workspaceId/tasks/assigned' },
-  { name: 'Created', to: '/$workspaceId/tasks/created' },
-  { name: 'All', to: '/$workspaceId/tasks/all' },
+  { name: 'Assigned', to: '/$workspaceId/my-tasks/assigned' },
+  { name: 'Created', to: '/$workspaceId/my-tasks/created' },
+  { name: 'All', to: '/$workspaceId/my-tasks/all' },
 ]
 
 function RouteComponent() {

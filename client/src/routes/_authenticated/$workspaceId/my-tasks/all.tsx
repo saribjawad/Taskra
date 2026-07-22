@@ -1,15 +1,14 @@
 import TaskCard from '#/components/tasks/TaskCard'
+import { Button } from '#/components/ui/button'
 import { useGetTasks } from '#/hooks/task.hook'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute(
-  '/_authenticated/$workspaceId/tasks/assigned',
-)({
+export const Route = createFileRoute('/_authenticated/$workspaceId/my-tasks/all')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data, isLoading } = useGetTasks({ filter: 'assigned' })
+  const { data, isLoading } = useGetTasks({ filter: 'all' })
 
   if (isLoading) {
     return <div>loading</div>
@@ -18,7 +17,9 @@ function RouteComponent() {
   if (!data?.tasks.length) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3">
-        <p className="text-muted-foreground">No tasks assigned to you.</p>
+        <p className="text-muted-foreground">No tasks has been created yet.</p>
+
+        <Button size="sm">Create new task</Button>
       </div>
     )
   }

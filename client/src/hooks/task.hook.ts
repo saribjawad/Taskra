@@ -1,4 +1,8 @@
-import { getTasks, type GetTasksParams } from '#/service/task.service'
+import {
+  getTaskById,
+  getTasks,
+  type GetTasksParams,
+} from '#/service/task.service'
 import { useQuery } from '@tanstack/react-query'
 
 export const useGetTasks = ({
@@ -9,5 +13,12 @@ export const useGetTasks = ({
   return useQuery({
     queryKey: [`${filter}-tasks`],
     queryFn: () => getTasks({ filter, page, limit }),
+  })
+}
+
+export const useGetTaskById = ({ taskId }: { taskId: string }) => {
+  return useQuery({
+    queryKey: [`task-${taskId}`],
+    queryFn: () => getTaskById(taskId),
   })
 }
