@@ -1,11 +1,18 @@
 import { Badge } from '#/components/ui/badge'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from '#/components/ui/breadcrumb'
 import { Button } from '#/components/ui/button'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
 import { useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
-import { createFileRoute, useParams } from '@tanstack/react-router'
+import { createFileRoute, Link, useParams } from '@tanstack/react-router'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/tasks/$taskId',
@@ -40,11 +47,31 @@ function RouteComponent() {
 
   return (
     <main className="h-screen w-full flex flex-col  ">
-      {/* Bread crumbs */}
+      {/* Header */}
       <div className="flex flex-col gap-2  p-3">
         <nav className="flex items-center gap-3">
           {isMobile && <SidebarTrigger />}
-          <h5 className="text-sm">My tasks</h5>
+          {/* Breadcrumb */}
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink>
+                  <Link
+                    to="/$workspaceId/my-tasks"
+                    params={{
+                      workspaceId: params.workspaceId!!,
+                    }}
+                  >
+                    My tasks
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem className="text-foreground">
+                {task.title}
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </nav>
         <Separator />
       </div>
