@@ -1,5 +1,6 @@
 import {
   createTask,
+  deleteTask,
   getTaskById,
   getTasks,
   type CreateTaskParams,
@@ -45,6 +46,32 @@ export const useCreateTask = () => {
 
       // TODO: show the toast
       console.log('Successfully created the task')
+    },
+  })
+}
+
+// deleteTask
+
+export const useDeleteTask = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (taskId: string) => deleteTask(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate(query) {
+          const queryKeys = query.queryKey.join('')
+
+          if (queryKeys.includes('tasks')) {
+            return true
+          } else {
+            return false
+          }
+        },
+      })
+
+      // TODO: show the toast
+      console.log('Successfully deleted the task')
     },
   })
 }

@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -139,10 +140,7 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
         </DialogHeader>
 
         {/* Form */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-10"
-        >
+        <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <Controller
               name="title"
@@ -331,15 +329,19 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
               />
             </div>
           </FieldGroup>
-          <div className="self-end flex items-center gap-2">
-            <DialogClose>
-              <Button variant="secondary" className="self-end" type="button">
-                Close
+
+          <DialogFooter className="mt-6">
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                Cancel
               </Button>
             </DialogClose>
+
             {/* TODO: add proper spinner and disabled fields */}
-            <Button type="submit">{isPending ? 'Creating' : 'Create'}</Button>
-          </div>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Creating...' : 'Create task'}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

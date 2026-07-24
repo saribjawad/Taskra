@@ -92,3 +92,7 @@ export interface CreateTaskParams {
 export async function createTask(params: CreateTaskParams): Promise<void> {
   await api.post(`/tasks`, params)
 }
+
+export async function deleteTask(taskId: string): Promise<void> {
+  await api.delete(`/tasks/${taskId}`)
+}
