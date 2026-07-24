@@ -52,7 +52,7 @@ export const createTask = async (
   label: string,
   workspaceId: string,
   userId: string,
-  assignee: string,
+  assignee: string | null,
 ) => {
   const result = await dbPool.query(
     `

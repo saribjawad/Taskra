@@ -49,7 +49,7 @@ export const CreateTaskSchema = z.object({
   status: Status,
   priority: Priority,
   label: Label,
-  assignee: z.uuid('Invalid assignee'),
+  assignee: z.uuid('Invalid assignee').optional(),
 });
 
 export const UpdateTaskSchema = z.object({

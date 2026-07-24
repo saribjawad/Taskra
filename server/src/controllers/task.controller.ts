@@ -28,10 +28,10 @@ export const CreateTask = async (req: Request, res: Response) => {
 
   const { assignee, description, label, priority, status, title } = parsedBody;
 
-  const assigneeUser = await findUserById(assignee);
+  let assigneeUser;
 
-  if (!assigneeUser) {
-    throw ApiError.notFound('Invalid assignee');
+  if (assignee) {
+    assigneeUser = await findUserById(assignee);
   }
 
   const createdTask = await createTask(
@@ -42,7 +42,7 @@ export const CreateTask = async (req: Request, res: Response) => {
     label,
     activeWorkspace,
     userId,
-    assignee,
+    assigneeUser ? assigneeUser.id : null,
   );
 
   if (!createdTask) {
