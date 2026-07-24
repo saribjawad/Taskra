@@ -55,7 +55,7 @@ function RouteComponent() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink>
+                <BreadcrumbLink asChild>
                   <Link
                     to="/$workspaceId/my-tasks"
                     params={{

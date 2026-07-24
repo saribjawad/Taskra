@@ -79,3 +79,16 @@ export async function getTaskById(taskId: string): Promise<GetTaskResponse> {
   const resp = await api.get(`/tasks/${taskId}`)
   return resp.data.data
 }
+
+export interface CreateTaskParams {
+  title: string
+  description: string
+  status: TaskStatusType
+  priority: TaskPriorityType
+  label: TaskLabelType
+  assignee?: string
+}
+
+export async function createTask(params: CreateTaskParams): Promise<void> {
+  await api.post(`/tasks`, params)
+}

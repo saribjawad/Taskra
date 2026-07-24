@@ -1,3 +1,4 @@
+import CreateTaskDialog from '#/components/tasks/CreateTaskDialog'
 import { Button } from '#/components/ui/button'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
@@ -8,6 +9,7 @@ import {
   Outlet,
   useLocation,
 } from '@tanstack/react-router'
+import { Plus } from 'lucide-react'
 
 export const Route = createFileRoute('/_authenticated/$workspaceId/my-tasks')({
   component: RouteComponent,
@@ -27,9 +29,18 @@ function RouteComponent() {
   return (
     <main className="h-screen w-full p-3 flex flex-col gap-2">
       {/* Header */}
-      <nav className="flex items-center gap-3">
-        {isMobile && <SidebarTrigger />}
-        <h5 className="text-sm">My tasks</h5>
+      <nav className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          {isMobile && <SidebarTrigger />}
+          <h5 className="text-sm">My tasks</h5>
+        </div>
+        <CreateTaskDialog
+          trigger={
+            <Button variant="ghost">
+              <Plus />
+            </Button>
+          }
+        />
       </nav>
       <Separator />
 
