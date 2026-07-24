@@ -12,7 +12,8 @@ import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
 import { useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
-import { createFileRoute, Link, useParams } from '@tanstack/react-router'
+import usePreviousLocation from '#/hooks/usePreviousLocation'
+import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/tasks/$taskId',
@@ -33,6 +34,9 @@ function Property({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 function RouteComponent() {
+  const prevLocation = usePreviousLocation()
+  const navigate = useNavigate()
+
   const params = useParams({ strict: false })
   const isMobile = useIsMobile()
   const { data: task, isLoading } = useGetTaskById({ taskId: params.taskId!! })
@@ -55,15 +59,15 @@ function RouteComponent() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link
-                    to="/$workspaceId/my-tasks"
-                    params={{
-                      workspaceId: params.workspaceId!!,
-                    }}
-                  >
-                    My tasks
-                  </Link>
+                <BreadcrumbLink
+                  className="cursor-pointer"
+                  onClick={() => {
+                    navigate({
+                      to: prevLocation,
+                    })
+                  }}
+                >
+                  My Tasks
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
