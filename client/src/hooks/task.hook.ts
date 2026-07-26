@@ -3,8 +3,10 @@ import {
   deleteTask,
   getTaskById,
   getTasks,
+  updateTask,
   type CreateTaskParams,
   type GetTasksParams,
+  type UpdateTaskPayload,
 } from '#/service/task.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -70,6 +72,28 @@ export const useDeleteTask = () => {
 
       // TODO: show the toast
       console.log('Successfully deleted the task')
+    },
+  })
+}
+
+export const useUpdateTask = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      taskId,
+      payload,
+    }: {
+      taskId: string
+      payload: UpdateTaskPayload
+    }) => updateTask(taskId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [`task-${variables.taskId}`],
+      })
+
+      // TODO: show the toast
+      console.log('Successfully updated the task')
     },
   })
 }

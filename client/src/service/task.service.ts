@@ -93,6 +93,22 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
   await api.post(`/tasks`, params)
 }
 
+export interface UpdateTaskPayload {
+  title: string
+  description: string
+  status: TaskStatusType
+  priority: TaskPriorityType
+  label: TaskLabelType
+  assignee?: string
+}
+
+export async function updateTask(
+  taskId: string,
+  payload: UpdateTaskPayload,
+): Promise<void> {
+  await api.patch(`/tasks/${taskId}`, payload)
+}
+
 export async function deleteTask(taskId: string): Promise<void> {
   await api.delete(`/tasks/${taskId}`)
 }
