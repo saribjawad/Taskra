@@ -117,7 +117,7 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
 
   return (
     <Dialog open={isDialogOpen}>
-      <DialogTrigger>{trigger}</DialogTrigger>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent showCloseButton={false} className="min-w-[35vw]">
         {/* Header */}
         <DialogHeader>

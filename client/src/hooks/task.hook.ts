@@ -50,8 +50,6 @@ export const useCreateTask = () => {
   })
 }
 
-// deleteTask
-
 export const useDeleteTask = () => {
   const queryClient = useQueryClient()
 

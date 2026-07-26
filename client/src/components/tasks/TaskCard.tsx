@@ -44,7 +44,7 @@ function TaskCard(props: TaskCardProps) {
           })
         }}
         key={props.id}
-        className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent/40"
+        className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent/40 cursor-pointer"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -56,7 +56,7 @@ function TaskCard(props: TaskCardProps) {
 
             <div>
               <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                   <Button variant="ghost">
                     <Ellipsis />
                   </Button>
