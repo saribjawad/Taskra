@@ -1,4 +1,5 @@
 import DeleteCommentDialog from '#/components/comments/DeleteCommentDialog'
+import UpdateCommentDialog from '#/components/comments/UpdateCommentDialog'
 import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
 import { Badge } from '#/components/ui/badge'
@@ -21,13 +22,17 @@ import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/context/authContext'
-import { useCreateComment, useDeleteComment } from '#/hooks/comment.hooks'
+import {
+  useCreateComment,
+  useDeleteComment,
+  useUpdateComment,
+} from '#/hooks/comment.hooks'
 import { useDeleteTask, useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
 import usePreviousLocation from '#/hooks/usePreviousLocation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
-import { Ellipsis, Trash2 } from 'lucide-react'
+import { Ellipsis, Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
@@ -59,7 +64,11 @@ function RouteComponent() {
 
   const [taskDeleteOpen, setTaskDeleteOpen] = useState(false)
   const [commentDeleteOpen, setCommentDeleteOpen] = useState(false)
-  const [selectedCommment, setSelectedComment] = useState<string | null>()
+  const [commentUpdateOpen, setCommentUpdateOpen] = useState(false)
+  const [selectedCommment, setSelectedComment] = useState<{
+    id: string
+    content: string
+  } | null>()
 
   const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(CreateCommentSchema),
@@ -80,6 +89,8 @@ function RouteComponent() {
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
   const { mutate: deleteComment, isPending: isDeletingComment } =
     useDeleteComment()
+  const { mutate: updateComment, isPending: isUpdatingComment } =
+    useUpdateComment()
   const { data: task, isLoading } = useGetTaskById({ taskId: params.taskId!! })
 
   function onTaskDelete() {
@@ -91,7 +102,7 @@ function RouteComponent() {
 
   function onCommentDelete() {
     if (selectedCommment) {
-      deleteComment({ taskId: params.taskId!!, commentId: selectedCommment })
+      deleteComment({ taskId: params.taskId!!, commentId: selectedCommment.id })
     }
     setSelectedComment(null)
     setCommentDeleteOpen(false)
@@ -104,6 +115,19 @@ function RouteComponent() {
         onSuccess: () => reset(),
       },
     )
+  }
+
+  function onUpdate(newContent: string) {
+    if (selectedCommment) {
+      updateComment({
+        taskId: params.taskId!!,
+        comment: {
+          id: selectedCommment?.id,
+          content: newContent,
+        },
+      })
+    }
+    setCommentUpdateOpen(false)
   }
 
   if (isLoading) {
@@ -262,7 +286,7 @@ function RouteComponent() {
                                     variant="destructive"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      setSelectedComment(comment.id)
+                                      setSelectedComment(comment)
                                     }}
                                     onSelect={() => {
                                       setCommentDeleteOpen(true)
@@ -270,6 +294,18 @@ function RouteComponent() {
                                   >
                                     <Trash2 />
                                     Delete
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setSelectedComment(comment)
+                                    }}
+                                    onSelect={() => {
+                                      setCommentUpdateOpen(true)
+                                    }}
+                                  >
+                                    <Pencil />
+                                    Edit
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -355,6 +391,13 @@ function RouteComponent() {
         onOpenChange={setCommentDeleteOpen}
         isDeleting={isDeletingComment}
         onDelete={onCommentDelete}
+      />
+      <UpdateCommentDialog
+        open={commentUpdateOpen}
+        onOpenChange={setCommentUpdateOpen}
+        isUpdating={isUpdatingComment}
+        onUpdate={onUpdate}
+        comment={selectedCommment!!}
       />
     </>
   )

@@ -17,6 +17,7 @@ export const findCommentsByTaskId = async (
     FROM comments AS c
     INNER JOIN users AS u ON c.user_id = u.id
     WHERE task_id = $1
+    ORDER BY c.created_at
     `,
     [id],
   );

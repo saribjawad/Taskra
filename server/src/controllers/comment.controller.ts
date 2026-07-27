@@ -16,7 +16,7 @@ import {
 } from '../services/comment.service';
 
 // ==================================================================================
-// Task Controllers
+// Comment Controllers
 // ==================================================================================
 
 export const CreateComment = async (req: Request, res: Response) => {
