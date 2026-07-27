@@ -9,14 +9,19 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { Button } from '#/components/ui/button'
+import { Field } from '#/components/ui/field'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
+import { useCreateComment } from '#/hooks/comment.hooks'
 import { useDeleteTask, useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
 import usePreviousLocation from '#/hooks/usePreviousLocation'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
 import { useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import z from 'zod'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/tasks/$taskId',
@@ -36,10 +41,23 @@ function Property({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
+const CreateCommentSchema = z.object({
+  content: z.string('Invalid comment').trim().min(1),
+})
+
 function RouteComponent() {
   const prevLocation = usePreviousLocation()
   const navigate = useNavigate()
-  const { mutate: deleteTask, isPending } = useDeleteTask()
+  const { handleSubmit, reset, control } = useForm({
+    resolver: zodResolver(CreateCommentSchema),
+    defaultValues: {
+      content: '',
+    },
+  })
+
+  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask()
+  const { mutate: createComment, isPending: isCommenting } = useCreateComment()
+
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   const params = useParams({ strict: false })
@@ -51,6 +69,15 @@ function RouteComponent() {
     navigate({
       to: prevLocation,
     })
+  }
+
+  function onComment(data: z.infer<typeof CreateCommentSchema>) {
+    createComment(
+      { taskId: params.taskId!!, comment: data.content },
+      {
+        onSuccess: () => reset(),
+      },
+    )
   }
 
   if (isLoading) {
@@ -93,111 +120,127 @@ function RouteComponent() {
           <Separator />
         </div>
 
-        <div className="flex lg:flex-row flex-col flex-1 w-full   justify-between ">
+        {/* <div className="flex lg:flex-row flex-col flex-1 w-full   justify-between "> */}
+        <div className="flex lg:flex-row flex-col flex-1 w-full justify-between min-h-0 overflow-hidden">
           {/* Main */}
 
-          <section className="flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-4xl px-10 py-8">
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="mb-3 flex gap-2">
-                    <Badge variant="outline">{task.label}</Badge>
-                    <Badge>{task.status}</Badge>
-                    <Badge variant="secondary">{task.priority}</Badge>
+          <section className="flex-1 flex flex-col min-h-0">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="mx-auto max-w-4xl px-10 py-8">
+                {/* Header */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="mb-3 flex gap-2">
+                      <Badge variant="outline">{task.label}</Badge>
+                      <Badge>{task.status}</Badge>
+                      <Badge variant="secondary">{task.priority}</Badge>
+                    </div>
+                    <h1 className="text-4xl font-semibold tracking-tight">
+                      {task.title}
+                    </h1>
                   </div>
 
-                  <h1 className="text-4xl font-semibold tracking-tight">
-                    {task.title}
-                  </h1>
+                  <div className="flex gap-2">
+                    <EditTaskDialog
+                      task={{
+                        id: task.id,
+                        description: task.description,
+                        label: task.label,
+                        priority: task.priority,
+                        status: task.status,
+                        title: task.title,
+                        assignee: task.assignee,
+                      }}
+                      trigger={
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                      }
+                    />
+                    <Button
+                      onClick={() => setDeleteOpen(true)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <EditTaskDialog
-                    task={{
-                      id: task.id,
-                      description: task.description,
-                      label: task.label,
-                      priority: task.priority,
-                      status: task.status,
-                      title: task.title,
-                      assignee: task.assignee,
-                    }}
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                    }
-                  />
-                  <Button
-                    onClick={() => {
-                      setDeleteOpen(true)
-                    }}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    Delete
+                <Separator className="my-8" />
+
+                {/* Description */}
+                <section>
+                  <h2 className="mb-4 text-lg font-semibold">Description</h2>
+                  <div className="prose prose-invert max-w-none text-muted-foreground">
+                    {task.description}
+                  </div>
+                </section>
+
+                <Separator className="my-10" />
+
+                {/* Activity */}
+                <section>
+                  <h2 className="mb-6 text-lg font-semibold">Activity</h2>
+
+                  <div className="space-y-8">
+                    {task.comments.length <= 0 ? (
+                      <p className="text-muted-foreground">No activity yet.</p>
+                    ) : (
+                      task.comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-4">
+                          <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
+                            {comment.user.username[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1">
+                            <div className="mb-1 flex items-center gap-3">
+                              <span className="font-medium">
+                                {comment.user.username}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(comment.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground">
+                              {comment.content}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            {/* Add comment — fixed footer, never scrolls */}
+            <div className="border-t bg-background px-10 py-4">
+              <form
+                onSubmit={handleSubmit(onComment)}
+                className="mx-auto max-w-4xl"
+              >
+                <Controller
+                  control={control}
+                  name="content"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <Textarea
+                        disabled={isCommenting}
+                        aria-invalid={fieldState.invalid}
+                        {...field}
+                        placeholder="Leave a comment..."
+                        rows={3}
+                      />
+                    </Field>
+                  )}
+                />
+                <div className="mt-3 flex justify-end">
+                  <Button disabled={isCommenting}>
+                    {isCommenting ? 'Commenting...' : 'Add comment'}
                   </Button>
                 </div>
-              </div>
-
-              <Separator className="my-8" />
-
-              {/* Description */}
-              <section>
-                <h2 className="mb-4 text-lg font-semibold">Description</h2>
-
-                <div className="prose prose-invert max-w-none text-muted-foreground">
-                  {task.description}
-                </div>
-              </section>
-
-              <Separator className="my-10" />
-
-              {/* Activity */}
-              <section>
-                <h2 className="mb-6 text-lg font-semibold">Activity</h2>
-
-                <div className="space-y-8">
-                  {task.comments.length <= 0 ? (
-                    <p className="text-muted-foreground">No activity yet.</p>
-                  ) : (
-                    task.comments.map((comment) => (
-                      <div key={comment.id} className="flex gap-4">
-                        <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
-                          {comment.user.username[0].toUpperCase()}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="mb-1 flex items-center gap-3">
-                            <span className="font-medium">
-                              {comment.user.username}
-                            </span>
-
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(comment.created_at).toLocaleString()}
-                            </span>
-                          </div>
-
-                          <p className="text-muted-foreground">
-                            {comment.content}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Add comment */}
-
-                <div className="mt-10">
-                  <Textarea placeholder="Leave a comment..." rows={5} />
-
-                  <div className="mt-3 flex justify-end">
-                    <Button>Add comment</Button>
-                  </div>
-                </div>
-              </section>
+              </form>
             </div>
           </section>
 
@@ -236,8 +279,133 @@ function RouteComponent() {
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
         onDelete={onDelete}
-        isDeleting={isPending}
+        isDeleting={isDeleting}
       />
     </>
   )
 }
+
+// <section className="flex-1 overflow-y-auto">
+//     <div className="mx-auto max-w-4xl px-10 py-8">
+//       {/* Header */}
+//       <div className="flex items-start justify-between">
+//         <div>
+//           <div className="mb-3 flex gap-2">
+//             <Badge variant="outline">{task.label}</Badge>
+//             <Badge>{task.status}</Badge>
+//             <Badge variant="secondary">{task.priority}</Badge>
+//           </div>
+
+//           <h1 className="text-4xl font-semibold tracking-tight">
+//             {task.title}
+//           </h1>
+//         </div>
+
+//         <div className="flex gap-2">
+//           <EditTaskDialog
+//             task={{
+//               id: task.id,
+//               description: task.description,
+//               label: task.label,
+//               priority: task.priority,
+//               status: task.status,
+//               title: task.title,
+//               assignee: task.assignee,
+//             }}
+//             trigger={
+//               <Button variant="outline" size="sm">
+//                 Edit
+//               </Button>
+//             }
+//           />
+//           <Button
+//             onClick={() => {
+//               setDeleteOpen(true)
+//             }}
+//             variant="destructive"
+//             size="sm"
+//           >
+//             Delete
+//           </Button>
+//         </div>
+//       </div>
+
+//       <Separator className="my-8" />
+
+//       {/* Description */}
+//       <section>
+//         <h2 className="mb-4 text-lg font-semibold">Description</h2>
+
+//         <div className="prose prose-invert max-w-none text-muted-foreground">
+//           {task.description}
+//         </div>
+//       </section>
+
+//       <Separator className="my-10" />
+
+//       {/* Activity */}
+//       <section>
+//         <h2 className="mb-6 text-lg font-semibold">Activity</h2>
+
+//         <div className="space-y-8">
+//           {task.comments.length <= 0 ? (
+//             <p className="text-muted-foreground">No activity yet.</p>
+//           ) : (
+//             task.comments.map((comment) => (
+//               <div key={comment.id} className="flex gap-4">
+//                 <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
+//                   {comment.user.username[0].toUpperCase()}
+//                 </div>
+
+//                 <div className="flex-1">
+//                   <div className="mb-1 flex items-center gap-3">
+//                     <span className="font-medium">
+//                       {comment.user.username}
+//                     </span>
+
+//                     <span className="text-xs text-muted-foreground">
+//                       {new Date(comment.created_at).toLocaleString()}
+//                     </span>
+//                   </div>
+
+//                   <p className="text-muted-foreground">
+//                     {comment.content}
+//                   </p>
+//                 </div>
+//               </div>
+//             ))
+//           )}
+//         </div>
+
+//         {/* Add comment */}
+
+//         <div className="mt-10">
+//           <form onSubmit={handleSubmit(onComment)}>
+//             <Controller
+//               control={control}
+//               name="content"
+//               render={({ field, fieldState }) => {
+//                 return (
+//                   <Field data-invalid={fieldState.invalid}>
+//                     <Textarea
+//                       disabled={isCommenting}
+//                       aria-invalid={fieldState.invalid}
+//                       {...field}
+//                       placeholder="Leave a comment..."
+//                       rows={5}
+//                     />
+//                   </Field>
+//                 )
+//               }}
+//             />
+
+//             <div className="mt-3 flex justify-end">
+//               <Button disabled={isCommenting}>
+//                 {isCommenting ? 'Add comment' : 'Commenting'}
+//               </Button>
+//             </div>
+//           </form>
+//         </div>
+//       </section>
+//     </div>
+//   </section>
