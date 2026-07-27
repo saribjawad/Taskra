@@ -9,16 +9,24 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { Button } from '#/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
 import { Field } from '#/components/ui/field'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
+import { useAuth } from '#/context/authContext'
 import { useCreateComment } from '#/hooks/comment.hooks'
 import { useDeleteTask, useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
 import usePreviousLocation from '#/hooks/usePreviousLocation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
+import { Ellipsis, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
@@ -46,8 +54,9 @@ const CreateCommentSchema = z.object({
 })
 
 function RouteComponent() {
-  const prevLocation = usePreviousLocation()
-  const navigate = useNavigate()
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const { user } = useAuth()
+
   const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(CreateCommentSchema),
     defaultValues: {
@@ -55,13 +64,16 @@ function RouteComponent() {
     },
   })
 
-  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask()
-  const { mutate: createComment, isPending: isCommenting } = useCreateComment()
+  // Get previous location
+  const prevLocation = usePreviousLocation()
 
-  const [deleteOpen, setDeleteOpen] = useState(false)
-
+  const navigate = useNavigate()
   const params = useParams({ strict: false })
   const isMobile = useIsMobile()
+
+  // Mutations
+  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask()
+  const { mutate: createComment, isPending: isCommenting } = useCreateComment()
   const { data: task, isLoading } = useGetTaskById({ taskId: params.taskId!! })
 
   function onDelete() {
@@ -84,6 +96,7 @@ function RouteComponent() {
     return <div>Loading</div>
   }
 
+  // TODO: Show a nice no task page
   if (!task) {
     return <div>Something went wrong try again</div>
   }
@@ -120,7 +133,6 @@ function RouteComponent() {
           <Separator />
         </div>
 
-        {/* <div className="flex lg:flex-row flex-col flex-1 w-full   justify-between "> */}
         <div className="flex lg:flex-row flex-col flex-1 w-full justify-between min-h-0 overflow-hidden">
           {/* Main */}
 
@@ -188,26 +200,68 @@ function RouteComponent() {
                     {task.comments.length <= 0 ? (
                       <p className="text-muted-foreground">No activity yet.</p>
                     ) : (
-                      task.comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-4">
-                          <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
-                            {comment.user.username[0].toUpperCase()}
-                          </div>
-                          <div className="flex-1">
-                            <div className="mb-1 flex items-center gap-3">
-                              <span className="font-medium">
-                                {comment.user.username}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(comment.created_at).toLocaleString()}
-                              </span>
+                      task.comments.map((comment) => {
+                        const isUsersComment = comment.user.id === user?.id
+
+                        return (
+                          <div
+                            key={comment.id}
+                            className="flex justify-between items-start"
+                          >
+                            <div className="flex gap-4 min-w-0 flex-1">
+                              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
+                                {comment.user.username[0].toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="mb-1 flex items-center gap-3">
+                                  <span className="font-medium">
+                                    {comment.user.username}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(
+                                      comment.created_at,
+                                    ).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground wrap-break-word">
+                                  {comment.content}
+                                </p>
+                              </div>
                             </div>
-                            <p className="text-muted-foreground">
-                              {comment.content}
-                            </p>
+
+                            {isUsersComment && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="shrink-0"
+                                  >
+                                    <Ellipsis />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  side="bottom"
+                                  className="mr-3"
+                                >
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                    }}
+                                    onSelect={() => {
+                                      setDeleteOpen(true)
+                                    }}
+                                  >
+                                    <Trash2 />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
-                        </div>
-                      ))
+                        )
+                      })
                     )}
                   </div>
                 </section>
@@ -284,128 +338,3 @@ function RouteComponent() {
     </>
   )
 }
-
-// <section className="flex-1 overflow-y-auto">
-//     <div className="mx-auto max-w-4xl px-10 py-8">
-//       {/* Header */}
-//       <div className="flex items-start justify-between">
-//         <div>
-//           <div className="mb-3 flex gap-2">
-//             <Badge variant="outline">{task.label}</Badge>
-//             <Badge>{task.status}</Badge>
-//             <Badge variant="secondary">{task.priority}</Badge>
-//           </div>
-
-//           <h1 className="text-4xl font-semibold tracking-tight">
-//             {task.title}
-//           </h1>
-//         </div>
-
-//         <div className="flex gap-2">
-//           <EditTaskDialog
-//             task={{
-//               id: task.id,
-//               description: task.description,
-//               label: task.label,
-//               priority: task.priority,
-//               status: task.status,
-//               title: task.title,
-//               assignee: task.assignee,
-//             }}
-//             trigger={
-//               <Button variant="outline" size="sm">
-//                 Edit
-//               </Button>
-//             }
-//           />
-//           <Button
-//             onClick={() => {
-//               setDeleteOpen(true)
-//             }}
-//             variant="destructive"
-//             size="sm"
-//           >
-//             Delete
-//           </Button>
-//         </div>
-//       </div>
-
-//       <Separator className="my-8" />
-
-//       {/* Description */}
-//       <section>
-//         <h2 className="mb-4 text-lg font-semibold">Description</h2>
-
-//         <div className="prose prose-invert max-w-none text-muted-foreground">
-//           {task.description}
-//         </div>
-//       </section>
-
-//       <Separator className="my-10" />
-
-//       {/* Activity */}
-//       <section>
-//         <h2 className="mb-6 text-lg font-semibold">Activity</h2>
-
-//         <div className="space-y-8">
-//           {task.comments.length <= 0 ? (
-//             <p className="text-muted-foreground">No activity yet.</p>
-//           ) : (
-//             task.comments.map((comment) => (
-//               <div key={comment.id} className="flex gap-4">
-//                 <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-zinc-800 text-sm font-medium">
-//                   {comment.user.username[0].toUpperCase()}
-//                 </div>
-
-//                 <div className="flex-1">
-//                   <div className="mb-1 flex items-center gap-3">
-//                     <span className="font-medium">
-//                       {comment.user.username}
-//                     </span>
-
-//                     <span className="text-xs text-muted-foreground">
-//                       {new Date(comment.created_at).toLocaleString()}
-//                     </span>
-//                   </div>
-
-//                   <p className="text-muted-foreground">
-//                     {comment.content}
-//                   </p>
-//                 </div>
-//               </div>
-//             ))
-//           )}
-//         </div>
-
-//         {/* Add comment */}
-
-//         <div className="mt-10">
-//           <form onSubmit={handleSubmit(onComment)}>
-//             <Controller
-//               control={control}
-//               name="content"
-//               render={({ field, fieldState }) => {
-//                 return (
-//                   <Field data-invalid={fieldState.invalid}>
-//                     <Textarea
-//                       disabled={isCommenting}
-//                       aria-invalid={fieldState.invalid}
-//                       {...field}
-//                       placeholder="Leave a comment..."
-//                       rows={5}
-//                     />
-//                   </Field>
-//                 )
-//               }}
-//             />
-
-//             <div className="mt-3 flex justify-end">
-//               <Button disabled={isCommenting}>
-//                 {isCommenting ? 'Add comment' : 'Commenting'}
-//               </Button>
-//             </div>
-//           </form>
-//         </div>
-//       </section>
-//     </div>
-//   </section>
