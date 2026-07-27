@@ -5,3 +5,7 @@ export async function createComment(taskId: string, comment: string) {
     content: comment,
   })
 }
+
+export async function deleteComment(taskId: string, commentId: string) {
+  await api.delete(`tasks/${taskId}/comments/${commentId}`)
+}

@@ -1,3 +1,4 @@
+import DeleteCommentDialog from '#/components/comments/DeleteCommentDialog'
 import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
 import { Badge } from '#/components/ui/badge'
@@ -20,7 +21,7 @@ import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/context/authContext'
-import { useCreateComment } from '#/hooks/comment.hooks'
+import { useCreateComment, useDeleteComment } from '#/hooks/comment.hooks'
 import { useDeleteTask, useGetTaskById } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
 import usePreviousLocation from '#/hooks/usePreviousLocation'
@@ -54,8 +55,11 @@ const CreateCommentSchema = z.object({
 })
 
 function RouteComponent() {
-  const [deleteOpen, setDeleteOpen] = useState(false)
   const { user } = useAuth()
+
+  const [taskDeleteOpen, setTaskDeleteOpen] = useState(false)
+  const [commentDeleteOpen, setCommentDeleteOpen] = useState(false)
+  const [selectedCommment, setSelectedComment] = useState<string | null>()
 
   const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(CreateCommentSchema),
@@ -72,15 +76,25 @@ function RouteComponent() {
   const isMobile = useIsMobile()
 
   // Mutations
-  const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask()
+  const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask()
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
+  const { mutate: deleteComment, isPending: isDeletingComment } =
+    useDeleteComment()
   const { data: task, isLoading } = useGetTaskById({ taskId: params.taskId!! })
 
-  function onDelete() {
+  function onTaskDelete() {
     deleteTask(params.taskId!!)
     navigate({
       to: prevLocation,
     })
+  }
+
+  function onCommentDelete() {
+    if (selectedCommment) {
+      deleteComment({ taskId: params.taskId!!, commentId: selectedCommment })
+    }
+    setSelectedComment(null)
+    setCommentDeleteOpen(false)
   }
 
   function onComment(data: z.infer<typeof CreateCommentSchema>) {
@@ -171,7 +185,7 @@ function RouteComponent() {
                       }
                     />
                     <Button
-                      onClick={() => setDeleteOpen(true)}
+                      onClick={() => setTaskDeleteOpen(true)}
                       variant="destructive"
                       size="sm"
                     >
@@ -248,9 +262,10 @@ function RouteComponent() {
                                     variant="destructive"
                                     onClick={(e) => {
                                       e.stopPropagation()
+                                      setSelectedComment(comment.id)
                                     }}
                                     onSelect={() => {
-                                      setDeleteOpen(true)
+                                      setCommentDeleteOpen(true)
                                     }}
                                   >
                                     <Trash2 />
@@ -330,10 +345,16 @@ function RouteComponent() {
         </div>
       </main>
       <DeleteTaskDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onDelete={onDelete}
-        isDeleting={isDeleting}
+        open={taskDeleteOpen}
+        onOpenChange={setTaskDeleteOpen}
+        onDelete={onTaskDelete}
+        isDeleting={isDeletingTask}
+      />
+      <DeleteCommentDialog
+        open={commentDeleteOpen}
+        onOpenChange={setCommentDeleteOpen}
+        isDeleting={isDeletingComment}
+        onDelete={onCommentDelete}
       />
     </>
   )
