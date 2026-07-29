@@ -6,6 +6,9 @@ export const api = axios.create({
   withCredentials: true,
 })
 
+// Define your public paths here
+const PUBLIC_ROUTES = ['/sign-in', '/sign-up']
+
 // Add a response interceptor
 api.interceptors.response.use(
   (response) => response,
@@ -25,7 +28,15 @@ api.interceptors.response.use(
         return api(originalRequest) // Retry the original request
       } catch (refreshError) {
         // Use router.navigate to change routes cleanly
-        router.navigate({ to: '/sign-in' })
+        const currentPath = window.location.pathname
+        const isPublicRoute = PUBLIC_ROUTES.some(
+          (route) =>
+            currentPath === route || currentPath.startsWith(route + '/'),
+        )
+
+        if (!isPublicRoute) {
+          router.navigate({ to: '/sign-in' })
+        }
         return Promise.reject(refreshError)
       }
     }
