@@ -16,7 +16,8 @@ export function generateAccessToken(
   activeWorkspace: string | null,
 ) {
   const accessToken = jwt.sign({ id, email, activeWorkspace }, env.JWT_SECRET, {
-    expiresIn: '600000ms', // 10 minutes
+    // expiresIn: '600000ms', // 10 minutes
+    expiresIn: '100000ms', // 10 minutes
   });
 
   return accessToken;

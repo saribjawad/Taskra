@@ -11,6 +11,7 @@ function PublicRoutesLayout() {
   const navigate = Route.useNavigate()
 
   useEffect(() => {
+    console.log('use effect')
     if (!isLoading && user) {
       if (user.activeWorkspace) {
         navigate({ to: '/' })
