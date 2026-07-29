@@ -13,6 +13,12 @@ api.interceptors.response.use(
     const originalRequest = error.config
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true // Mark the request as retired to avoid infinite loop
+
+      // Break the loop if the refresh call itself failed with a 401
+      if (originalRequest.url?.includes('/refresh-access-token')) {
+        return Promise.reject(error)
+      }
+
       try {
         await api.post('/refresh-access-token')
 
