@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
 import { useSignUp } from '#/hooks/auth.hooks'
+import { Spinner } from '#/components/ui/spinner'
 
 const SignUpFormSchema = z
   .object({
@@ -54,9 +55,6 @@ function RouteComponent() {
 
   function onSubmit(data: z.infer<typeof SignUpFormSchema>) {
     signUpMutation(data)
-
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   return (
@@ -82,6 +80,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="sign-up-username"
                         placeholder="sarib"
                         autoComplete="username"
@@ -102,6 +101,7 @@ function RouteComponent() {
                       <FieldLabel htmlFor="sign-up-email">Email</FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="sign-up-email"
                         placeholder="sarib@gmail.com"
                         autoComplete="email"
@@ -124,6 +124,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="sign-up-password"
                         type="password"
                         placeholder="••••••••"
@@ -147,6 +148,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="sign-up-confirm-password"
                         type="password"
                         placeholder="••••••••"
@@ -167,13 +169,15 @@ function RouteComponent() {
             <Field orientation="vertical" className="justify-end">
               <Button
                 type="button"
+                disabled={isPending}
                 variant="outline"
                 onClick={() => form.reset()}
               >
                 Reset
               </Button>
 
-              <Button type="submit" form="sign-up-form">
+              <Button disabled={isPending} type="submit" form="sign-up-form">
+                {isPending && <Spinner />}
                 Create Account
               </Button>
             </Field>
@@ -182,7 +186,7 @@ function RouteComponent() {
 
         <div className="flex justify-center gap-1 text-sm">
           <p>Already have an account?</p>
-          <Link to="/sign-in">
+          <Link disabled={isPending} to="/sign-in">
             <strong>Sign in</strong>
           </Link>
         </div>

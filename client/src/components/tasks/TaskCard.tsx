@@ -38,10 +38,12 @@ function TaskCard(props: TaskCardProps) {
     <>
       <div
         onClick={() => {
-          navigate({
-            to: '/$workspaceId/tasks/$taskId',
-            params: { workspaceId: workspaceId!!, taskId: props.id },
-          })
+          if (!isPending) {
+            navigate({
+              to: '/$workspaceId/tasks/$taskId',
+              params: { workspaceId: workspaceId!!, taskId: props.id },
+            })
+          }
         }}
         key={props.id}
         className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent/40 cursor-pointer"
@@ -63,6 +65,7 @@ function TaskCard(props: TaskCardProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="bottom" className="mr-3">
                   <DropdownMenuItem
+                    disabled={isPending}
                     variant="destructive"
                     onClick={(e) => {
                       e.stopPropagation()

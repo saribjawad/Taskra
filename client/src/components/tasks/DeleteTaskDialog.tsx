@@ -9,6 +9,7 @@ import {
 } from '../ui/dialog'
 import { Button } from '../ui/button'
 import { TriangleAlert } from 'lucide-react'
+import { Spinner } from '../ui/spinner'
 
 interface DeleteTaskDialogProps {
   open: boolean
@@ -21,7 +22,7 @@ function DeleteTaskDialog({
   open,
   onOpenChange,
   onDelete,
-  isDeleting = false,
+  isDeleting,
 }: DeleteTaskDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +52,8 @@ function DeleteTaskDialog({
             disabled={isDeleting}
             onClick={onDelete}
           >
-            {isDeleting ? 'Deleting...' : 'Delete task'}
+            {isDeleting && <Spinner />}
+            Delete task
           </Button>
         </DialogFooter>
       </DialogContent>

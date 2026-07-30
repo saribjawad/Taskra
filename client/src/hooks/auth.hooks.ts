@@ -95,6 +95,8 @@ export const useResendCode = () => {
 }
 
 export const useForgotPassword = () => {
+  const navigate = useNavigate()
+
   return useMutation({
     mutationFn: (email: string) => forgotPassword(email),
     onError: (err: AxiosError<ApiErrorResponse>) => {
@@ -106,11 +108,16 @@ export const useForgotPassword = () => {
       toast(
         "If an account exists for that email, we've sent a password reset link to it.",
       )
+      navigate({
+        to: '/sign-in',
+      })
     },
   })
 }
 
 export const useResetPassword = () => {
+  const navigate = useNavigate()
+
   return useMutation({
     mutationFn: ({ token, password }: { token: string; password: string }) =>
       resetPassword(token, password),
@@ -123,6 +130,9 @@ export const useResetPassword = () => {
       toast(
         'Your password has been reset. You can now sign in with your new password.',
       )
+      navigate({
+        to: '/sign-in',
+      })
     },
   })
 }

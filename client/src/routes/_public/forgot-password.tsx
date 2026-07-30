@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
 import { useForgotPassword } from '#/hooks/auth.hooks'
+import { Spinner } from '#/components/ui/spinner'
 
 export const ForgotPasswordSchema = z.object({
   email: z.email('Invalid email'),
@@ -43,9 +44,6 @@ function RouteComponent() {
 
   function onSubmit(data: ForgotPasswordFormPayload) {
     forgotPasswordMutation(data.email)
-
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   return (
@@ -77,6 +75,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="forgot-password-email"
                         placeholder="sarib@gmail.com"
                         autoComplete="email"
@@ -95,6 +94,7 @@ function RouteComponent() {
           <CardFooter className="justify-center">
             <Field orientation="vertical" className="justify-end">
               <Button
+                disabled={isPending}
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}
@@ -102,7 +102,12 @@ function RouteComponent() {
                 Reset
               </Button>
 
-              <Button type="submit" form="forgot-password-form">
+              <Button
+                disabled={isPending}
+                type="submit"
+                form="forgot-password-form"
+              >
+                {isPending && <Spinner />}
                 Send Reset Link
               </Button>
             </Field>
@@ -111,7 +116,7 @@ function RouteComponent() {
 
         <div className="flex justify-center gap-1 text-sm">
           <p>Remembered your password?</p>
-          <Link to="/sign-in">
+          <Link disabled={isPending} to="/sign-in">
             <strong>Sign in</strong>
           </Link>
         </div>

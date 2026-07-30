@@ -17,6 +17,7 @@ import { Check, ChevronsUpDownIcon, PlusIcon, Trash2 } from 'lucide-react'
 import { useNavigate } from '@tanstack/react-router'
 import { useDeleteWorkspace, useSwitchWorkspace } from '#/hooks/workspace.hooks'
 import { useAuth } from '#/context/auth/auth-hook'
+import { Spinner } from './ui/spinner'
 
 interface WorkspaceSwitcherProps {
   workspaces: {
@@ -32,7 +33,6 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
   const { isMobile } = useSidebar()
   const activeWorkspace = workspaces.find((w) => w.id === user?.activeWorkspace)
 
-  // TODO: add loading indicator
   const { mutate: switchWorkspace, isPending } = useSwitchWorkspace()
   const navigate = useNavigate()
 
@@ -46,6 +46,7 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
+              disabled={isPending}
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
@@ -74,6 +75,7 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
 
               return (
                 <DropdownMenuItem
+                  disabled={isPending}
                   key={index}
                   onClick={() => switchWorkspace(w.id)}
                   className="gap-2 p-2"
@@ -88,20 +90,16 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
                     onClick={(e) => {
                       e.stopPropagation()
                       deleteWorkspace(w.id)
-                      // TODO: add loading spinners
-                      console.log(
-                        'Is deleteing workspace pending',
-                        isDeleteingWorkspacePending,
-                      )
                     }}
                   >
-                    <Trash2 />
+                    {isPending ? <Spinner /> : <Trash2 />}
                   </DropdownMenuShortcut>
                 </DropdownMenuItem>
               )
             })}
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              disabled={isPending}
               className="gap-2 p-2"
               onClick={() => {
                 navigate({

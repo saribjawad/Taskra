@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from '../ui/select'
 import { useUpdateTask } from '#/hooks/task.hook'
-// import { useUpdateTask } from '#/hooks/task.hook'
+import { Spinner } from '../ui/spinner'
 
 interface EditTaskDialogProps {
   trigger: ReactElement
@@ -140,11 +140,21 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
 
             {/* Button */}
             <div>
-              <Button variant="ghost" type="button" size="icon-sm">
+              <Button
+                disabled={isPending}
+                variant="ghost"
+                type="button"
+                size="icon-sm"
+              >
                 <Maximize2 />
               </Button>
               <DialogClose asChild>
-                <Button variant="ghost" type="button" size="icon-sm">
+                <Button
+                  disabled={isPending}
+                  variant="ghost"
+                  type="button"
+                  size="icon-sm"
+                >
                   <X />
                 </Button>
               </DialogClose>
@@ -162,6 +172,7 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Title</FieldLabel>
                   <Input
+                    disabled={isPending}
                     {...field}
                     id={field.name}
                     aria-invalid={fieldState.invalid}
@@ -182,6 +193,7 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Description</FieldLabel>
                   <Textarea
+                    disabled={isPending}
                     {...field}
                     id={field.name}
                     aria-invalid={fieldState.invalid}
@@ -208,7 +220,11 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Status</FieldLabel>
 
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      disabled={isPending}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
@@ -243,7 +259,11 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Priority</FieldLabel>
 
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      disabled={isPending}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
@@ -278,7 +298,11 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Label</FieldLabel>
 
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      disabled={isPending}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
@@ -314,6 +338,7 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                     <FieldLabel htmlFor={field.name}>Assignee</FieldLabel>
 
                     <Select value={field.value} onValueChange={field.onChange}>
+                      disabled={isPending}
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
@@ -321,7 +346,6 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                       >
                         <SelectValue placeholder="Select assignee" />
                       </SelectTrigger>
-
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Assignee</SelectLabel>
@@ -345,14 +369,14 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
 
           <DialogFooter className="mt-6">
             <DialogClose asChild>
-              <Button type="button" variant="outline">
+              <Button disabled={isPending} type="button" variant="outline">
                 Cancel
               </Button>
             </DialogClose>
 
-            {/* TODO: add proper spinner and disabled fields */}
             <Button type="submit" disabled={isPending}>
-              {isPending ? 'Saving...' : 'Save changes'}
+              {isPending && <Spinner />}
+              Save changes
             </Button>
           </DialogFooter>
         </form>

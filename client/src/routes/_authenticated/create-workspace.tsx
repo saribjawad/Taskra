@@ -1,6 +1,7 @@
 import { Button } from '#/components/ui/button'
 import { Field, FieldError, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
+import { Spinner } from '#/components/ui/spinner'
 import { useCreateWorkspace } from '#/hooks/workspace.hooks'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute } from '@tanstack/react-router'
@@ -34,9 +35,6 @@ function RouteComponent() {
 
   function onSubmit(data: z.infer<typeof CreateWorkspaceFormSchema>) {
     createWorkspaceMutate(data)
-
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   return (
@@ -62,6 +60,7 @@ function RouteComponent() {
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="create-workspace-name">Name</FieldLabel>
               <Input
+                disabled={isPending}
                 {...field}
                 id="create-workspace-name"
                 aria-invalid={fieldState.invalid}
@@ -72,7 +71,8 @@ function RouteComponent() {
             </Field>
           )}
         />
-        <Button type="submit" form="create-workspace-form">
+        <Button disabled={isPending} type="submit" form="create-workspace-form">
+          {isPending && <Spinner />}
           Create Workspace
         </Button>
       </form>

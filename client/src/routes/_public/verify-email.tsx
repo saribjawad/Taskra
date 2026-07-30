@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
 import { useResendCode, useVerifyEmail } from '#/hooks/auth.hooks'
-// import { useVerifyEmail } from '#/hooks/auth.hooks'
+import { Spinner } from '#/components/ui/spinner'
 
 export const VerifyEmailSchema = z.object({
   email: z.string('Email is required').min(1, 'Email is required'),
@@ -58,8 +58,6 @@ function RouteComponent() {
 
   function onSubmit(data: VerifyEmailFormPayload) {
     verifyEmailMutation(data)
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   function onResend() {
@@ -116,6 +114,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending || isResendingCode}
                         id="verify-email-code"
                         placeholder="123456"
                         inputMode="numeric"
@@ -136,6 +135,7 @@ function RouteComponent() {
           <CardFooter className="justify-center">
             <Field orientation="vertical" className="justify-end">
               <Button
+                disabled={isPending || isResendingCode}
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}
@@ -143,7 +143,12 @@ function RouteComponent() {
                 Reset
               </Button>
 
-              <Button type="submit" form="verify-email-form">
+              <Button
+                disabled={isPending || isResendingCode}
+                type="submit"
+                form="verify-email-form"
+              >
+                {isPending && <Spinner />}
                 Verify Email
               </Button>
             </Field>
@@ -154,6 +159,7 @@ function RouteComponent() {
           <p>Didn&apos;t receive a code?</p>
 
           <Button
+            disabled={isPending || isResendingCode}
             size="xs"
             variant="link"
             onClick={() => onResend()}

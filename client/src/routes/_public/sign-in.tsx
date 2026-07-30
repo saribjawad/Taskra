@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
 import { useSignIn } from '#/hooks/auth.hooks'
+import { Spinner } from '#/components/ui/spinner'
 
 const SignInFormSchema = z.object({
   email: z.email('Invalid email'),
@@ -46,9 +47,6 @@ function RouteComponent() {
 
   function onSubmit(data: z.infer<typeof SignInFormSchema>) {
     signInMutate(data)
-
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   return (
@@ -74,6 +72,7 @@ function RouteComponent() {
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="sign-in-email">Email</FieldLabel>
                       <Input
+                        disabled={isPending}
                         {...field}
                         id="sign-in-email"
                         aria-invalid={fieldState.invalid}
@@ -96,6 +95,7 @@ function RouteComponent() {
                       </FieldLabel>
                       <Input
                         {...field}
+                        disabled={isPending}
                         id="sign-in-password"
                         type="password"
                         aria-invalid={fieldState.invalid}
@@ -110,6 +110,7 @@ function RouteComponent() {
                 />
               </FieldGroup>
               <Button
+                disabled={isPending}
                 className="self-end"
                 type="button"
                 variant="link"
@@ -127,13 +128,15 @@ function RouteComponent() {
           <CardFooter className="justify-center">
             <Field orientation="vertical" className="justify-end">
               <Button
+                disabled={isPending}
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}
               >
                 Reset
               </Button>
-              <Button type="submit" form="sign-in-form">
+              <Button disabled={isPending} type="submit" form="sign-in-form">
+                {isPending && <Spinner />}
                 Sign in
               </Button>
             </Field>
@@ -141,7 +144,7 @@ function RouteComponent() {
         </Card>
         <div className="flex text-sm justify-center gap-1">
           <p>Don't have an account?</p>
-          <Link to="/sign-up">
+          <Link disabled={isPending} to="/sign-up">
             <strong>Sign up now</strong>
           </Link>
         </div>

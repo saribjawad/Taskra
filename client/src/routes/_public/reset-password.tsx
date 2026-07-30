@@ -20,6 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { Button } from '#/components/ui/button'
 import { useResetPassword } from '#/hooks/auth.hooks'
+import { Spinner } from '#/components/ui/spinner'
 
 const resetPasswordSearchSchema = z.object({
   token: z.string().min(1),
@@ -58,9 +59,6 @@ function RouteComponent() {
 
   function onSubmit(data: ResetPasswordFormPayload) {
     resetPasswordMutation(data)
-
-    // TODO: add loading state
-    console.log('is pending', isPending)
   }
 
   return (
@@ -96,6 +94,7 @@ function RouteComponent() {
                         New Password
                       </FieldLabel>
                       <Input
+                        disabled={isPending}
                         {...field}
                         id="reset-password-password"
                         type="password"
@@ -119,6 +118,7 @@ function RouteComponent() {
                         Confirm New Password
                       </FieldLabel>
                       <Input
+                        disabled={isPending}
                         {...field}
                         id="reset-password-confirm-password"
                         type="password"
@@ -139,6 +139,7 @@ function RouteComponent() {
           <CardFooter className="justify-center">
             <Field orientation="vertical" className="justify-end">
               <Button
+                disabled={isPending}
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}
@@ -146,7 +147,12 @@ function RouteComponent() {
                 Reset
               </Button>
 
-              <Button type="submit" form="reset-password-form">
+              <Button
+                disabled={isPending}
+                type="submit"
+                form="reset-password-form"
+              >
+                {isPending && <Spinner />}
                 Reset Password
               </Button>
             </Field>
@@ -155,7 +161,7 @@ function RouteComponent() {
 
         <div className="flex justify-center gap-1 text-sm">
           <p>Remembered your password?</p>
-          <Link to="/sign-in">
+          <Link disabled={isPending} to="/sign-in">
             <strong>Sign in</strong>
           </Link>
         </div>
