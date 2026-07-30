@@ -14,9 +14,9 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Check, ChevronsUpDownIcon, PlusIcon, Trash2 } from 'lucide-react'
-import { useAuth } from '#/context/authContext'
 import { useNavigate } from '@tanstack/react-router'
 import { useDeleteWorkspace, useSwitchWorkspace } from '#/hooks/workspace.hooks'
+import { useAuth } from '#/context/auth/auth-hook'
 
 interface WorkspaceSwitcherProps {
   workspaces: {

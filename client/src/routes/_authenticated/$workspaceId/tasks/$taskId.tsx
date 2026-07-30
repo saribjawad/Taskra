@@ -21,7 +21,7 @@ import { Field } from '#/components/ui/field'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
-import { useAuth } from '#/context/authContext'
+import { useAuth } from '#/context/auth/auth-hook'
 import {
   useCreateComment,
   useDeleteComment,

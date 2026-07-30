@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { useAuth } from '#/context/authContext'
 import { useEffect } from 'react'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { useAuth } from '#/context/auth/auth-hook'
 
 export const Route = createFileRoute('/_authenticated')({
   component: AuthenticatedRoutesLayout,

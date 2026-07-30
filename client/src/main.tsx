@@ -1,9 +1,10 @@
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
-import { AuthContextProvider, useAuth } from './context/authContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from './components/ui/sonner'
+import { useAuth } from './context/auth/auth-hook'
+import { AuthContextProvider } from './context/auth/auth-provider'
 
 export const router = createRouter({
   routeTree,

@@ -32,11 +32,7 @@ export const Route = createFileRoute('/_public/forgot-password')({
 })
 
 function RouteComponent() {
-  const {
-    mutate: forgotPasswordMutation,
-    isPending,
-    isSuccess,
-  } = useForgotPassword()
+  const { mutate: forgotPasswordMutation, isPending } = useForgotPassword()
 
   const form = useForm({
     resolver: zodResolver(ForgotPasswordSchema),
