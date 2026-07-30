@@ -7,7 +7,7 @@ export const api = axios.create({
 })
 
 // Define your public paths here
-const PUBLIC_ROUTES = ['/sign-in', '/sign-up']
+const PUBLIC_ROUTES = ['/sign-in', '/sign-up', '/verify-email']
 
 // Add a response interceptor
 api.interceptors.response.use(

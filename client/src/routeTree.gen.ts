@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as PublicVerifyEmailRouteImport } from './routes/_public/verify-email'
 import { Route as PublicSignUpRouteImport } from './routes/_public/sign-up'
 import { Route as PublicSignInRouteImport } from './routes/_public/sign-in'
 import { Route as AuthenticatedCreateWorkspaceRouteImport } from './routes/_authenticated/create-workspace'
@@ -37,6 +38,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const PublicVerifyEmailRoute = PublicVerifyEmailRouteImport.update({
+  id: '/verify-email',
+  path: '/verify-email',
+  getParentRoute: () => PublicRoute,
 } as any)
 const PublicSignUpRoute = PublicSignUpRouteImport.update({
   id: '/sign-up',
@@ -115,6 +121,7 @@ export interface FileRoutesByFullPath {
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
+  '/verify-email': typeof PublicVerifyEmailRoute
   '/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdMyTasksRouteRouteWithChildren
   '/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/$workspaceId/my-tasks/all': typeof AuthenticatedWorkspaceIdMyTasksAllRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
+  '/verify-email': typeof PublicVerifyEmailRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdIndexRoute
   '/$workspaceId/my-tasks/all': typeof AuthenticatedWorkspaceIdMyTasksAllRoute
   '/$workspaceId/my-tasks/assigned': typeof AuthenticatedWorkspaceIdMyTasksAssignedRoute
@@ -145,6 +153,7 @@ export interface FileRoutesById {
   '/_authenticated/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/sign-up': typeof PublicSignUpRoute
+  '/_public/verify-email': typeof PublicVerifyEmailRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdMyTasksRouteRouteWithChildren
   '/_authenticated/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/create-workspace'
     | '/sign-in'
     | '/sign-up'
+    | '/verify-email'
     | '/$workspaceId/my-tasks'
     | '/$workspaceId/'
     | '/$workspaceId/my-tasks/all'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/create-workspace'
     | '/sign-in'
     | '/sign-up'
+    | '/verify-email'
     | '/$workspaceId'
     | '/$workspaceId/my-tasks/all'
     | '/$workspaceId/my-tasks/assigned'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/_authenticated/create-workspace'
     | '/_public/sign-in'
     | '/_public/sign-up'
+    | '/_public/verify-email'
     | '/_authenticated/'
     | '/_authenticated/$workspaceId/my-tasks'
     | '/_authenticated/$workspaceId/'
@@ -230,6 +242,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_public/verify-email': {
+      id: '/_public/verify-email'
+      path: '/verify-email'
+      fullPath: '/verify-email'
+      preLoaderRoute: typeof PublicVerifyEmailRouteImport
+      parentRoute: typeof PublicRoute
     }
     '/_public/sign-up': {
       id: '/_public/sign-up'
@@ -385,11 +404,13 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 interface PublicRouteChildren {
   PublicSignInRoute: typeof PublicSignInRoute
   PublicSignUpRoute: typeof PublicSignUpRoute
+  PublicVerifyEmailRoute: typeof PublicVerifyEmailRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
   PublicSignInRoute: PublicSignInRoute,
   PublicSignUpRoute: PublicSignUpRoute,
+  PublicVerifyEmailRoute: PublicVerifyEmailRoute,
 }
 
 const PublicRouteWithChildren =
