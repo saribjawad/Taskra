@@ -320,7 +320,7 @@ export const ForgotPassword = async (req: Request, res: Response) => {
   await createPasswordResetToken(user.id, tokenHash, expiresAt);
 
   await sendResetPasswordLinkEmail(
-    `http://localhost:3000/reset-password/${rawToken}`,
+    `${env.APP_URL}/reset-password?token=${rawToken}`,
   );
 
   return res

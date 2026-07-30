@@ -3,11 +3,12 @@ import routes from './routes';
 import { ErrorHandlerMiddleware } from './middlewares/errorHandler.middleware';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
+import { env } from './config/env';
 
 const app = express();
 app.use(
   cors({
-    origin: 'http://localhost:4000',
+    origin: env.APP_URL,
     credentials: true,
   }),
 );

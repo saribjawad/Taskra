@@ -6,6 +6,7 @@ dotenv.config({ path: './.env' });
 const envSchema = z.object({
   PORT: z.string(),
   APP_ENV: z.enum(['DEV', 'PROD']),
+  APP_URL: z.string(),
   PGHOST: z.string(),
   PGUSER: z.string(),
   PGPASSWORD: z.string(),
