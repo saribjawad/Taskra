@@ -3,6 +3,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 import { AuthContextProvider, useAuth } from './context/authContext'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from './components/ui/sonner'
 
 export const router = createRouter({
   routeTree,
@@ -34,6 +35,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <QueryClientProvider client={queryClient}>
       <AuthContextProvider>
+        <Toaster position="top-right" />
         <App />
       </AuthContextProvider>
     </QueryClientProvider>,

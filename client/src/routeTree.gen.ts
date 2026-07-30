@@ -15,6 +15,8 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as PublicVerifyEmailRouteImport } from './routes/_public/verify-email'
 import { Route as PublicSignUpRouteImport } from './routes/_public/sign-up'
 import { Route as PublicSignInRouteImport } from './routes/_public/sign-in'
+import { Route as PublicResetPasswordRouteImport } from './routes/_public/reset-password'
+import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as AuthenticatedCreateWorkspaceRouteImport } from './routes/_authenticated/create-workspace'
 import { Route as AuthenticatedWorkspaceIdRouteRouteImport } from './routes/_authenticated/$workspaceId/route'
 import { Route as AuthenticatedWorkspaceIdIndexRouteImport } from './routes/_authenticated/$workspaceId/index'
@@ -52,6 +54,16 @@ const PublicSignUpRoute = PublicSignUpRouteImport.update({
 const PublicSignInRoute = PublicSignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicResetPasswordRoute = PublicResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => PublicRoute,
 } as any)
 const AuthenticatedCreateWorkspaceRoute =
@@ -119,6 +131,8 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
+  '/reset-password': typeof PublicResetPasswordRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
   '/verify-email': typeof PublicVerifyEmailRoute
@@ -134,6 +148,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/forgot-password': typeof PublicForgotPasswordRoute
+  '/reset-password': typeof PublicResetPasswordRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
   '/verify-email': typeof PublicVerifyEmailRoute
@@ -151,6 +167,8 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/_authenticated/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/_authenticated/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/_public/forgot-password': typeof PublicForgotPasswordRoute
+  '/_public/reset-password': typeof PublicResetPasswordRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/sign-up': typeof PublicSignUpRoute
   '/_public/verify-email': typeof PublicVerifyEmailRoute
@@ -170,6 +188,8 @@ export interface FileRouteTypes {
     | '/'
     | '/$workspaceId'
     | '/create-workspace'
+    | '/forgot-password'
+    | '/reset-password'
     | '/sign-in'
     | '/sign-up'
     | '/verify-email'
@@ -185,6 +205,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/create-workspace'
+    | '/forgot-password'
+    | '/reset-password'
     | '/sign-in'
     | '/sign-up'
     | '/verify-email'
@@ -201,6 +223,8 @@ export interface FileRouteTypes {
     | '/_public'
     | '/_authenticated/$workspaceId'
     | '/_authenticated/create-workspace'
+    | '/_public/forgot-password'
+    | '/_public/reset-password'
     | '/_public/sign-in'
     | '/_public/sign-up'
     | '/_public/verify-email'
@@ -262,6 +286,20 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof PublicSignInRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/reset-password': {
+      id: '/_public/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof PublicResetPasswordRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/forgot-password': {
+      id: '/_public/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof PublicForgotPasswordRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_authenticated/create-workspace': {
@@ -402,12 +440,16 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface PublicRouteChildren {
+  PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
+  PublicResetPasswordRoute: typeof PublicResetPasswordRoute
   PublicSignInRoute: typeof PublicSignInRoute
   PublicSignUpRoute: typeof PublicSignUpRoute
   PublicVerifyEmailRoute: typeof PublicVerifyEmailRoute
 }
 
 const PublicRouteChildren: PublicRouteChildren = {
+  PublicForgotPasswordRoute: PublicForgotPasswordRoute,
+  PublicResetPasswordRoute: PublicResetPasswordRoute,
   PublicSignInRoute: PublicSignInRoute,
   PublicSignUpRoute: PublicSignUpRoute,
   PublicVerifyEmailRoute: PublicVerifyEmailRoute,

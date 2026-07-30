@@ -21,6 +21,12 @@ interface VerifyEmailResponse {
   success: true
 }
 
+interface ForgotPasswordResponse {
+  statusCode: 200
+  message: string
+  success: true
+}
+
 export async function signIn(
   payload: SignInFormPayload,
 ): Promise<SignInResponse> {
@@ -48,6 +54,28 @@ export async function verifyEmail(
 export async function resendCode(email: string): Promise<VerifyEmailResponse> {
   const resp = await api.post('/resend-code', {
     email,
+  })
+
+  return resp.data.data
+}
+
+export async function forgotPassword(
+  email: string,
+): Promise<ForgotPasswordResponse> {
+  const resp = await api.post('/forgot-password', {
+    email,
+  })
+
+  return resp.data.data
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<ForgotPasswordResponse> {
+  const resp = await api.patch('/reset-password', {
+    token,
+    newPassword,
   })
 
   return resp.data.data

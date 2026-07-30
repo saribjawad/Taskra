@@ -14,7 +14,7 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Controller, useForm } from 'react-hook-form'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Input } from '#/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
@@ -150,12 +150,17 @@ function RouteComponent() {
           </CardFooter>
         </Card>
 
-        <div className="flex justify-center gap-1 text-sm">
+        <div className="flex justify-center  text-sm">
           <p>Didn&apos;t receive a code?</p>
 
-          <span onClick={() => onResend()}>
+          <Button
+            size="xs"
+            variant="link"
+            onClick={() => onResend()}
+            className="cursor-pointer"
+          >
             <strong>Resend</strong>
-          </span>
+          </Button>
         </div>
       </div>
     </main>

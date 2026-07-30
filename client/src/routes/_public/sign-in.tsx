@@ -14,7 +14,7 @@ import {
   FieldLabel,
 } from '#/components/ui/field'
 import { Controller, useForm } from 'react-hook-form'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Input } from '#/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
@@ -33,6 +33,7 @@ export const Route = createFileRoute('/_public/sign-in')({
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const { mutate: signInMutate, isPending } = useSignIn()
 
   const form = useForm({
@@ -60,7 +61,11 @@ function RouteComponent() {
             <CardAction>Logo</CardAction>
           </CardHeader>
           <CardContent>
-            <form id="sign-in-form" onSubmit={form.handleSubmit(onSubmit)}>
+            <form
+              id="sign-in-form"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex flex-col gap-1"
+            >
               <FieldGroup>
                 <Controller
                   name="email"
@@ -104,6 +109,19 @@ function RouteComponent() {
                   )}
                 />
               </FieldGroup>
+              <Button
+                className="self-end"
+                type="button"
+                variant="link"
+                size="xs"
+                onClick={() => {
+                  navigate({
+                    to: '/forgot-password',
+                  })
+                }}
+              >
+                Forgot password?
+              </Button>
             </form>
           </CardContent>
           <CardFooter className="justify-center">

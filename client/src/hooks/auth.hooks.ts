@@ -2,11 +2,19 @@ import { router } from '#/main'
 import type { SignInFormPayload } from '#/routes/_public/sign-in'
 import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 import type { VerifyEmailFormPayload } from '#/routes/_public/verify-email'
-import { resendCode, signIn, signUp, verifyEmail } from '#/service/auth.service'
+import {
+  forgotPassword,
+  resendCode,
+  resetPassword,
+  signIn,
+  signUp,
+  verifyEmail,
+} from '#/service/auth.service'
 import type { ApiErrorResponse } from '#/type'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { AxiosError } from 'axios'
+import { toast } from 'sonner'
 
 export const useSignIn = () => {
   const navigate = useNavigate()
@@ -40,10 +48,10 @@ export const useSignUp = () => {
       // TODO: add err toast
       const serverErrorMessage =
         err.response?.data.message || 'An error occurred'
-      console.error('error inside the on error', serverErrorMessage)
+      toast.error(serverErrorMessage)
     },
     onSuccess: async (_, variables) => {
-      // TODO: add code message toast
+      toast('Verify your email to get started')
       navigate({
         to: `/verify-email?email=${variables.email}`,
       })
@@ -63,7 +71,7 @@ export const useVerifyEmail = () => {
       console.error('error inside the on error', serverErrorMessage)
     },
     onSuccess: async () => {
-      // TODO: add code message toast
+      toast('Email verified')
       navigate({
         to: '/sign-in',
       })
@@ -81,7 +89,40 @@ export const useResendCode = () => {
       console.error('error inside the on error', serverErrorMessage)
     },
     onSuccess: async () => {
-      // TODO: add code message toast
+      toast('If an account exists, a verification code has been sent.')
+    },
+  })
+}
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: (email: string) => forgotPassword(email),
+    onError: (err: AxiosError<ApiErrorResponse>) => {
+      const serverErrorMessage =
+        err.response?.data.message || 'An error occurred'
+      toast.error(serverErrorMessage)
+    },
+    onSuccess: () => {
+      toast(
+        "If an account exists for that email, we've sent a password reset link to it.",
+      )
+    },
+  })
+}
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: ({ token, password }: { token: string; password: string }) =>
+      resetPassword(token, password),
+    onError: (err: AxiosError<ApiErrorResponse>) => {
+      const serverErrorMessage =
+        err.response?.data.message || 'An error occurred'
+      toast.error(serverErrorMessage)
+    },
+    onSuccess: () => {
+      toast(
+        'Your password has been reset. You can now sign in with your new password.',
+      )
     },
   })
 }
