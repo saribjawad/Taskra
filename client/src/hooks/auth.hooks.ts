@@ -7,6 +7,7 @@ import {
   resendCode,
   resetPassword,
   signIn,
+  signOut,
   signUp,
   verifyEmail,
 } from '#/service/auth.service'
@@ -23,10 +24,9 @@ export const useSignIn = () => {
   return useMutation({
     mutationFn: (payload: SignInFormPayload) => signIn(payload),
     onError: (err: AxiosError<ApiErrorResponse>) => {
-      // TODO: add err toast
       const serverErrorMessage =
         err.response?.data.message || 'An error occurred'
-      console.error('error inside the on error', serverErrorMessage)
+      toast.error(serverErrorMessage)
     },
     onSuccess: async () => {
       // refetch useGetMe
@@ -34,6 +34,26 @@ export const useSignIn = () => {
       await router.invalidate() // re-runs beforeLoad with fresh auth
       navigate({
         to: '/',
+      })
+    },
+  })
+}
+
+export const useSignOut = () => {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => signOut(),
+    onError: (err: AxiosError<ApiErrorResponse>) => {
+      const serverErrorMessage =
+        err.response?.data.message || 'An error occurred'
+      toast.error(serverErrorMessage)
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(['me'], null)
+      navigate({
+        to: '/sign-in',
       })
     },
   })

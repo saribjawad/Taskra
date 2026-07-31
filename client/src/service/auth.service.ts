@@ -9,6 +9,12 @@ interface SignInResponse {
   success: true
 }
 
+interface SignOutResponse {
+  message: string
+  statusCode: 200
+  success: true
+}
+
 interface SignUpResponse {
   statusCode: 201
   message: string
@@ -31,6 +37,12 @@ export async function signIn(
   payload: SignInFormPayload,
 ): Promise<SignInResponse> {
   const resp = await api.post('/sign-in', payload)
+
+  return resp.data.data
+}
+
+export async function signOut(): Promise<SignOutResponse> {
+  const resp = await api.post('/sign-out')
 
   return resp.data.data
 }

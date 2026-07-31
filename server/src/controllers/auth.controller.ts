@@ -153,13 +153,14 @@ export const SignUpUser = async (req: Request, res: Response) => {
 };
 
 /**
- * Creates new user credentials and initiates the email verification process.
- * * If the user exists but is unverified, it updates their profile (password/username)
- * and re-issues a verification code instead of creating a duplicate record.
+ * Signs out the user
+ * Remove the cookies
  */
 export const SignOutUser = async (req: Request, res: Response) => {
   res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  res.clearCookie('refreshToken', {
+    path: '/api/v1/refresh-access-token',
+  });
 
   return res.status(200).json(new ApiResponse(200, 'User signed out'));
 };

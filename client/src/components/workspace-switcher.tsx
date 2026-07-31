@@ -92,7 +92,7 @@ export function WorkspaceSwitcher({ workspaces }: WorkspaceSwitcherProps) {
                       deleteWorkspace(w.id)
                     }}
                   >
-                    {isPending ? <Spinner /> : <Trash2 />}
+                    {isDeleteingWorkspacePending ? <Spinner /> : <Trash2 />}
                   </DropdownMenuShortcut>
                 </DropdownMenuItem>
               )
