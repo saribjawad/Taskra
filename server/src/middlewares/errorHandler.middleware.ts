@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import z, { ZodError } from 'zod';
 import { ApiError } from '../utils/ApiErrors';
 import logger from '../utils/logger';
+import { MulterError } from 'multer';
 
 export function ErrorHandlerMiddleware(
   err: Error,
@@ -9,6 +10,32 @@ export function ErrorHandlerMiddleware(
   res: Response,
   _next: NextFunction,
 ) {
+  // Handle Mutler Errors
+  if (err instanceof MulterError) {
+    if (err.code === 'LIMIT_UNEXPECTED_FILE' && err.field === 'images') {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message: 'Cannot add more than 3 images',
+      });
+    } else if (err.code === 'LIMIT_UNEXPECTED_FILE' && err.field === 'pdf') {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message: 'Cannot add more than 1 PDF',
+      });
+    } else if (
+      err.code === 'LIMIT_UNEXPECTED_FILE' &&
+      err.field === 'document'
+    ) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message: 'Cannot add more than 1 document',
+      });
+    }
+  }
+
   // Handler zod errors
   if (err instanceof ZodError) {
     const flattenError = z.flattenError(err);

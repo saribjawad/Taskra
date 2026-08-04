@@ -53,7 +53,7 @@ export const createTask = async (
   workspaceId: string,
   userId: string,
   assignee: string | null,
-) => {
+): Promise<Task> => {
   const result = await dbPool.query(
     `
     INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, created_by)

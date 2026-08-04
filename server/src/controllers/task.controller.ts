@@ -16,6 +16,8 @@ import {
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
 import { findCommentsByTaskId } from '../services/comment.service';
+import { FILE_TYPE, uploadFileToS3 } from '../config/s3';
+import { createAttachment } from '../services/attachment.service';
 
 // ==================================================================================
 // Task Controllers
@@ -24,17 +26,23 @@ import { findCommentsByTaskId } from '../services/comment.service';
 export const CreateTask = async (req: Request, res: Response) => {
   const userId = req.user.id;
   const activeWorkspace = req.user.activeWorkspace;
-  const parsedBody = CreateTaskSchema.parse(req.body);
 
-  const { assignee, description, label, priority, status, title } = parsedBody;
+  const parsedBody = CreateTaskSchema.parse({
+    body: req.body,
+    files: req.files,
+  });
+
+  const { body } = parsedBody;
+  const { description, label, priority, status, title, assignee } = body;
 
   let assigneeUser;
 
+  // If the assigne exists query the user
   if (assignee) {
     assigneeUser = await findUserById(assignee);
   }
 
-  const createdTask = await createTask(
+  const task = await createTask(
     title,
     description,
     status,
@@ -45,7 +53,35 @@ export const CreateTask = async (req: Request, res: Response) => {
     assigneeUser ? assigneeUser.id : null,
   );
 
-  if (!createdTask) {
+  // Upload files to s3 bucket
+  if (req.files) {
+    for (const [_, value] of Object.entries(req.files)) {
+      await Promise.all(
+        value.map(
+          async (v: any) =>
+            await uploadFileToS3(
+              v.mimetype as FILE_TYPE,
+              v.originalname,
+              v.buffer,
+            ),
+        ),
+      );
+    }
+  }
+
+  // Save the attachements in DB
+  if (req.files) {
+    for (const [_, value] of Object.entries(req.files)) {
+      await Promise.all(
+        value.map(
+          async (v: any) =>
+            await createAttachment(task.id, v.originalname, v.size, v.mimetype),
+        ),
+      );
+    }
+  }
+
+  if (!task) {
     throw ApiError.internal('Something went wrong while creating the task');
   }
 

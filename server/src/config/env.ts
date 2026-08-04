@@ -16,6 +16,10 @@ const envSchema = z.object({
   REFRESH_SECRET: z.string(),
   RESEND_SECRET: z.string(),
   VERIFY_TOKEN_SECRET: z.string(),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_BUCKET_NAME: z.string(),
+  AWS_REGION: z.string(),
 });
 
 export const env = envSchema.parse(process.env);

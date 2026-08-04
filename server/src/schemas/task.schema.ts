@@ -1,23 +1,20 @@
 import z from 'zod';
 
-// Resusable types
-
+// Resusable Schema
 const Status = z.enum(
   ['backlog', 'todo', 'in_progress', 'done', 'cancelled'],
   'Invalid status',
 );
-export type StatusType = z.infer<typeof Status>;
-
+const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label');
 const Filter = z.enum(['assigned', 'created', 'all']);
-export type FilterType = z.infer<typeof Filter>;
-
 const Priority = z.enum(
   ['urgent', 'high', 'medium', 'low', 'no_priority'],
   'Invalid priority',
 );
-export type Priority = z.infer<typeof Priority>;
 
-const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label');
+export type FilterType = z.infer<typeof Filter>;
+export type StatusType = z.infer<typeof Status>;
+export type Priority = z.infer<typeof Priority>;
 export type LabelType = z.infer<typeof Label>;
 
 // Schemas
@@ -41,15 +38,68 @@ export const GetTaskQuerySchema = z.object({
 });
 
 export const CreateTaskSchema = z.object({
-  title: z
-    .string('Invalid title')
-    .min(1, 'Title is required')
-    .max(250, 'Title cannot be more than 250 words'),
-  description: z.string('Invalid description'),
-  status: Status,
-  priority: Priority,
-  label: Label,
-  assignee: z.uuid('Invalid assignee').optional(),
+  body: z.object({
+    title: z
+      .string('Invalid title')
+      .min(1, 'Title is required')
+      .max(250, 'Title cannot be more than 250 words'),
+    description: z.string('Invalid description'),
+    status: Status,
+    priority: Priority,
+    label: Label,
+    assignee: z.uuid('Invalid assignee').optional(),
+  }),
+  files: z.object({
+    images: z
+      .array(
+        z.object({
+          mimetype: z
+            .string()
+            .refine(
+              (val) => ['image/jpeg', 'image/png', 'image/webp'].includes(val),
+              'Only JPEG, PNG, and WebP images are allowed',
+            ),
+          size: z
+            .number()
+            .max(5 * 1024 * 1024, 'File size must not exceed 5MB'),
+        }),
+      )
+      .max(3, 'Cannot add more than 3 images')
+      .optional(),
+    pdf: z
+      .array(
+        z.object({
+          mimetype: z
+            .string()
+            .refine(
+              (val) => ['application/pdf'].includes(val),
+              'Only PDF are allowed as PDF',
+            ),
+          size: z.number().max(5 * 1024 * 1024, 'PDF size must not exceed 5MB'),
+        }),
+      )
+      .max(1, 'Cannot add more than one PDF')
+      .optional(),
+    document: z
+      .array(
+        z.object({
+          mimetype: z
+            .string()
+            .refine(
+              (val) =>
+                [
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ].includes(val),
+              'Only DOCX are allowed as documents',
+            ),
+          size: z
+            .number()
+            .max(5 * 1024 * 1024, 'Document size must not exceed 5MB'),
+        }),
+      )
+      .max(1, 'Cannot add more than one Document')
+      .optional(),
+  }),
 });
 
 export const UpdateTaskSchema = z.object({
