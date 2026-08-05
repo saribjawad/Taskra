@@ -49,57 +49,62 @@ export const CreateTaskSchema = z.object({
     label: Label,
     assignee: z.uuid('Invalid assignee').optional(),
   }),
-  files: z.object({
-    images: z
-      .array(
-        z.object({
-          mimetype: z
-            .string()
-            .refine(
-              (val) => ['image/jpeg', 'image/png', 'image/webp'].includes(val),
-              'Only JPEG, PNG, and WebP images are allowed',
-            ),
-          size: z
-            .number()
-            .max(5 * 1024 * 1024, 'File size must not exceed 5MB'),
-        }),
-      )
-      .max(3, 'Cannot add more than 3 images')
-      .optional(),
-    pdf: z
-      .array(
-        z.object({
-          mimetype: z
-            .string()
-            .refine(
-              (val) => ['application/pdf'].includes(val),
-              'Only PDF are allowed as PDF',
-            ),
-          size: z.number().max(5 * 1024 * 1024, 'PDF size must not exceed 5MB'),
-        }),
-      )
-      .max(1, 'Cannot add more than one PDF')
-      .optional(),
-    document: z
-      .array(
-        z.object({
-          mimetype: z
-            .string()
-            .refine(
-              (val) =>
-                [
-                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                ].includes(val),
-              'Only DOCX are allowed as documents',
-            ),
-          size: z
-            .number()
-            .max(5 * 1024 * 1024, 'Document size must not exceed 5MB'),
-        }),
-      )
-      .max(1, 'Cannot add more than one Document')
-      .optional(),
-  }),
+  files: z
+    .object({
+      images: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) =>
+                  ['image/jpeg', 'image/png', 'image/webp'].includes(val),
+                'Only JPEG, PNG, and WebP images are allowed',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'File size must not exceed 5MB'),
+          }),
+        )
+        .max(3, 'Cannot add more than 3 images')
+        .optional(),
+      pdf: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) => ['application/pdf'].includes(val),
+                'Only PDF are allowed as PDF',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'PDF size must not exceed 5MB'),
+          }),
+        )
+        .max(1, 'Cannot add more than one PDF')
+        .optional(),
+      document: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) =>
+                  [
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  ].includes(val),
+                'Only DOCX are allowed as documents',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'Document size must not exceed 5MB'),
+          }),
+        )
+        .max(1, 'Cannot add more than one Document')
+        .optional(),
+    })
+    .optional(),
 });
 
 export const UpdateTaskSchema = z.object({
