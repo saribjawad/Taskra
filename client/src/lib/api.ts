@@ -1,4 +1,4 @@
-import { router } from '#/main'
+import { queryClient, router } from '#/main'
 import axios from 'axios'
 
 export const api = axios.create({
@@ -41,6 +41,8 @@ api.interceptors.response.use(
         )
 
         if (!isPublicRoute) {
+          // remove the query data for 'me' to prevent the loop
+          queryClient.setQueryData(['me'], null)
           router.navigate({ to: '/sign-in' })
         }
         return Promise.reject(refreshError)

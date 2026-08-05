@@ -141,7 +141,7 @@ function RouteComponent() {
 
   return (
     <>
-      <main className="h-screen w-full flex flex-col  ">
+      <main className="h-screen w-full flex flex-col">
         {/* Header */}
         <div className="flex flex-col gap-2  p-3">
           <nav className="flex items-center gap-3">
