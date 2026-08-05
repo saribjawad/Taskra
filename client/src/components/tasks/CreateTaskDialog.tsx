@@ -13,15 +13,8 @@ import { Maximize2, X } from 'lucide-react'
 import z from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '../ui/field'
+import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field'
 import { Input } from '../ui/input'
-import { Textarea } from '../ui/textarea'
 import {
   Select,
   SelectContent,
@@ -33,6 +26,14 @@ import {
 } from '../ui/select'
 import { useCreateTask } from '#/hooks/task.hook'
 import { Spinner } from '../ui/spinner'
+import TaskDescriptionEditor from './TaskDescriptionEditor'
+import AttachmentField, {
+  ACCEPTED_DOCUMENT_TYPES,
+  ACCEPTED_IMAGE_TYPES,
+  MAX_DOCUMENTS,
+  MAX_FILE_SIZE,
+  MAX_IMAGES,
+} from './AttachmentField'
 
 interface CreateTaskDialogProps {
   trigger: ReactElement
@@ -48,6 +49,58 @@ const Priority = z.enum(
 )
 const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label')
 
+const attachmentsSchema = z
+  .array(z.instanceof(File))
+  .optional()
+  .default([])
+  .superRefine((files, ctx) => {
+    if (!files || files.length === 0) return
+
+    const images = files.filter((f) => ACCEPTED_IMAGE_TYPES.includes(f.type))
+    const documents = files.filter((f) =>
+      ACCEPTED_DOCUMENT_TYPES.includes(f.type),
+    )
+    const invalid = files.filter(
+      (f) =>
+        !ACCEPTED_IMAGE_TYPES.includes(f.type) &&
+        !ACCEPTED_DOCUMENT_TYPES.includes(f.type),
+    )
+
+    if (invalid.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        expected: 'file',
+        message: `${invalid.map((f) => f.name).join(', ')}: unsupported file type`,
+      })
+    }
+
+    if (images.length > MAX_IMAGES) {
+      ctx.addIssue({
+        code: 'custom',
+        expected: 'file',
+        message: `You can attach a maximum of ${MAX_IMAGES} images`,
+      })
+    }
+
+    if (documents.length > MAX_DOCUMENTS) {
+      ctx.addIssue({
+        code: 'custom',
+        expected: 'file',
+        message: `You can attach a maximum of ${MAX_DOCUMENTS} document`,
+      })
+    }
+
+    files.forEach((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        ctx.addIssue({
+          code: 'custom',
+          expected: 'file',
+          message: `${file.name} exceeds the 5MB size limit`,
+        })
+      }
+    })
+  })
+
 const CreateTaskFormSchema = z.object({
   title: z
     .string('Invalid title')
@@ -58,6 +111,7 @@ const CreateTaskFormSchema = z.object({
   priority: Priority,
   label: Label,
   assignee: z.string('Invalid assignee').optional(),
+  attachments: attachmentsSchema,
 })
 
 export type CreateTaskFormPayload = z.infer<typeof CreateTaskFormSchema>
@@ -90,11 +144,11 @@ const tempAssigneeItems = [
   { label: 'Someone', value: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
 ]
 
-function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
+function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>()
 
   const { mutate: createTask, isPending } = useCreateTask()
-  const { handleSubmit, control, reset } = useForm({
+  const { handleSubmit, control, reset, trigger } = useForm({
     resolver: zodResolver(CreateTaskFormSchema),
     defaultValues: {
       title: '',
@@ -103,6 +157,7 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
       label: 'feature',
       priority: 'medium',
       status: 'todo',
+      attachments: [],
     },
   })
 
@@ -114,12 +169,17 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
     // Manually close the dialog and reset the form
     reset()
     setIsDialogOpen(false)
+
+    console.log(data)
   }
 
   return (
     <Dialog open={isDialogOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent showCloseButton={false} className="min-w-[35vw]">
+      <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col"
+      >
         {/* Header */}
         <DialogHeader>
           <div className="w-full  flex items-center justify-between">
@@ -151,8 +211,11 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
         </DialogHeader>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <FieldGroup className="overflow-y-auto">
             <Controller
               name="title"
               control={control}
@@ -174,33 +237,45 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
               )}
             />
 
+            {/* Task Description */}
             <Controller
               name="description"
               control={control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                  <Textarea
+                  <FieldLabel htmlFor={field.name}>Task Description</FieldLabel>
+                  <TaskDescriptionEditor
                     disabled={isPending}
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Add more details, links, acceptance criteria, or any relevant context..."
-                    autoComplete="off"
-                    className="h-44"
+                    value={field.value}
+                    onChange={field.onChange}
                   />
-                  <FieldDescription className="text-xs">
-                    Provide enough context so anyone on the team can understand
-                    and complete the task.
-                  </FieldDescription>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
                 </Field>
               )}
             />
+            {/* Attachments */}
+            <Controller
+              name="attachments"
+              control={control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Attachments</FieldLabel>
+                  <AttachmentField
+                    disabled={isPending}
+                    value={field.value ?? []}
+                    onChange={(files) => {
+                      field.onChange(files)
+                      trigger('attachments')
+                    }}
+                    error={fieldState.error?.message}
+                  />
+                </Field>
+              )}
+            />
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid md:grid-cols-4 gap-2 grid-cols-2">
               <Controller
                 name="status"
                 control={control}
@@ -216,7 +291,6 @@ function CreateTaskDialog({ trigger }: CreateTaskDialogProps) {
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
-                        className="w-full"
                       >
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>

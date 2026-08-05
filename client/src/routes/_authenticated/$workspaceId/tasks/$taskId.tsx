@@ -170,7 +170,6 @@ function RouteComponent() {
           </nav>
           <Separator />
         </div>
-
         <div className="flex lg:flex-row flex-col flex-1 w-full justify-between min-h-0 overflow-hidden">
           {/* Main */}
 

@@ -12,7 +12,7 @@ function usePreviousLocation() {
     })
   }, [])
 
-  return previousLocation
+  return previousLocation || '/'
 }
 
 export default usePreviousLocation

@@ -1,3 +1,4 @@
+import { ACCEPTED_IMAGE_TYPES } from '#/components/tasks/AttachmentField'
 import { api } from '#/lib/api'
 import type {
   Task,
@@ -87,10 +88,37 @@ export interface CreateTaskParams {
   priority: TaskPriorityType
   label: TaskLabelType
   assignee?: string
+  attachments: (File | undefined)[] | undefined
 }
 
 export async function createTask(params: CreateTaskParams): Promise<void> {
-  await api.post(`/tasks`, params)
+  const { attachments, description, label, priority, status, title, assignee } =
+    params
+
+  const formData = new FormData()
+
+  formData.append('title', title)
+  formData.append('description', description)
+  formData.append('status', status)
+  formData.append('priority', priority)
+  formData.append('label', label)
+  if (assignee) {
+    formData.append('assignee', assignee)
+  }
+
+  if (attachments) {
+    for (const file of attachments) {
+      if (file && ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        formData.append('images', file)
+      } else if (file && file.type === 'application/pdf') {
+        formData.append('pdf', file)
+      } else if (file) {
+        formData.append('document', file)
+      }
+    }
+  }
+
+  await api.post(`/tasks`, formData)
 }
 
 export interface UpdateTaskPayload {

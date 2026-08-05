@@ -142,3 +142,64 @@ body {
     @apply font-sans;
   }
 }
+
+/* Overriding styles of blocknote */
+.bn-container {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+.bn-editor {
+  padding: 10px !important;
+  overflow: scroll;
+  max-height: 400px;
+  min-height: 200px;
+  border: 1px solid var(--border);
+}
+
+.bn-block-content {
+  font-size: 14px;
+  padding-left: 0px;
+  color: var(--foreground) !important;
+  font-weight: var(--font-weight-medium) !important;
+}
+
+.bn-inline-content::before {
+  font-style: normal !important;
+}
+
+.bn-editor h1.bn-inline-content {
+  font-size: 28px;
+}
+
+.bn-editor h2.bn-inline-content {
+  font-size: 26px;
+}
+
+.bn-editor h3.bn-inline-content {
+  font-size: 24px;
+}
+
+.bn-editor h4.bn-inline-content {
+  font-size: 22px;
+}
+
+.bn-editor h5.bn-inline-content {
+  font-size: 20px;
+}
+
+.bn-editor h6.bn-inline-content {
+  font-size: 18px;
+}
+
+.bn-block-content[data-content-type='heading'][data-is-toggleable='true'] h1 {
+  font-size: 28px;
+}
+
+.bn-block-content[data-content-type='heading'][data-is-toggleable='true'] h2 {
+  font-size: 24px;
+}
+
+.bn-block-content[data-content-type='heading'][data-is-toggleable='true'] h3 {
+  font-size: 20px;
+}
