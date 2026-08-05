@@ -54,6 +54,7 @@ function TaskDescriptionEditor({
         tableHandles={false}
         emojiPicker={false}
         comments={false}
+        slashMenu={false}
         onChange={() => {
           onChange(JSON.stringify(editor.document))
         }}
