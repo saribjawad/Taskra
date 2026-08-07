@@ -196,7 +196,7 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
               >
                 <Maximize2 />
               </Button>
-              <DialogClose>
+              <DialogClose asChild>
                 <Button
                   disabled={isPending}
                   variant="ghost"
