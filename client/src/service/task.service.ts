@@ -46,6 +46,22 @@ export async function getTasks(
   return resp.data.data
 }
 
+type AttachmentsMimeTypes =
+  | 'image/jpeg'
+  | 'image/png'
+  | 'image/webp'
+  | 'application/pdf'
+  | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+type Attachments = {
+  id: string
+  task_id: string
+  name: string
+  size: number
+  mime_type: AttachmentsMimeTypes
+  created_at: Date
+}
+
 interface GetTaskResponse {
   id: string
   title: string
@@ -74,6 +90,7 @@ interface GetTaskResponse {
       created_at: Date
     },
   ]
+  attachments: Attachments[]
 }
 
 export async function getTaskById(taskId: string): Promise<GetTaskResponse> {

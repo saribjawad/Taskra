@@ -147,7 +147,7 @@ const tempAssigneeItems = [
 function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>()
 
-  const { mutate: createTask, isPending } = useCreateTask()
+  const { mutateAsync: createTask, isPending } = useCreateTask()
   const { handleSubmit, control, reset, trigger } = useForm({
     resolver: zodResolver(CreateTaskFormSchema),
     defaultValues: {
@@ -161,16 +161,14 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
     },
   })
 
-  function onSubmit(data: CreateTaskFormPayload) {
-    createTask({
+  async function onSubmit(data: CreateTaskFormPayload) {
+    await createTask({
       ...data,
       assignee: data.assignee === '' ? undefined : data.assignee,
     })
     // Manually close the dialog and reset the form
     reset()
     setIsDialogOpen(false)
-
-    console.log(data)
   }
 
   return (

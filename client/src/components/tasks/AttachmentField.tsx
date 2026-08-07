@@ -34,7 +34,6 @@ function getPreviewUrl(file: File) {
     url = URL.createObjectURL(file)
     previewCache.set(file, url)
   }
-  console.log('form get preview url', url)
   return url
 }
 
