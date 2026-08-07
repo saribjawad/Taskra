@@ -1,5 +1,5 @@
 import { dbPool } from '../db';
-import { AttachmentsMimeTypes } from '../models/attachments.model';
+import { Attachment, AttachmentsMimeTypes } from '../models/attachments.model';
 
 /**
  * Create attachments in database
@@ -30,4 +30,24 @@ export const createAttachment = async (
   );
 
   return result.rows[0];
+};
+
+/**
+ * Get task attachments
+ *
+ * @param taskId - Task uuid
+ * @returns Attachments
+ */
+export const getAttachmentsByTaskId = async (
+  taskId: string,
+): Promise<Attachment[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM attachments
+    WHERE task_id = $1
+    `,
+    [taskId],
+  );
+
+  return result.rows;
 };

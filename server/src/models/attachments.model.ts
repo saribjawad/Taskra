@@ -5,7 +5,7 @@ export type AttachmentsMimeTypes =
   | 'application/pdf'
   | 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-export type Attachments = {
+export type Attachment = {
   id: string;
   task_id: string;
   name: string;

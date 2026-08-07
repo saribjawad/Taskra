@@ -17,7 +17,10 @@ import {
 import { ApiResponse } from '../utils/ApiResponse';
 import { findCommentsByTaskId } from '../services/comment.service';
 import { FILE_TYPE, uploadFileToS3 } from '../config/s3';
-import { createAttachment } from '../services/attachment.service';
+import {
+  createAttachment,
+  getAttachmentsByTaskId,
+} from '../services/attachment.service';
 
 // ==================================================================================
 // Task Controllers
@@ -176,9 +179,14 @@ export const GetTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
+  // Get assignee details
   const assignee = await findUserById(task.assignee);
 
+  // Get task comments
   const comments = await findCommentsByTaskId(taskId);
+
+  // Get task attachments
+  const attachments = await getAttachmentsByTaskId(taskId);
 
   return res.status(200).json(
     new ApiResponse(200, 'success', {
@@ -193,8 +201,8 @@ export const GetTask = async (req: Request, res: Response) => {
         updated_at: c.updated_at,
         created_at: c.created_at,
       })),
+      attachments: attachments,
       // In case of no assignee
-
       ...(assignee
         ? {
             assignee: {
