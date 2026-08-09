@@ -5,6 +5,7 @@ import taskRouter from './task.routes';
 import commentRouter from './comment.route';
 import userRouter from './user.routes';
 import workspaceRouter from './workspace.routes';
+import attachmentRouter from './attachment.routes';
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use('/users', userRouter);
 router.use('/tasks', taskRouter);
 router.use('/tasks', commentRouter);
 router.use('/workspace', workspaceRouter);
+router.use('/attachment', attachmentRouter);
 
 export default router;

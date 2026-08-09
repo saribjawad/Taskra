@@ -11,5 +11,6 @@ export type Attachment = {
   name: string;
   size: number;
   mime_type: AttachmentsMimeTypes;
+  storage_id: string;
   created_at: Date;
 };
