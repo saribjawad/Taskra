@@ -16,11 +16,12 @@ import {
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
 import { findCommentsByTaskId } from '../services/comment.service';
-import { FILE_TYPE, uploadFileToS3 } from '../config/s3';
+import { FILE_TYPE, generatePresignedUrl, uploadFileToS3 } from '../config/s3';
 import {
   createAttachment,
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
+import { v4 as uuidv4 } from 'uuid';
 
 // ==================================================================================
 // Task Controllers
@@ -56,30 +57,25 @@ export const CreateTask = async (req: Request, res: Response) => {
     assigneeUser ? assigneeUser.id : null,
   );
 
-  // Upload files to s3 bucket
+  // Upload files to s3 bucket and save in DB
   if (req.files) {
     for (const [_, value] of Object.entries(req.files)) {
       await Promise.all(
-        value.map(
-          async (v: any) =>
-            await uploadFileToS3(
-              v.mimetype as FILE_TYPE,
-              v.originalname,
-              v.buffer,
-            ),
-        ),
-      );
-    }
-  }
+        value.map(async (v: any) => {
+          const storageId = `attachment/${v.originalname}-${uuidv4()}`;
 
-  // Save the attachements in DB
-  if (req.files) {
-    for (const [_, value] of Object.entries(req.files)) {
-      await Promise.all(
-        value.map(
-          async (v: any) =>
-            await createAttachment(task.id, v.originalname, v.size, v.mimetype),
-        ),
+          // Upload the file to s3
+          await uploadFileToS3(v.mimetype as FILE_TYPE, storageId, v.buffer);
+
+          // Save the attachment in DB
+          await createAttachment(
+            task.id,
+            v.originalname,
+            v.size,
+            v.mimetype,
+            storageId,
+          );
+        }),
       );
     }
   }
@@ -186,7 +182,7 @@ export const GetTask = async (req: Request, res: Response) => {
   const comments = await findCommentsByTaskId(taskId);
 
   // Get task attachments
-  const attachments = await getAttachmentsByTaskId(taskId);
+  let attachments = await getAttachmentsByTaskId(taskId);
 
   return res.status(200).json(
     new ApiResponse(200, 'success', {
