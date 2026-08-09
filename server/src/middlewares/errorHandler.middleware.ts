@@ -63,7 +63,6 @@ export function ErrorHandlerMiddleware(
     });
   }
 
-  console.log(err);
   logger.error(err);
 
   res.status(500).json({

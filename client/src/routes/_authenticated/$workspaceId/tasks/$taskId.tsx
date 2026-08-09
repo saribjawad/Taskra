@@ -23,6 +23,7 @@ import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/context/auth/auth-hook'
+import { useGetPresignedUrl } from '#/hooks/attachment.hooks'
 import {
   useCreateComment,
   useDeleteComment,
@@ -147,6 +148,7 @@ const CreateCommentSchema = z.object({
 function RouteComponent() {
   const { user } = useAuth()
 
+  // Use states
   const [taskDeleteOpen, setTaskDeleteOpen] = useState(false)
   const [commentDeleteOpen, setCommentDeleteOpen] = useState(false)
   const [commentUpdateOpen, setCommentUpdateOpen] = useState(false)
@@ -155,6 +157,7 @@ function RouteComponent() {
     content: string
   } | null>()
 
+  // Use form
   const { handleSubmit, reset, control } = useForm({
     resolver: zodResolver(CreateCommentSchema),
     defaultValues: {
@@ -162,12 +165,14 @@ function RouteComponent() {
     },
   })
 
+  // Hooks
   const prevLocation = usePreviousLocation()
 
   const navigate = useNavigate()
   const params = useParams({ strict: false })
   const isMobile = useIsMobile()
 
+  // Mutations
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask()
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
   const { mutate: deleteComment, isPending: isDeletingComment } =
@@ -175,6 +180,13 @@ function RouteComponent() {
   const { mutate: updateComment, isPending: isUpdatingComment } =
     useUpdateComment()
   const { data: task, isLoading } = useGetTaskById({ taskId: params.taskId!! })
+  const { mutate: getPresignedUrl, isPending: isGettingPresignedUrl } =
+    useGetPresignedUrl()
+
+  // Helpers
+  function onClickingAttachment(attachmentId: string) {
+    getPresignedUrl(attachmentId)
+  }
 
   function onTaskDelete() {
     deleteTask(params.taskId!!)
@@ -395,8 +407,11 @@ function RouteComponent() {
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {task.attachments.map((file) => (
                           <div
+                            onClick={() => {
+                              onClickingAttachment(file.id)
+                            }}
                             key={file.id}
-                            className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                            className="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 cursor-pointer"
                           >
                             <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
                               <AttachmentTypeIcon mimeType={file.mime_type} />
