@@ -15,7 +15,6 @@ export const GetPresignedUrlOfAttachment = async (
   res: Response,
 ) => {
   const activeWorkspaceId = req.user.activeWorkspace;
-  console.log(req.params);
   const { attachmentId } = z
     .object({ attachmentId: z.uuid('Invalid attachment ID') })
     .parse(req.params);
