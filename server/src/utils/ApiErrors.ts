@@ -29,6 +29,10 @@ export class ApiError extends Error {
     return new ApiError(400, message);
   }
 
+  static forbidden(message = 'Forbidden request') {
+    return new ApiError(403, message);
+  }
+
   static internal(message = 'Internal server error') {
     return new ApiError(500, message, [], false); // not operational
   }
