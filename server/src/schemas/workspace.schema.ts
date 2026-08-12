@@ -10,3 +10,13 @@ export const CreateWorkspaceSchema = z.object({
     .min(1, 'Name is requried')
     .max(250, 'Name cannot be more than 250 characters'),
 });
+
+export const InviteToWorkspaceSchema = z.object({
+  email: z.email('Invalid email'),
+});
+
+export const AcceptWorkspaceInviteSchema = z.object({
+  token: z.string().regex(/^[0-9a-fA-F]{64}$/, {
+    message: 'Token must be a 64-character hex string (32 bytes)',
+  }),
+});

@@ -8,7 +8,7 @@ import { WorkspaceMember } from '../models/workspace.model';
  * @param workspaceId - workspace UUID
  * @returns the workspace created
  */
-const getWorkspace = async (workspaceId: string) => {
+const getWorkspaceById = async (workspaceId: string): Promise<Workspace> => {
   const result = await dbPool.query(
     `
     SELECT * FROM workspace 
@@ -121,7 +121,7 @@ const createWorkspaceMember = async (
 };
 
 export {
-  getWorkspace,
+  getWorkspaceById,
   createWorkspace,
   deleteWorkspace,
   getUserWorkspaces,
