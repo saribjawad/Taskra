@@ -230,13 +230,20 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
   const user = await findUserById(userId);
   const workspace = await getWorkspaceById(workspaceId);
 
-  // Check if user is already member of workspace
   const userToBeInvited = await findUserByEmail(email);
+  if (!userToBeInvited) {
+    return res.status(200).json(new ApiResponse(200, 'User not found'));
+  }
 
-  if (userToBeInvited) {
+  // Check if user is already member of workspace
+  const userWorkspaceMemberShip = await getWorkspaceMember(
+    userToBeInvited.id,
+    workspaceId,
+  );
+  if (userWorkspaceMemberShip) {
     return res
       .status(200)
-      .json(new ApiResponse(200, 'User is already member of workspace'));
+      .json(new ApiResponse(200, 'User is already member of the workspace'));
   }
 
   // Create token
@@ -292,6 +299,12 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 
   if (!invitation) {
     throw ApiError.notFound('Invitation not found');
+  }
+
+  if (invitation.status === 'accepted') {
+    return res
+      .status(200)
+      .json(new ApiResponse(200, 'Invitation has been already accepted'));
   }
 
   if (invitation.status === 'revoked') {
