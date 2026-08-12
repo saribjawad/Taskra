@@ -7,6 +7,7 @@ import {
   DeleteWorkspace,
   GetUserWorkspaces,
   InviteToWorkspace,
+  RemoveMemberFromWorkspace,
   SwitchWorkspace,
 } from '../controllers/workspace.controller';
 
@@ -18,13 +19,23 @@ workspaceRouter
   .route('/')
   .get(asyncHandler(GetUserWorkspaces))
   .post(asyncHandler(CreateWorkspace));
+
 workspaceRouter
   .route('/:workspaceId')
   .delete(asyncHandler(DeleteWorkspace))
   .post(asyncHandler(SwitchWorkspace));
+
+workspaceRouter
+  .route('/:workspaceId/member/:memberId')
+  .delete(asyncHandler(RemoveMemberFromWorkspace));
+
 workspaceRouter.post('/:workspaceId/invite', asyncHandler(InviteToWorkspace));
 workspaceRouter.post(
   '/:workspaceId/invite/:token/accept',
+  asyncHandler(AcceptWorkspaceInvite),
+);
+workspaceRouter.post(
+  '/:workspaceId/invite/:token/decline',
   asyncHandler(AcceptWorkspaceInvite),
 );
 

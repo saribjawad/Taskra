@@ -41,11 +41,11 @@ const getUserWorkspaces = async (userId: string) => {
 };
 
 /**
- * Get workspaces of a user
+ * Get workspace membership of a user
  *
  * @param userId - user UUID
  * @param workspaceId - workspace UUID
- * @returns the workspace created
+ * @returns workspace member
  */
 const getWorkspaceMember = async (userId: string, workspaceId: string) => {
   const result = await dbPool.query(
@@ -120,6 +120,28 @@ const createWorkspaceMember = async (
   return result.rows[0];
 };
 
+/**
+ * Delete a workspace member
+ *
+ * @param userId - UUID of user
+ * @param workspaceID - UUID of workspace
+ * @returns number of rows deleted
+ */
+const deleteWorkspaceMember = async (
+  userId: string,
+  workspaceId: string,
+): Promise<number | null> => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM workspace_members
+    WHERE user_id = $1 & workspace_id = $2
+    `,
+    [userId, workspaceId],
+  );
+
+  return result.rowCount;
+};
+
 export {
   getWorkspaceById,
   createWorkspace,
@@ -127,4 +149,5 @@ export {
   getUserWorkspaces,
   getWorkspaceMember,
   createWorkspaceMember,
+  deleteWorkspaceMember,
 };

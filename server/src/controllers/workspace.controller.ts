@@ -4,6 +4,7 @@ import {
   createWorkspace,
   createWorkspaceMember,
   deleteWorkspace,
+  deleteWorkspaceMember,
   getUserWorkspaces,
   getWorkspaceById,
   getWorkspaceMember,
@@ -11,7 +12,9 @@ import {
 import {
   AcceptWorkspaceInviteSchema,
   CreateWorkspaceSchema,
+  DeclineWorkspaceInviteSchema,
   InviteToWorkspaceSchema,
+  RemoveMemberFromWorkspaceSchema,
   WorkspaceIdParamsSchema,
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
@@ -220,6 +223,49 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
   );
 };
 
+export const RemoveMemberFromWorkspace = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = req.user.id;
+  const { memberId, workspaceId } = RemoveMemberFromWorkspaceSchema.parse(
+    req.params,
+  );
+
+  const isUserMemberOfWorkspace = await getWorkspaceMember(userId, workspaceId);
+
+  if (!isUserMemberOfWorkspace) {
+    throw ApiError.forbidden(
+      'You do not have permission to remove members from this workspace',
+    );
+  }
+
+  const user = await findUserById(memberId);
+
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  const userWorkspaceMembership = await getWorkspaceMember(
+    memberId,
+    workspaceId,
+  );
+
+  if (!userWorkspaceMembership) {
+    throw ApiError.forbidden('User is not member of the workspace');
+  }
+
+  const deleteRowCount = await deleteWorkspaceMember(memberId, workspaceId);
+
+  if (!deleteRowCount || deleteRowCount < 1) {
+    throw ApiError.internal(
+      'Something went wrong while deleting the workspace member',
+    );
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Workspace member deleted'));
+};
+
 export const InviteToWorkspace = async (req: Request, res: Response) => {
   // TODO: add role option
 
@@ -344,4 +390,27 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Invite accepted'));
+};
+
+export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
+  const { token } = DeclineWorkspaceInviteSchema.parse(req.params);
+
+  const hashToken = crypto.hash('SHA-256', token);
+
+  const invitation = await getInvitationByHash(hashToken);
+
+  if (!invitation) {
+    throw ApiError.notFound('Invitation not found');
+  }
+
+  // Update the status to 'declined'
+  const updatedRows = await updateInvitationStatus(invitation.id, 'declined');
+
+  if (!updatedRows || updatedRows < 1) {
+    throw ApiError.internal(
+      'Something went wrong while updating the invitation status',
+    );
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Workspace invite declined'));
 };

@@ -11,6 +11,11 @@ export const CreateWorkspaceSchema = z.object({
     .max(250, 'Name cannot be more than 250 characters'),
 });
 
+export const RemoveMemberFromWorkspaceSchema = z.object({
+  memberId: z.uuid('Invalid member uuid'),
+  workspaceId: z.uuid('Invalid workspace uuid'),
+});
+
 export const InviteToWorkspaceSchema = z.object({
   email: z.email('Invalid email'),
 });
@@ -20,3 +25,5 @@ export const AcceptWorkspaceInviteSchema = z.object({
     message: 'Token must be a 64-character hex string (32 bytes)',
   }),
 });
+
+export const DeclineWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
