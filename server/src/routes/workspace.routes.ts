@@ -4,10 +4,12 @@ import { AuthMiddleware } from '../middlewares/auth.middleware';
 import {
   AcceptWorkspaceInvite,
   CreateWorkspace,
+  DeclineWorkspaceInvite,
   DeleteWorkspace,
   GetUserWorkspaces,
   InviteToWorkspace,
   RemoveMemberFromWorkspace,
+  RevokeWorkspaceInvite,
   SwitchWorkspace,
 } from '../controllers/workspace.controller';
 
@@ -36,7 +38,11 @@ workspaceRouter.post(
 );
 workspaceRouter.post(
   '/:workspaceId/invite/:token/decline',
-  asyncHandler(AcceptWorkspaceInvite),
+  asyncHandler(DeclineWorkspaceInvite),
+);
+workspaceRouter.post(
+  '/:workspaceId/invite/:token/revoked',
+  asyncHandler(RevokeWorkspaceInvite),
 );
 
 export default workspaceRouter;

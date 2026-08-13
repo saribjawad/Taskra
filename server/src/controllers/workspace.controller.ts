@@ -13,8 +13,10 @@ import {
   AcceptWorkspaceInviteSchema,
   CreateWorkspaceSchema,
   DeclineWorkspaceInviteSchema,
+  InviteToWorkspaceParamsSchema,
   InviteToWorkspaceSchema,
   RemoveMemberFromWorkspaceSchema,
+  RevokeWorkspaceInviteSchema,
   WorkspaceIdParamsSchema,
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
@@ -29,6 +31,7 @@ import {
   createInvitation,
   deleteInvitation,
   getInvitationByHash,
+  getPendingInvitation,
   updateInvitationStatus,
 } from '../services/invitation.service';
 import { sendInviteToWorkspace } from '../lib/resend';
@@ -269,9 +272,9 @@ export const RemoveMemberFromWorkspace = async (
 export const InviteToWorkspace = async (req: Request, res: Response) => {
   // TODO: add role option
 
+  const { workspaceId } = InviteToWorkspaceParamsSchema.parse(req.params);
   const { email } = InviteToWorkspaceSchema.parse(req.body);
   const userId = req.user.id;
-  const workspaceId = req.user.activeWorkspace;
 
   const user = await findUserById(userId);
   const workspace = await getWorkspaceById(workspaceId);
@@ -279,6 +282,14 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
   const userToBeInvited = await findUserByEmail(email);
   if (!userToBeInvited) {
     return res.status(200).json(new ApiResponse(200, 'User not found'));
+  }
+
+  const existingInvite = await getPendingInvitation(email, workspaceId);
+
+  if (existingInvite) {
+    throw ApiError.badRequest(
+      'An invitation has already been sent to this user',
+    );
   }
 
   // Check if user is already member of workspace
@@ -347,32 +358,41 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     throw ApiError.notFound('Invitation not found');
   }
 
-  if (invitation.status === 'accepted') {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, 'Invitation has been already accepted'));
+  if (req.user.email !== invitation.email) {
+    throw ApiError.forbidden(
+      'This invitation was sent to a different email address',
+    );
   }
 
-  if (invitation.status === 'revoked') {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, 'Invitation has been revoked'));
+  const existingMembership = await getWorkspaceMember(
+    userId,
+    invitation.workspace_id,
+  );
+
+  if (existingMembership) {
+    throw ApiError.badRequest('You are already a member of this workspace');
+  }
+
+  if (invitation.status !== 'pending') {
+    throw ApiError.badRequest('This invitation is no longer valid');
   }
 
   if (invitation.expires_at < new Date()) {
+    // Update invitation status to 'expired'
+    await updateInvitationStatus(invitation.id, 'expired');
     return res
       .status(200)
       .json(new ApiResponse(200, 'Invitation has been expired'));
   }
 
-  const workspaceToJoin = getWorkspaceById(invitation.workspace_id);
+  const workspaceToJoin = await getWorkspaceById(invitation.workspace_id);
 
   if (!workspaceToJoin) {
     throw ApiError.notFound('Workspace not found');
   }
 
   // Add user to workspace
-  const member = createWorkspaceMember(userId, invitation.workspace_id);
+  const member = await createWorkspaceMember(userId, invitation.workspace_id);
 
   if (!member) {
     throw ApiError.internal(
@@ -403,6 +423,24 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
     throw ApiError.notFound('Invitation not found');
   }
 
+  if (invitation.status !== 'pending') {
+    throw ApiError.badRequest('This invitation is no longer valid');
+  }
+
+  if (req.user.email !== invitation.email) {
+    throw ApiError.forbidden(
+      'This invitation was sent to a different email address',
+    );
+  }
+
+  if (invitation.expires_at < new Date()) {
+    // Update invitation status to 'expired'
+    await updateInvitationStatus(invitation.id, 'expired');
+    return res
+      .status(200)
+      .json(new ApiResponse(200, 'Invitation has been expired'));
+  }
+
   // Update the status to 'declined'
   const updatedRows = await updateInvitationStatus(invitation.id, 'declined');
 
@@ -413,4 +451,45 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Workspace invite declined'));
+};
+
+export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { token } = RevokeWorkspaceInviteSchema.parse(req.params);
+
+  const hashToken = crypto.hash('SHA-256', token);
+
+  const invitation = await getInvitationByHash(hashToken);
+
+  if (!invitation) {
+    throw ApiError.notFound('Invitation not found');
+  }
+
+  // If invited user himself is trying revoking
+  const invitedUser = await findUserById(userId);
+
+  if (invitedUser.email === invitation.email) {
+    throw ApiError.forbidden('You are not allowed to revoke the invitation');
+  }
+
+  // Check if the user belongs to the workspace of the invitation
+  const isWorkspaceMember = await getWorkspaceMember(
+    userId,
+    invitation.workspace_id,
+  );
+
+  if (!isWorkspaceMember) {
+    throw ApiError.forbidden('You are not allowed to revoke the invitation');
+  }
+
+  // Update the status to 'revoked'
+  const updatedRows = await updateInvitationStatus(invitation.id, 'revoked');
+
+  if (!updatedRows || updatedRows < 1) {
+    throw ApiError.internal(
+      'Something went wrong while updating the invitation status',
+    );
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Workspace invite revoked'));
 };

@@ -16,6 +16,7 @@ export const RemoveMemberFromWorkspaceSchema = z.object({
   workspaceId: z.uuid('Invalid workspace uuid'),
 });
 
+export const InviteToWorkspaceParamsSchema = WorkspaceIdParamsSchema;
 export const InviteToWorkspaceSchema = z.object({
   email: z.email('Invalid email'),
 });
@@ -27,3 +28,4 @@ export const AcceptWorkspaceInviteSchema = z.object({
 });
 
 export const DeclineWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
+export const RevokeWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
