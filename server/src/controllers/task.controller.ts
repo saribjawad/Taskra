@@ -16,7 +16,7 @@ import {
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
 import { findCommentsByTaskId } from '../services/comment.service';
-import { FILE_TYPE, generatePresignedUrl, uploadFileToS3 } from '../config/s3';
+import { FILE_TYPE, uploadFileToS3 } from '../config/s3';
 import {
   createAttachment,
   getAttachmentsByTaskId,
