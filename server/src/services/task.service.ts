@@ -56,7 +56,7 @@ export const createTask = async (
 ): Promise<Task> => {
   const result = await dbPool.query(
     `
-    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, created_by)
+    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     RETURNING *`,
     [
@@ -161,7 +161,7 @@ export const getTasks = async (
       AND ($5::text IS NULL OR priority = $5)
       AND ($6::text IS NULL OR title ILIKE $6)
       AND ($7::uuid IS NULL OR workspace_id = $7)
-      AND ($8::uuid IS NULL OR created_by = $8)
+      AND ($8::uuid IS NULL OR creator = $8)
       ORDER BY created_at DESC
       LIMIT $1
       OFFSET $2
