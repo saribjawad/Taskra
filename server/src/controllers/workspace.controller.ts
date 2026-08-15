@@ -13,6 +13,7 @@ import {
   AcceptWorkspaceInviteSchema,
   CreateWorkspaceSchema,
   DeclineWorkspaceInviteSchema,
+  GetWorkspaceInvitesParamsSchema,
   InviteToWorkspaceParamsSchema,
   InviteToWorkspaceSchema,
   RemoveMemberFromWorkspaceSchema,
@@ -32,6 +33,7 @@ import {
   deleteInvitation,
   getInvitationByHash,
   getPendingInvitation,
+  getWorkspaceInvitations,
   updateInvitationStatus,
 } from '../services/invitation.service';
 import { sendInviteToWorkspace } from '../lib/resend';
@@ -286,6 +288,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
 
   const existingInvite = await getPendingInvitation(email, workspaceId);
 
+  // TODO: enforce this at the database level too.
   if (existingInvite) {
     throw ApiError.badRequest(
       'An invitation has already been sent to this user',
@@ -492,4 +495,35 @@ export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Workspace invite revoked'));
+};
+
+export const GetWorkspaceInvites = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { workspaceId } = GetWorkspaceInvitesParamsSchema.parse(req.params);
+
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace) {
+    throw ApiError.notFound('Workspace not found');
+  }
+
+  const isWorkspaceMember = await getWorkspaceMember(userId, workspace.id);
+
+  if (!isWorkspaceMember) {
+    throw ApiError.badRequest('You are not member of this workspace');
+  }
+
+  const invitations = await getWorkspaceInvitations(workspaceId);
+  const formatedInvitation = invitations.map((i) => ({
+    id: i.id,
+    status: i.status,
+    email: i.email,
+    role: i.role,
+    expiresAt: i.expires_at,
+    createdAt: i.created_at,
+  }));
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Workspace invites', formatedInvitation));
 };

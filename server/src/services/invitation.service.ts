@@ -65,3 +65,17 @@ export async function getPendingInvitation(email: string, workspaceId: string) {
 
   return result.rows[0];
 }
+
+export async function getWorkspaceInvitations(
+  workspaceId: string,
+): Promise<Invitation[]> {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM invitations
+    WHERE workspace_id = $1
+    `,
+    [workspaceId],
+  );
+
+  return result.rows;
+}

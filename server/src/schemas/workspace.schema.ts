@@ -29,3 +29,5 @@ export const AcceptWorkspaceInviteSchema = z.object({
 
 export const DeclineWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
 export const RevokeWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
+
+export const GetWorkspaceInvitesParamsSchema = WorkspaceIdParamsSchema;
