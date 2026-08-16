@@ -38,11 +38,12 @@ export const findTaskById = async (
  * @param status - Task status
  * @param priority - Task priority
  * @param label - Task label
- * @param assignee - Task assignee
  * @param workspaceId - Workspace ID tasks belongs to
  * @param userId - ID of the user who created the task
+ * @param assignee - Task assignee
+ * @param reporter - Task reporter
  *
- * @returns The task row if found, otherwise undefined
+ * @returns The created task
  */
 export const createTask = async (
   title: string,
@@ -53,11 +54,12 @@ export const createTask = async (
   workspaceId: string,
   userId: string,
   assignee: string | null,
+  reporter: string | null,
 ): Promise<Task> => {
   const result = await dbPool.query(
     `
-    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator, reporter)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *`,
     [
       title,
@@ -68,6 +70,7 @@ export const createTask = async (
       assignee,
       workspaceId,
       userId,
+      reporter,
     ],
   );
 
@@ -85,6 +88,7 @@ export const createTask = async (
  * @param priority - Task priority (optional)
  * @param label - Task label (optional)
  * @param assignee - Task assignee (optional)
+ * @param reporter - Task reporter (optional)
  * @returns Count of updated row
  */
 export const updateTask = async (id: string, data: UpdateSchema) => {

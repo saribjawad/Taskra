@@ -37,13 +37,32 @@ export const CreateTask = async (req: Request, res: Response) => {
   });
 
   const { body } = parsedBody;
-  const { description, label, priority, status, title, assignee } = body;
+  const {
+    description,
+    label,
+    priority,
+    status,
+    title,
+    assignee: assigneeId,
+    reporter: reporterId,
+  } = body;
 
   let assigneeUser;
+  let reporterUser;
 
   // If the assigne exists query the user
-  if (assignee) {
-    assigneeUser = await findUserById(assignee);
+  if (assigneeId) {
+    assigneeUser = await findUserById(assigneeId);
+    if (!assigneeUser) {
+      throw ApiError.notFound('Assignee not found');
+    }
+  }
+
+  if (reporterId) {
+    reporterUser = await findUserById(reporterId);
+    if (reporterId) {
+      throw ApiError.notFound('Reporter not found');
+    }
   }
 
   const task = await createTask(
@@ -55,6 +74,7 @@ export const CreateTask = async (req: Request, res: Response) => {
     activeWorkspace,
     userId,
     assigneeUser ? assigneeUser.id : null,
+    reporterUser ? reporterUser.id : null,
   );
 
   // Upload files to s3 bucket and save in DB
@@ -100,15 +120,22 @@ export const UpdateTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
-  const { assignee } = parsedBody;
+  const { assignee: assigneeId, reporter: reporterId } = parsedBody;
 
   let assigneeUser;
-  if (assignee) {
-    assigneeUser = await findUserById(assignee);
-  }
+  let reporterUser;
 
-  if (assignee && !assigneeUser) {
-    throw ApiError.notFound('Invalid assignee');
+  if (assigneeId) {
+    assigneeUser = await findUserById(assigneeId);
+    if (!assigneeUser) {
+      throw ApiError.notFound('Assignee not found');
+    }
+  }
+  if (reporterId) {
+    reporterUser = await findUserById(reporterId);
+    if (!reporterUser) {
+      throw ApiError.notFound('Reporter not found');
+    }
   }
 
   const count = await updateTask(taskId, parsedBody);

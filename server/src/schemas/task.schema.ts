@@ -1,4 +1,4 @@
-import z from 'zod';
+import z, { ZodUUID } from 'zod';
 
 // Resusable Schema
 const Status = z.enum(
@@ -47,7 +47,8 @@ export const CreateTaskSchema = z.object({
     status: Status,
     priority: Priority,
     label: Label,
-    assignee: z.uuid('Invalid assignee').optional(),
+    assignee: z.uuid('Invalid assignee UUID').optional(),
+    reporter: z.uuid('Invalid reporter UUID').optional(),
   }),
   files: z
     .object({
@@ -116,6 +117,7 @@ export const UpdateTaskSchema = z.object({
   status: Status.optional(),
   priority: Priority.optional(),
   label: Label.optional(),
-  assignee: z.uuid('Invalid assignee').optional(),
+  assignee: z.uuid('Invalid assignee UUID').optional(),
+  reporter: z.uuid('Invalid reporter UUID').optional(),
 });
 export type UpdateSchema = z.infer<typeof UpdateTaskSchema>;

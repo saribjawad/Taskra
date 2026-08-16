@@ -18,6 +18,7 @@ export type Task = {
   label: TaskLabel;
   assignee: string;
   creator: string;
+  reporter: string;
   workspace_id: string;
   updated_at: Date;
   created_at: Date;
