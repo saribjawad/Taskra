@@ -142,6 +142,27 @@ const deleteWorkspaceMember = async (
   return result.rowCount;
 };
 
+/**
+ * Get workspace members
+ *
+ * @param workspaceID - UUID of workspace
+ * @returns rows of workspace users
+ */
+const getWorkspaceUsers = async (workspaceId: string) => {
+  const results = await dbPool.query(
+    `
+    SELECT u.id, u.username, u.email
+    FROM workspace_members wm
+    INNER JOIN users u
+      ON u.id = wm.user_id
+    WHERE wm.workspace_id = $1;
+    `,
+    [workspaceId],
+  );
+
+  return results.rows;
+};
+
 export {
   getWorkspaceById,
   createWorkspace,
@@ -150,4 +171,5 @@ export {
   getWorkspaceMember,
   createWorkspaceMember,
   deleteWorkspaceMember,
+  getWorkspaceUsers,
 };

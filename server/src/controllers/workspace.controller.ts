@@ -8,12 +8,14 @@ import {
   getUserWorkspaces,
   getWorkspaceById,
   getWorkspaceMember,
+  getWorkspaceUsers,
 } from '../services/workspace.service';
 import {
   AcceptWorkspaceInviteSchema,
   CreateWorkspaceSchema,
   DeclineWorkspaceInviteSchema,
   GetWorkspaceInvitesParamsSchema,
+  GetWorkspaceUsersParamsSchema,
   InviteToWorkspaceParamsSchema,
   InviteToWorkspaceSchema,
   RemoveMemberFromWorkspaceSchema,
@@ -526,4 +528,22 @@ export const GetWorkspaceInvites = async (req: Request, res: Response) => {
   res
     .status(200)
     .json(new ApiResponse(200, 'Workspace invites', formatedInvitation));
+};
+
+export const GetWorkspaceUsers = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { workspaceId } = GetWorkspaceUsersParamsSchema.parse(req.params);
+
+  // Check if user is allowed
+  const isMemberOfWorkspace = await getWorkspaceMember(userId, workspaceId);
+
+  if (!isMemberOfWorkspace) {
+    throw ApiError.badRequest('You are not part of this workspace');
+  }
+
+  const workspaceMembers = await getWorkspaceUsers(workspaceId);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Workspace users', workspaceMembers));
 };

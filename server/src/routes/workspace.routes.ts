@@ -8,6 +8,7 @@ import {
   DeleteWorkspace,
   GetUserWorkspaces,
   GetWorkspaceInvites,
+  GetWorkspaceUsers,
   InviteToWorkspace,
   RemoveMemberFromWorkspace,
   RevokeWorkspaceInvite,
@@ -36,6 +37,10 @@ workspaceRouter
   .route('/:workspaceId/invite')
   .get(asyncHandler(GetWorkspaceInvites))
   .post(asyncHandler(InviteToWorkspace));
+
+workspaceRouter
+  .route('/:workspaceId/users')
+  .get(asyncHandler(GetWorkspaceUsers));
 
 workspaceRouter.post(
   '/invite/:token/accept',
