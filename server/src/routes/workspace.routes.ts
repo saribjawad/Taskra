@@ -13,9 +13,16 @@ import {
   RemoveMemberFromWorkspace,
   RevokeWorkspaceInvite,
   SwitchWorkspace,
+  VerifyWorkspaceInvitation,
 } from '../controllers/workspace.controller';
 
 const workspaceRouter = Router();
+
+// Public verification route
+workspaceRouter.post(
+  '/invite/:token/verify',
+  asyncHandler(VerifyWorkspaceInvitation),
+);
 
 workspaceRouter.use(AuthMiddleware);
 

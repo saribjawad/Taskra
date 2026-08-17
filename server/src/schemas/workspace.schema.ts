@@ -21,14 +21,19 @@ export const InviteToWorkspaceSchema = z.object({
   email: z.email('Invalid email'),
 });
 
-export const AcceptWorkspaceInviteSchema = z.object({
+export const VerifyWorkspaceInvitationParamsSchema = z.object({
   token: z.string().regex(/^[0-9a-fA-F]{64}$/, {
     message: 'Token must be a 64-character hex string (32 bytes)',
   }),
 });
 
-export const DeclineWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
-export const RevokeWorkspaceInviteSchema = AcceptWorkspaceInviteSchema;
+export const AcceptWorkspaceInviteParamsSchema =
+  VerifyWorkspaceInvitationParamsSchema;
+
+export const DeclineWorkspaceInviteParamsSchema =
+  VerifyWorkspaceInvitationParamsSchema;
+export const RevokeWorkspaceInviteParamsSchema =
+  VerifyWorkspaceInvitationParamsSchema;
 
 export const GetWorkspaceInvitesParamsSchema = WorkspaceIdParamsSchema;
 export const GetWorkspaceUsersParamsSchema = WorkspaceIdParamsSchema;

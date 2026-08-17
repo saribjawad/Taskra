@@ -11,16 +11,17 @@ import {
   getWorkspaceUsers,
 } from '../services/workspace.service';
 import {
-  AcceptWorkspaceInviteSchema,
+  VerifyWorkspaceInvitationParamsSchema,
   CreateWorkspaceSchema,
-  DeclineWorkspaceInviteSchema,
+  DeclineWorkspaceInviteParamsSchema,
   GetWorkspaceInvitesParamsSchema,
   GetWorkspaceUsersParamsSchema,
   InviteToWorkspaceParamsSchema,
   InviteToWorkspaceSchema,
   RemoveMemberFromWorkspaceSchema,
-  RevokeWorkspaceInviteSchema,
+  RevokeWorkspaceInviteParamsSchema,
   WorkspaceIdParamsSchema,
+  AcceptWorkspaceInviteParamsSchema,
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
 import {
@@ -34,6 +35,7 @@ import {
   createInvitation,
   deleteInvitation,
   getInvitationByHash,
+  getInvitationDetailByHash,
   getPendingInvitation,
   getWorkspaceInvitations,
   updateInvitationStatus,
@@ -351,7 +353,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
 export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
   const { id: userId } = req.user;
 
-  const { token } = AcceptWorkspaceInviteSchema.parse(req.params);
+  const { token } = AcceptWorkspaceInviteParamsSchema.parse(req.params);
 
   const hashedToken = crypto.hash('SHA-256', token);
 
@@ -416,7 +418,7 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 };
 
 export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
-  const { token } = DeclineWorkspaceInviteSchema.parse(req.params);
+  const { token } = DeclineWorkspaceInviteParamsSchema.parse(req.params);
 
   const hashToken = crypto.hash('SHA-256', token);
 
@@ -458,7 +460,7 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
 
 export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const { token } = RevokeWorkspaceInviteSchema.parse(req.params);
+  const { token } = RevokeWorkspaceInviteParamsSchema.parse(req.params);
 
   const hashToken = crypto.hash('SHA-256', token);
 
@@ -544,4 +546,34 @@ export const GetWorkspaceUsers = async (req: Request, res: Response) => {
   res
     .status(200)
     .json(new ApiResponse(200, 'Workspace users', workspaceMembers));
+};
+
+export const VerifyWorkspaceInvitation = async (
+  req: Request,
+  res: Response,
+) => {
+  const { token } = VerifyWorkspaceInvitationParamsSchema.parse(req.params);
+
+  const hashedToken = crypto.hash('SHA-256', token);
+
+  const invitation = await getInvitationDetailByHash(hashedToken);
+
+  if (!invitation) {
+    throw ApiError.notFound('Invitation not found');
+  }
+
+  if (invitation.status !== 'pending') {
+    throw ApiError.badRequest('This invitation is no longer valid');
+  }
+
+  if (invitation.expires_at < new Date()) {
+    // update the status of invitation to 'expired'
+    if (invitation.status !== 'expired') {
+      await updateInvitationStatus(invitation.id, 'expired');
+    }
+
+    throw ApiError.forbidden('Invitation has been expired');
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Invitation verified', invitation));
 };

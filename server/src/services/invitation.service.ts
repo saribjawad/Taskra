@@ -40,6 +40,36 @@ export async function getInvitationByHash(
   return result.rows[0];
 }
 
+export async function getInvitationDetailByHash(hashedToken: string) {
+  const results = await dbPool.query(
+    `
+    SELECT
+      i.id,
+      i.status,
+      i.email,
+      i.role,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'email', u.email
+      ) AS sentBy,
+      json_build_object(
+        'id', w.id,
+        'name', w.name
+      ) AS workspace
+    FROM invitations i
+    INNER JOIN users u
+      ON u.id = i.sent_by
+    INNER JOIN workspace w
+      ON w.id = i.workspace_id
+    WHERE i.token = $1;
+    `,
+    [hashedToken],
+  );
+
+  return results.rows[0];
+}
+
 export async function updateInvitationStatus(
   id: string,
   status: InvitationStatus,
