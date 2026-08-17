@@ -282,12 +282,6 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
 
   const user = await findUserById(userId);
   const workspace = await getWorkspaceById(workspaceId);
-
-  const userToBeInvited = await findUserByEmail(email);
-  if (!userToBeInvited) {
-    return res.status(200).json(new ApiResponse(200, 'User not found'));
-  }
-
   const existingInvite = await getPendingInvitation(email, workspaceId);
 
   // TODO: enforce this at the database level too.
@@ -296,16 +290,20 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
       'An invitation has already been sent to this user',
     );
   }
+  // If user exists check
+  const userToBeInvited = await findUserByEmail(email);
 
-  // Check if user is already member of workspace
-  const userWorkspaceMemberShip = await getWorkspaceMember(
-    userToBeInvited.id,
-    workspaceId,
-  );
-  if (userWorkspaceMemberShip) {
-    return res
-      .status(200)
-      .json(new ApiResponse(200, 'User is already member of the workspace'));
+  if (userToBeInvited) {
+    // Check if user is already member of workspace
+    const userWorkspaceMemberShip = await getWorkspaceMember(
+      userToBeInvited.id,
+      workspaceId,
+    );
+    if (userWorkspaceMemberShip) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, 'User is already member of the workspace'));
+    }
   }
 
   // Create token
@@ -333,7 +331,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
     );
   }
 
-  const invitationLink = `${env.APP_URL}/invitation/${token}`;
+  const invitationLink = `${env.APP_URL}/workspace-invitation?token=${token}`;
 
   // Send the email to the user
   try {

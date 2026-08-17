@@ -58,7 +58,7 @@ export async function getPendingInvitation(email: string, workspaceId: string) {
   const result = await dbPool.query(
     `
     SELECT * FROM invitations
-    WHERE status = 'pending' & email = $1 & workspace_id = $2
+    WHERE status = 'pending' AND email = $1 AND workspace_id = $2
     `,
     [email, workspaceId],
   );
