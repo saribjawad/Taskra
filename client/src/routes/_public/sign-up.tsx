@@ -82,7 +82,7 @@ function RouteComponent() {
                         {...field}
                         disabled={isPending}
                         id="sign-up-username"
-                        placeholder="sarib"
+                        placeholder="jhonedoe"
                         autoComplete="username"
                         aria-invalid={fieldState.invalid}
                       />
@@ -103,7 +103,7 @@ function RouteComponent() {
                         {...field}
                         disabled={isPending}
                         id="sign-up-email"
-                        placeholder="sarib@gmail.com"
+                        placeholder="jhon@xyz.com"
                         autoComplete="email"
                         aria-invalid={fieldState.invalid}
                       />
