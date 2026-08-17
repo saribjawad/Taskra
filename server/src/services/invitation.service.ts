@@ -48,6 +48,7 @@ export async function getInvitationDetailByHash(hashedToken: string) {
       i.status,
       i.email,
       i.role,
+      i.expires_at,
       json_build_object(
         'id', u.id,
         'username', u.username,

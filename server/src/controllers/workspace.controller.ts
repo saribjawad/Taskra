@@ -567,7 +567,6 @@ export const VerifyWorkspaceInvitation = async (
   }
 
   if (invitation.expires_at < new Date()) {
-    console.log('expired');
     // update the status of invitation to 'expired'
     if (invitation.status !== 'expired') {
       await updateInvitationStatus(invitation.id, 'expired');
