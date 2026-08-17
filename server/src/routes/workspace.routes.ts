@@ -19,7 +19,7 @@ import {
 const workspaceRouter = Router();
 
 // Public verification route
-workspaceRouter.post(
+workspaceRouter.get(
   '/invite/:token/verify',
   asyncHandler(VerifyWorkspaceInvitation),
 );

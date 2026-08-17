@@ -314,7 +314,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
 
   // Expiry date of 15 minutes
   const currentTimeAsMs = Date.now();
-  const adjustedTimeAsMs = currentTimeAsMs + 5 * 60 * 1000;
+  const adjustedTimeAsMs = currentTimeAsMs + 15 * 60 * 1000;
   const expiryDate = new Date(adjustedTimeAsMs);
 
   // Create and save invitation
@@ -567,6 +567,7 @@ export const VerifyWorkspaceInvitation = async (
   }
 
   if (invitation.expires_at < new Date()) {
+    console.log('expired');
     // update the status of invitation to 'expired'
     if (invitation.status !== 'expired') {
       await updateInvitationStatus(invitation.id, 'expired');
