@@ -355,6 +355,12 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 
   const { token } = AcceptWorkspaceInviteParamsSchema.parse(req.params);
 
+  const user = await findUserById(userId);
+
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
   const hashedToken = crypto.hash('SHA-256', token);
 
   const invitation = await getInvitationByHash(hashedToken);
@@ -363,14 +369,14 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     throw ApiError.notFound('Invitation not found');
   }
 
-  if (req.user.email !== invitation.email) {
+  if (user.email !== invitation.email) {
     throw ApiError.forbidden(
       'This invitation was sent to a different email address',
     );
   }
 
   const existingMembership = await getWorkspaceMember(
-    userId,
+    user.id,
     invitation.workspace_id,
   );
 
@@ -397,7 +403,7 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   // Add user to workspace
-  const member = await createWorkspaceMember(userId, invitation.workspace_id);
+  const member = await createWorkspaceMember(user.id, invitation.workspace_id);
 
   if (!member) {
     throw ApiError.internal(
@@ -413,6 +419,36 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
       'Something went wrong while updating the invitation status',
     );
   }
+
+  // Update the user's active workspace
+  const updatedUser = await updateUser(userId, {
+    active_workspace: member.workspace_id,
+  });
+
+  if (!updatedUser || updatedUser < 1) {
+    throw ApiError.internal(
+      "Something went wrong while updating user's active workspace",
+    );
+  }
+
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    member.workspace_id,
+  );
+  const refreshToken = await generateRefreshToken(
+    user.id,
+    user.email,
+    member.workspace_id,
+  );
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+  });
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    path: '/api/v1/refresh-access-token',
+  });
 
   res.status(200).json(new ApiResponse(200, 'Invite accepted'));
 };
