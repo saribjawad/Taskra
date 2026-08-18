@@ -333,7 +333,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
     );
   }
 
-  const invitationLink = `${env.APP_URL}/workspace-invitation?token=${token}`;
+  const invitationLink = `${env.APP_URL}/invite?token=${token}`;
 
   // Send the email to the user
   try {
