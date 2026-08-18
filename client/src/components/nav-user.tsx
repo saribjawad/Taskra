@@ -24,6 +24,7 @@ import {
   LogOutIcon,
 } from 'lucide-react'
 import { Spinner } from './ui/spinner'
+import { useNavigate } from '@tanstack/react-router'
 
 export function NavUser({
   user,
@@ -34,6 +35,7 @@ export function NavUser({
     avatar: string
   }
 }) {
+  const navigate = useNavigate()
   const { isMobile } = useSidebar()
   const { mutate: signOut, isPending: isSigningOut } = useSignOut()
 
@@ -101,7 +103,13 @@ export function NavUser({
             <DropdownMenuItem
               disabled={isSigningOut}
               onClick={() => {
-                signOut()
+                signOut(undefined, {
+                  onSuccess: () => {
+                    navigate({
+                      to: '/sign-in',
+                    })
+                  },
+                })
               }}
             >
               <LogOutIcon />

@@ -16,6 +16,7 @@ import { Route as PublicVerifyEmailRouteImport } from './routes/_public/verify-e
 import { Route as PublicSignUpRouteImport } from './routes/_public/sign-up'
 import { Route as PublicSignInRouteImport } from './routes/_public/sign-in'
 import { Route as PublicResetPasswordRouteImport } from './routes/_public/reset-password'
+import { Route as PublicInviteRouteImport } from './routes/_public/invite'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
 import { Route as AuthenticatedCreateWorkspaceRouteImport } from './routes/_authenticated/create-workspace'
 import { Route as AuthenticatedWorkspaceIdRouteRouteImport } from './routes/_authenticated/$workspaceId/route'
@@ -59,6 +60,11 @@ const PublicSignInRoute = PublicSignInRouteImport.update({
 const PublicResetPasswordRoute = PublicResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicInviteRoute = PublicInviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
   getParentRoute: () => PublicRoute,
 } as any)
 const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
+  '/invite': typeof PublicInviteRoute
   '/reset-password': typeof PublicResetPasswordRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
+  '/invite': typeof PublicInviteRoute
   '/reset-password': typeof PublicResetPasswordRoute
   '/sign-in': typeof PublicSignInRoute
   '/sign-up': typeof PublicSignUpRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/_authenticated/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/_authenticated/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
+  '/_public/invite': typeof PublicInviteRoute
   '/_public/reset-password': typeof PublicResetPasswordRoute
   '/_public/sign-in': typeof PublicSignInRoute
   '/_public/sign-up': typeof PublicSignUpRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/$workspaceId'
     | '/create-workspace'
     | '/forgot-password'
+    | '/invite'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
@@ -206,6 +216,7 @@ export interface FileRouteTypes {
     | '/'
     | '/create-workspace'
     | '/forgot-password'
+    | '/invite'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$workspaceId'
     | '/_authenticated/create-workspace'
     | '/_public/forgot-password'
+    | '/_public/invite'
     | '/_public/reset-password'
     | '/_public/sign-in'
     | '/_public/sign-up'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof PublicResetPasswordRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/invite': {
+      id: '/_public/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof PublicInviteRouteImport
       parentRoute: typeof PublicRoute
     }
     '/_public/forgot-password': {
@@ -441,6 +460,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface PublicRouteChildren {
   PublicForgotPasswordRoute: typeof PublicForgotPasswordRoute
+  PublicInviteRoute: typeof PublicInviteRoute
   PublicResetPasswordRoute: typeof PublicResetPasswordRoute
   PublicSignInRoute: typeof PublicSignInRoute
   PublicSignUpRoute: typeof PublicSignUpRoute
@@ -449,6 +469,7 @@ interface PublicRouteChildren {
 
 const PublicRouteChildren: PublicRouteChildren = {
   PublicForgotPasswordRoute: PublicForgotPasswordRoute,
+  PublicInviteRoute: PublicInviteRoute,
   PublicResetPasswordRoute: PublicResetPasswordRoute,
   PublicSignInRoute: PublicSignInRoute,
   PublicSignUpRoute: PublicSignUpRoute,

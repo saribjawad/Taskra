@@ -1,4 +1,3 @@
-import { router } from '#/main'
 import type { SignInFormPayload } from '#/routes/_public/sign-in'
 import type { SignUpFormPayload } from '#/routes/_public/sign-up'
 import type { VerifyEmailFormPayload } from '#/routes/_public/verify-email'
@@ -19,6 +18,7 @@ import { toast } from 'sonner'
 
 export const useSignIn = () => {
   const navigate = useNavigate()
+  const inviteRedirect = sessionStorage.getItem('invite-redirect')
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -31,10 +31,15 @@ export const useSignIn = () => {
     onSuccess: async () => {
       // refetch useGetMe
       await queryClient.invalidateQueries({ queryKey: ['me'] })
-      await router.invalidate() // re-runs beforeLoad with fresh auth
-      navigate({
-        to: '/',
-      })
+      if (inviteRedirect) {
+        navigate({
+          to: JSON.parse(inviteRedirect),
+        })
+      } else {
+        navigate({
+          to: '/',
+        })
+      }
     },
   })
 }

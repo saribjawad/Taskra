@@ -10,8 +10,10 @@ function PublicRoutesLayout() {
   const { user, isLoading } = useAuth()
   const navigate = Route.useNavigate()
 
+  const isInvitePage = window.location.pathname === '/invite'
+
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && !isInvitePage) {
       if (user.activeWorkspace) {
         navigate({ to: '/' })
       } else {
@@ -21,6 +23,11 @@ function PublicRoutesLayout() {
   }, [user, isLoading, navigate])
 
   if (isLoading) return <div>Loading...</div> // TODO: add a spinner
+
+  // Allow invite whether logged in or not
+  if (isInvitePage) {
+    return <Outlet />
+  }
 
   if (user) return null // will redirect via effect
 

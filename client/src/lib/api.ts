@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = [
   '/verify-email',
   '/forgot-password',
   '/reset-password',
+  '/invite',
 ]
 
 // Add a response interceptor
@@ -35,12 +36,14 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Use router.navigate to change routes cleanly
         const currentPath = window.location.pathname
+        console.log(currentPath)
         const isPublicRoute = PUBLIC_ROUTES.some(
           (route) =>
             currentPath === route || currentPath.startsWith(route + '/'),
         )
 
         if (!isPublicRoute) {
+          console.log('Not public')
           // remove the query data for 'me' to prevent the loop
           queryClient.setQueryData(['me'], null)
           router.navigate({ to: '/sign-in' })

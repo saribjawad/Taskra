@@ -4,7 +4,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 
 import '../styles.css'
-import type { IAuthContext } from '#/context/authContext'
+import type { IAuthContext } from '#/context/auth/auth-context'
 
 interface MyRouterContext {
   auth: IAuthContext
