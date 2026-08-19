@@ -351,7 +351,8 @@ function RouteComponent() {
                         priority: task.priority,
                         status: task.status,
                         title: task.title,
-                        assignee: task.assignee,
+                        assignee: task.assignee ?? undefined,
+                        reporter: task.reporter ?? undefined,
                       }}
                       trigger={
                         <Button variant="outline" size="sm">
