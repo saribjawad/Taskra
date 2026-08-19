@@ -73,7 +73,12 @@ interface GetTaskResponse {
     id: string
     username: string
     email: string
-  }
+  } | null
+  reporter: {
+    id: string
+    username: string
+    email: string
+  } | null
   updated_at: string
   created_at: string
   workspace_id: string
@@ -105,12 +110,21 @@ export interface CreateTaskParams {
   priority: TaskPriorityType
   label: TaskLabelType
   assignee?: string
+  reporter?: string
   attachments: (File | undefined)[] | undefined
 }
 
 export async function createTask(params: CreateTaskParams): Promise<void> {
-  const { attachments, description, label, priority, status, title, assignee } =
-    params
+  const {
+    attachments,
+    description,
+    label,
+    priority,
+    status,
+    title,
+    assignee,
+    reporter,
+  } = params
 
   const formData = new FormData()
 
@@ -121,6 +135,9 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
   formData.append('label', label)
   if (assignee) {
     formData.append('assignee', assignee)
+  }
+  if (reporter) {
+    formData.append('reporter', reporter)
   }
 
   if (attachments) {

@@ -248,6 +248,7 @@ function RouteComponent() {
 
   const properties = [
     { label: 'Assignee', value: task.assignee?.username },
+    { label: 'Reporter', value: task.reporter?.username },
     { label: 'Email', value: task.assignee?.email },
     {
       label: 'Status',

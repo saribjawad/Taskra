@@ -44,6 +44,7 @@ interface EditTaskDialogProps {
     priority: string
     label: string
     assignee?: { id: string; username: string; email: string }
+    reporter?: { id: string; username: string; email: string }
   }
 }
 
@@ -67,6 +68,7 @@ const EditTaskFormSchema = z.object({
   priority: Priority,
   label: Label,
   assignee: z.string('Invalid assignee').optional(),
+  reporter: z.string('Invalid reporter').optional(),
 })
 
 export type EditTaskFormPayload = z.infer<typeof EditTaskFormSchema>
@@ -337,8 +339,11 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor={field.name}>Assignee</FieldLabel>
 
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
                       disabled={isPending}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger
                         id={field.name}
                         aria-invalid={fieldState.invalid}
@@ -349,6 +354,44 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Assignee</SelectLabel>
+                          {tempAssigneeItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="reporter"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Reporter</FieldLabel>
+
+                    <Select
+                      disabled={isPending}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <SelectTrigger
+                        id={field.name}
+                        aria-invalid={fieldState.invalid}
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Select reporter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Reporter</SelectLabel>
                           {tempAssigneeItems.map((item) => (
                             <SelectItem key={item.value} value={item.value}>
                               {item.label}

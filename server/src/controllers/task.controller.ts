@@ -202,8 +202,9 @@ export const GetTask = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
-  // Get assignee details
+  // Get assignee & reporter details
   const assignee = await findUserById(task.assignee);
+  const reporter = await findUserById(task.reporter);
 
   // Get task comments
   const comments = await findCommentsByTaskId(taskId);
@@ -236,6 +237,17 @@ export const GetTask = async (req: Request, res: Response) => {
           }
         : {
             assignee: null,
+          }),
+      ...(reporter
+        ? {
+            reporter: {
+              id: reporter?.id ?? '',
+              username: reporter?.username ?? '',
+              email: reporter?.email ?? '',
+            },
+          }
+        : {
+            reporter: null,
           }),
     }),
   );
