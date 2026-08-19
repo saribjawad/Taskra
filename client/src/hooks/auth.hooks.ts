@@ -23,10 +23,17 @@ export const useSignIn = () => {
 
   return useMutation({
     mutationFn: (payload: SignInFormPayload) => signIn(payload),
-    onError: (err: AxiosError<ApiErrorResponse>) => {
+    onError: (err: AxiosError<ApiErrorResponse>, variables) => {
       const serverErrorMessage =
         err.response?.data.message || 'An error occurred'
       toast.error(serverErrorMessage)
+
+      if (err.response?.data.statusCode === 403) {
+        navigate({
+          to: '/verify-email',
+          search: { email: variables.email },
+        })
+      }
     },
     onSuccess: async () => {
       // refetch useGetMe
