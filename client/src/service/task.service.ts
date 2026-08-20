@@ -162,13 +162,59 @@ export interface UpdateTaskPayload {
   priority: TaskPriorityType
   label: TaskLabelType
   assignee?: string
+  reporter?: string
+  attachments: (File | undefined)[] | undefined
+  removedAttachmentIds: string[]
 }
 
 export async function updateTask(
   taskId: string,
   payload: UpdateTaskPayload,
 ): Promise<void> {
-  await api.patch(`/tasks/${taskId}`, payload)
+  const {
+    attachments,
+    description,
+    label,
+    priority,
+    status,
+    title,
+    assignee,
+    reporter,
+    removedAttachmentIds,
+  } = payload
+
+  const formData = new FormData()
+
+  formData.append('title', title)
+  formData.append('description', description)
+  formData.append('status', status)
+  formData.append('priority', priority)
+  formData.append('label', label)
+
+  removedAttachmentIds.forEach((item) =>
+    formData.append('removedAttachmentIds[]', item),
+  )
+
+  if (assignee) {
+    formData.append('assignee', assignee)
+  }
+  if (reporter) {
+    formData.append('reporter', reporter)
+  }
+
+  if (attachments) {
+    for (const file of attachments) {
+      if (file && ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        formData.append('images', file)
+      } else if (file && file.type === 'application/pdf') {
+        formData.append('pdf', file)
+      } else if (file) {
+        formData.append('document', file)
+      }
+    }
+  }
+
+  await api.patch(`/tasks/${taskId}`, formData)
 }
 
 export async function deleteTask(taskId: string): Promise<void> {

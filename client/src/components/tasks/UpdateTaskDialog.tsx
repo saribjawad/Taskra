@@ -1,4 +1,9 @@
-import { useState, type ReactElement } from 'react'
+import {
+  useState,
+  type Dispatch,
+  type ReactElement,
+  type SetStateAction,
+} from 'react'
 import {
   Dialog,
   DialogClose,
@@ -13,15 +18,8 @@ import { Maximize2, X } from 'lucide-react'
 import z from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '../ui/field'
+import { Field, FieldError, FieldGroup, FieldLabel } from '../ui/field'
 import { Input } from '../ui/input'
-import { Textarea } from '../ui/textarea'
 import {
   Select,
   SelectContent,
@@ -33,6 +31,14 @@ import {
 } from '../ui/select'
 import { useUpdateTask } from '#/hooks/task.hook'
 import { Spinner } from '../ui/spinner'
+import TaskDescriptionEditor from './TaskDescriptionEditor'
+import AttachmentField, {
+  ACCEPTED_DOCUMENT_TYPES,
+  ACCEPTED_IMAGE_TYPES,
+  type ExistingAttachment,
+} from './AttachmentField'
+import { createAttachmentsSchema } from '#/schema/attachment.schema'
+import { useMemo } from 'react'
 
 interface EditTaskDialogProps {
   trigger: ReactElement
@@ -45,7 +51,10 @@ interface EditTaskDialogProps {
     label: string
     assignee?: { id: string; username: string; email: string }
     reporter?: { id: string; username: string; email: string }
+    attachments?: ExistingAttachment[]
   }
+  isDialogOpen: boolean
+  setIsDialogOpen: Dispatch<SetStateAction<boolean>>
 }
 
 const Status = z.enum(
@@ -58,21 +67,7 @@ const Priority = z.enum(
 )
 const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label')
 
-const EditTaskFormSchema = z.object({
-  title: z
-    .string('Invalid title')
-    .min(1, 'Title is required')
-    .max(250, 'Title cannot be more than 250 words'),
-  description: z.string().min(1, 'Description is required'),
-  status: Status,
-  priority: Priority,
-  label: Label,
-  assignee: z.string('Invalid assignee').optional(),
-  reporter: z.string('Invalid reporter').optional(),
-})
-
-export type EditTaskFormPayload = z.infer<typeof EditTaskFormSchema>
-
+// TODO: temp move to a separate file
 const statusItems = [
   { label: 'Backlog', value: 'backlog' },
   { label: 'Todo', value: 'todo' },
@@ -101,24 +96,62 @@ const tempAssigneeItems = [
   { label: 'Someone', value: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
 ]
 
-function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>()
+function EditTaskDialog({
+  trigger: dialogTrigger,
+  task,
+  isDialogOpen,
+  setIsDialogOpen,
+}: EditTaskDialogProps) {
+  const existingAttachments = task.attachments ?? []
+  const existingCounts = useMemo(
+    () => ({
+      images: existingAttachments.filter((a) =>
+        ACCEPTED_IMAGE_TYPES.includes(a.mime_type),
+      ).length,
+      documents: existingAttachments.filter((a) =>
+        ACCEPTED_DOCUMENT_TYPES.includes(a.mime_type),
+      ).length,
+    }),
+    [existingAttachments],
+  )
 
-  const { mutate: updateTask, isPending } = useUpdateTask()
-  const { handleSubmit, control, reset } = useForm({
+  const { mutateAsync: updateTask, isPending } = useUpdateTask()
+  const EditTaskFormSchema = useMemo(
+    () =>
+      z.object({
+        title: z
+          .string('Invalid title')
+          .min(1, 'Title is required')
+          .max(250, 'Title cannot be more than 250 words'),
+        description: z.string().min(1, 'Description is required'),
+        status: Status,
+        priority: Priority,
+        label: Label,
+        assignee: z.string('Invalid assignee').optional(),
+        reporter: z.string('Invalid reporter').optional(),
+        attachments: createAttachmentsSchema(existingCounts),
+        removedAttachmentIds: z.array(z.string()).optional().default([]),
+      }),
+    [existingCounts],
+  )
+
+  const { handleSubmit, control, reset, trigger } = useForm({
     resolver: zodResolver(EditTaskFormSchema),
     defaultValues: {
       title: task.title,
       description: task.description,
       assignee: task.assignee?.id ?? '',
       label: task.label as z.infer<typeof Label>,
+      reporter: task.reporter?.id ?? '',
       priority: task.priority as z.infer<typeof Priority>,
       status: task.status as z.infer<typeof Status>,
+      attachments: [],
+      removedAttachmentIds: [],
     },
   })
 
-  function onSubmit(data: EditTaskFormPayload) {
-    updateTask({
+  async function onSubmit(data: z.infer<typeof EditTaskFormSchema>) {
+    await updateTask({
       taskId: task.id,
       payload: {
         ...data,
@@ -132,8 +165,11 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
 
   return (
     <Dialog open={isDialogOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent showCloseButton={false} className="min-w-[35vw]">
+      <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
+      <DialogContent
+        showCloseButton={false}
+        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col"
+      >
         {/* Header */}
         <DialogHeader>
           <div className="w-full  flex items-center justify-between">
@@ -194,23 +230,57 @@ function EditTaskDialog({ trigger, task }: EditTaskDialogProps) {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor={field.name}>Description</FieldLabel>
-                  <Textarea
+                  <TaskDescriptionEditor
                     disabled={isPending}
-                    {...field}
-                    id={field.name}
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Add more details, links, acceptance criteria, or any relevant context..."
-                    autoComplete="off"
-                    className="h-44"
+                    value={field.value}
+                    onChange={field.onChange}
                   />
-                  <FieldDescription className="text-xs">
-                    Provide enough context so anyone on the team can understand
-                    and complete the task.
-                  </FieldDescription>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
                 </Field>
+              )}
+            />
+
+            <Controller
+              name="removedAttachmentIds"
+              control={control}
+              render={({ field: removedField }) => (
+                <Controller
+                  name="attachments"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel>Attachments</FieldLabel>
+                      <AttachmentField
+                        disabled={isPending}
+                        value={field.value ?? []}
+                        onChange={(files) => {
+                          field.onChange(files)
+                          trigger('attachments')
+                        }}
+                        error={fieldState.error?.message}
+                        existingAttachments={existingAttachments.filter(
+                          (a) => !(removedField.value ?? []).includes(a.id),
+                        )}
+                        onRemoveExisting={(id: string, mimeType: string) => {
+                          if (ACCEPTED_IMAGE_TYPES.includes(mimeType)) {
+                            existingCounts.images -= 1
+                          }
+                          if (ACCEPTED_DOCUMENT_TYPES.includes(mimeType)) {
+                            existingCounts.documents -= 1
+                          }
+
+                          removedField.onChange([
+                            ...(removedField.value ?? []),
+                            id,
+                          ])
+                          trigger('attachments')
+                        }}
+                      />
+                    </Field>
+                  )}
+                />
               )}
             />
 

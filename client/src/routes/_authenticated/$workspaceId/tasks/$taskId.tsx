@@ -156,6 +156,7 @@ function RouteComponent() {
     id: string
     content: string
   } | null>()
+  const [isEditDialogOpen, setEditIsDialogOpen] = useState<boolean>(false)
 
   // Use form
   const { handleSubmit, reset, control } = useForm({
@@ -353,9 +354,16 @@ function RouteComponent() {
                         title: task.title,
                         assignee: task.assignee ?? undefined,
                         reporter: task.reporter ?? undefined,
+                        attachments: task.attachments ?? [],
                       }}
+                      isDialogOpen={isEditDialogOpen}
+                      setIsDialogOpen={setEditIsDialogOpen}
                       trigger={
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditIsDialogOpen(true)}
+                        >
                           <Pencil />
                           Edit
                         </Button>

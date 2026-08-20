@@ -27,13 +27,8 @@ import {
 import { useCreateTask } from '#/hooks/task.hook'
 import { Spinner } from '../ui/spinner'
 import TaskDescriptionEditor from './TaskDescriptionEditor'
-import AttachmentField, {
-  ACCEPTED_DOCUMENT_TYPES,
-  ACCEPTED_IMAGE_TYPES,
-  MAX_DOCUMENTS,
-  MAX_FILE_SIZE,
-  MAX_IMAGES,
-} from './AttachmentField'
+import AttachmentField from './AttachmentField'
+import { attachmentsSchema } from '#/schema/attachment.schema'
 
 interface CreateTaskDialogProps {
   trigger: ReactElement
@@ -48,58 +43,6 @@ const Priority = z.enum(
   'Invalid priority',
 )
 const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label')
-
-const attachmentsSchema = z
-  .array(z.instanceof(File))
-  .optional()
-  .default([])
-  .superRefine((files, ctx) => {
-    if (!files || files.length === 0) return
-
-    const images = files.filter((f) => ACCEPTED_IMAGE_TYPES.includes(f.type))
-    const documents = files.filter((f) =>
-      ACCEPTED_DOCUMENT_TYPES.includes(f.type),
-    )
-    const invalid = files.filter(
-      (f) =>
-        !ACCEPTED_IMAGE_TYPES.includes(f.type) &&
-        !ACCEPTED_DOCUMENT_TYPES.includes(f.type),
-    )
-
-    if (invalid.length > 0) {
-      ctx.addIssue({
-        code: 'custom',
-        expected: 'file',
-        message: `${invalid.map((f) => f.name).join(', ')}: unsupported file type`,
-      })
-    }
-
-    if (images.length > MAX_IMAGES) {
-      ctx.addIssue({
-        code: 'custom',
-        expected: 'file',
-        message: `You can attach a maximum of ${MAX_IMAGES} images`,
-      })
-    }
-
-    if (documents.length > MAX_DOCUMENTS) {
-      ctx.addIssue({
-        code: 'custom',
-        expected: 'file',
-        message: `You can attach a maximum of ${MAX_DOCUMENTS} document`,
-      })
-    }
-
-    files.forEach((file) => {
-      if (file.size > MAX_FILE_SIZE) {
-        ctx.addIssue({
-          code: 'custom',
-          expected: 'file',
-          message: `${file.name} exceeds the 5MB size limit`,
-        })
-      }
-    })
-  })
 
 const CreateTaskFormSchema = z.object({
   title: z
