@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import z, { prettifyError } from 'zod';
+import z from 'zod';
 import { ApiResponse } from '../utils/ApiResponse';
 import { getAttachmentById } from '../services/attachment.service';
 import { ApiError } from '../utils/ApiErrors';

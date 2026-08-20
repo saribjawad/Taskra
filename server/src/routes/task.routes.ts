@@ -39,7 +39,23 @@ taskRouter
 taskRouter
   .route('/:taskId')
   .get(asyncHandler(GetTask))
-  .patch(asyncHandler(UpdateTask))
+  .patch(
+    upload.fields([
+      {
+        name: 'images',
+        maxCount: 3,
+      },
+      {
+        name: 'pdf',
+        maxCount: 1,
+      },
+      {
+        name: 'document',
+        maxCount: 1,
+      },
+    ]),
+    asyncHandler(UpdateTask),
+  )
   .delete(asyncHandler(DeleteTask));
 
 export default taskRouter;

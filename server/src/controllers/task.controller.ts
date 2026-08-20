@@ -16,9 +16,11 @@ import {
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
 import { findCommentsByTaskId } from '../services/comment.service';
-import { FILE_TYPE, uploadFileToS3 } from '../config/s3';
+import { deleteFileFromS3, FILE_TYPE, uploadFileToS3 } from '../config/s3';
 import {
   createAttachment,
+  deleteAttachmentById,
+  getAttachmentByIdAndTaskId,
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
 import { v4 as uuidv4 } from 'uuid';
@@ -51,6 +53,7 @@ export const CreateTask = async (req: Request, res: Response) => {
   let reporterUser;
 
   // If the assigne exists query the user
+
   if (assigneeId) {
     assigneeUser = await findUserById(assigneeId);
     if (!assigneeUser) {
@@ -60,7 +63,7 @@ export const CreateTask = async (req: Request, res: Response) => {
 
   if (reporterId) {
     reporterUser = await findUserById(reporterId);
-    if (reporterId) {
+    if (!reporterUser) {
       throw ApiError.notFound('Reporter not found');
     }
   }
@@ -77,32 +80,30 @@ export const CreateTask = async (req: Request, res: Response) => {
     reporterUser ? reporterUser.id : null,
   );
 
-  // Upload files to s3 bucket and save in DB
-  if (req.files) {
-    for (const [_, value] of Object.entries(req.files)) {
-      await Promise.all(
-        value.map(async (v: any) => {
-          const storageId = `attachment/${v.originalname}-${uuidv4()}`;
-
-          // Upload the file to s3
-          await uploadFileToS3(v.mimetype as FILE_TYPE, storageId, v.buffer);
-
-          // Save the attachment in DB
-          await createAttachment(
-            task.id,
-            v.originalname,
-            v.size,
-            v.mimetype,
-            storageId,
-          );
-        }),
-      );
-    }
-  }
-
   if (!task) {
     throw ApiError.internal('Something went wrong while creating the task');
   }
+
+  // Upload new attachments files to s3 bucket and save in DB
+  const files = Object.values(req.files ?? {}).flat();
+
+  await Promise.all(
+    files.map(async (f) => {
+      const storageId = `attachment/${f.originalname}-${uuidv4()}`;
+
+      // Upload the file to s3
+      await uploadFileToS3(f.mimetype as FILE_TYPE, storageId, f.buffer);
+
+      // Save the attachment in DB
+      await createAttachment(
+        task.id,
+        f.originalname,
+        f.size,
+        f.mimetype,
+        storageId,
+      );
+    }),
+  );
 
   res.status(201).json(new ApiResponse(201, 'Task created'));
 };
@@ -113,14 +114,29 @@ export const UpdateTask = async (req: Request, res: Response) => {
   const parsedParams = TaskParamsSchema.parse(req.params);
 
   const { taskId } = parsedParams;
-  const parsedBody = UpdateTaskSchema.parse(req.body);
+  const { body } = UpdateTaskSchema.parse({
+    body: req.body,
+    files: req.files,
+  });
+
+  const {
+    assignee,
+    description,
+    label,
+    priority,
+    reporter,
+    status,
+    title,
+    removedAttachmentIds,
+  } = body;
+
   const task = await findTaskById(taskId, workspaceId);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
   }
 
-  const { assignee: assigneeId, reporter: reporterId } = parsedBody;
+  const { assignee: assigneeId, reporter: reporterId } = body;
 
   let assigneeUser;
   let reporterUser;
@@ -138,7 +154,47 @@ export const UpdateTask = async (req: Request, res: Response) => {
     }
   }
 
-  const count = await updateTask(taskId, parsedBody);
+  const count = await updateTask(taskId, {
+    title,
+    description,
+    assignee,
+    reporter,
+    label,
+    priority,
+    status,
+  });
+
+  // Remove attachments which user have removed
+  await Promise.all(
+    removedAttachmentIds.map(async (a, i) => {
+      const attachment = await getAttachmentByIdAndTaskId(a, task.id);
+
+      await deleteFileFromS3(attachment.storage_id);
+
+      await deleteAttachmentById(attachment.id);
+    }),
+  );
+
+  // Upload new attachments files to s3 bucket and save in DB
+  const files = Object.values(req.files ?? {}).flat();
+
+  await Promise.all(
+    files.map(async (f) => {
+      const storageId = `attachment/${f.originalname}-${uuidv4()}`;
+
+      // Upload the file to s3
+      await uploadFileToS3(f.mimetype as FILE_TYPE, storageId, f.buffer);
+
+      // Save the attachment in DB
+      await createAttachment(
+        task.id,
+        f.originalname,
+        f.size,
+        f.mimetype,
+        storageId,
+      );
+    }),
+  );
 
   if (!count || count <= 0) {
     throw ApiError.internal('Something went wrong while update the task');

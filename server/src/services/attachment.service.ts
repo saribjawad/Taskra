@@ -74,3 +74,45 @@ export const getAttachmentById = async (
 
   return result.rows[0];
 };
+
+/**
+ * Get task attachment by ID and task Id
+ *
+ * @param attachmentId - Attachment uuid
+ * @param taskId - Task uuid
+ * @returns Attachments
+ */
+export const getAttachmentByIdAndTaskId = async (
+  attachmentId: string,
+  taskId: string,
+): Promise<Attachment> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM attachments
+    WHERE id = $1 AND task_id = $2
+    `,
+    [attachmentId, taskId],
+  );
+
+  return result.rows[0];
+};
+
+/**
+ * Delete task attachment by ID
+ *
+ * @param attachmentId - Attachment uuid
+ * @returns Attachments
+ */
+export const deleteAttachmentById = async (
+  attachmentId: string,
+): Promise<Attachment> => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM attachments
+    WHERE id = $1
+    `,
+    [attachmentId],
+  );
+
+  return result.rows[0];
+};

@@ -1,5 +1,10 @@
 import { dbPool } from '../db';
-import { Task } from '../models/task.model';
+import {
+  Task,
+  TaskLabel,
+  TaskPriority,
+  TaskStatus,
+} from '../models/task.model';
 import {
   FilterType,
   LabelType,
@@ -91,7 +96,18 @@ export const createTask = async (
  * @param reporter - Task reporter (optional)
  * @returns Count of updated row
  */
-export const updateTask = async (id: string, data: UpdateSchema) => {
+export const updateTask = async (
+  id: string,
+  data: {
+    title?: string;
+    description?: string;
+    assignee?: string;
+    reporter?: string;
+    label?: TaskLabel;
+    priority?: TaskPriority;
+    status?: TaskStatus;
+  },
+) => {
   const keys = Object.keys(data);
   const values = Object.values(data);
 

@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
   S3Client,
@@ -68,6 +69,21 @@ export async function generatePresignedUrl(key: string) {
     return url;
   } catch (error) {
     logger.error('An error occured while generating presigned url', error);
+    throw error;
+  }
+}
+
+export async function deleteFileFromS3(key: string) {
+  const command = new DeleteObjectCommand({
+    Bucket: env.AWS_BUCKET_NAME,
+    Key: key,
+  });
+
+  try {
+    const response = await s3.send(command);
+    return response;
+  } catch (error) {
+    logger.error('An error occured while deleting files from S3', error);
     throw error;
   }
 }

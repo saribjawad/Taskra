@@ -109,15 +109,75 @@ export const CreateTaskSchema = z.object({
 });
 
 export const UpdateTaskSchema = z.object({
-  title: z
-    .string('Invalid title')
-    .max(250, 'Title cannot be more than 250 words')
+  body: z.object({
+    title: z
+      .string('Invalid title')
+      .max(250, 'Title cannot be more than 250 words')
+      .optional(),
+    description: z.string('Invalid description').optional(),
+    status: Status.optional(),
+    priority: Priority.optional(),
+    label: Label.optional(),
+    assignee: z.uuid('Invalid assignee UUID').optional(),
+    reporter: z.uuid('Invalid reporter UUID').optional(),
+    removedAttachmentIds: z.array(z.string()).optional().default([]),
+  }),
+  files: z
+    .object({
+      images: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) =>
+                  ['image/jpeg', 'image/png', 'image/webp'].includes(val),
+                'Only JPEG, PNG, and WebP images are allowed',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'File size must not exceed 5MB'),
+          }),
+        )
+        .max(3, 'Cannot add more than 3 images')
+        .optional(),
+      pdf: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) => ['application/pdf'].includes(val),
+                'Only PDF are allowed as PDF',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'PDF size must not exceed 5MB'),
+          }),
+        )
+        .max(1, 'Cannot add more than one PDF')
+        .optional(),
+      document: z
+        .array(
+          z.object({
+            mimetype: z
+              .string()
+              .refine(
+                (val) =>
+                  [
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  ].includes(val),
+                'Only DOCX are allowed as documents',
+              ),
+            size: z
+              .number()
+              .max(5 * 1024 * 1024, 'Document size must not exceed 5MB'),
+          }),
+        )
+        .max(1, 'Cannot add more than one Document')
+        .optional(),
+    })
     .optional(),
-  description: z.string('Invalid description').optional(),
-  status: Status.optional(),
-  priority: Priority.optional(),
-  label: Label.optional(),
-  assignee: z.uuid('Invalid assignee UUID').optional(),
-  reporter: z.uuid('Invalid reporter UUID').optional(),
 });
+
 export type UpdateSchema = z.infer<typeof UpdateTaskSchema>;
