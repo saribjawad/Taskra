@@ -117,6 +117,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   const parsedParams = TaskParamsSchema.parse(req.params);
 
+  console.log(req.body);
   const { taskId } = parsedParams;
   const { body } = UpdateTaskSchema.parse({
     body: req.body,
@@ -168,8 +169,8 @@ export const UpdateTask = async (req: Request, res: Response) => {
     label,
     priority,
     status,
-    dueDate,
-    startDate,
+    due_date: dueDate,
+    start_date: startDate,
   });
 
   // Remove attachments which user have removed

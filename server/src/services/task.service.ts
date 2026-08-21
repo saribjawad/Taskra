@@ -10,7 +10,6 @@ import {
   LabelType,
   Priority,
   StatusType,
-  UpdateSchema,
 } from '../schemas/task.schema';
 
 /**
@@ -114,8 +113,8 @@ export const updateTask = async (
     label?: TaskLabel;
     priority?: TaskPriority;
     status?: TaskStatus;
-    startDate?: Date;
-    dueDate?: Date;
+    start_date?: Date;
+    due_date?: Date;
   },
 ) => {
   const keys = Object.keys(data);
