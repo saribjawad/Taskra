@@ -168,6 +168,8 @@ export const UpdateTask = async (req: Request, res: Response) => {
     label,
     priority,
     status,
+    dueDate,
+    startDate,
   });
 
   // Remove attachments which user have removed
