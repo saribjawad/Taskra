@@ -45,6 +45,8 @@ export const CreateTask = async (req: Request, res: Response) => {
     priority,
     status,
     title,
+    dueDate,
+    startDate,
     assignee: assigneeId,
     reporter: reporterId,
   } = body;
@@ -76,6 +78,8 @@ export const CreateTask = async (req: Request, res: Response) => {
     label,
     activeWorkspace,
     userId,
+    startDate,
+    dueDate,
     assigneeUser ? assigneeUser.id : null,
     reporterUser ? reporterUser.id : null,
   );
@@ -127,6 +131,8 @@ export const UpdateTask = async (req: Request, res: Response) => {
     reporter,
     status,
     title,
+    dueDate,
+    startDate,
     removedAttachmentIds,
   } = body;
 
