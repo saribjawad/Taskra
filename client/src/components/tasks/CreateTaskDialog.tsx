@@ -29,6 +29,8 @@ import { Spinner } from '../ui/spinner'
 import TaskDescriptionEditor from './TaskDescriptionEditor'
 import AttachmentField from './AttachmentField'
 import { attachmentsSchema } from '#/schema/attachment.schema'
+import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
+import { useParams } from '@tanstack/react-router'
 
 interface CreateTaskDialogProps {
   trigger: ReactElement
@@ -82,22 +84,15 @@ const labelItems = [
   { label: 'Improvement', value: 'improvement' },
 ]
 
-const tempAssigneeItems = [
-  { label: 'Ali', value: '550e8400-e29b-41d4-a716-446655440000' },
-  { label: 'Arthur', value: '6ba7b810-9dad-11d1-80b4-00c04fd430c8' },
-  { label: 'Someone', value: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
-]
-
-const tempReporterItems = [
-  { label: 'Ali', value: '550e8400-e29b-41d4-a716-446655440000' },
-  { label: 'Arthur', value: '6ba7b810-9dad-11d1-80b4-00c04fd430c8' },
-  { label: 'Someone', value: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
-]
-
 function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
+  const params = useParams({ strict: false }) as { workspaceId: string }
+
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>()
 
+  // Mutation and queries
   const { mutateAsync: createTask, isPending } = useCreateTask()
+  const { data: workspaceUsers } = useGetWorkspaceUsers(params.workspaceId)
+
   const { handleSubmit, control, reset, trigger } = useForm({
     resolver: zodResolver(CreateTaskFormSchema),
     defaultValues: {
@@ -115,7 +110,8 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
   async function onSubmit(data: CreateTaskFormPayload) {
     await createTask({
       ...data,
-      assignee: data.assignee === '' ? undefined : data.assignee,
+      assignee: data.assignee === 'noassignee' ? undefined : data.assignee,
+      reporter: data.reporter === 'noreporter' ? undefined : data.reporter,
     })
     // Manually close the dialog and reset the form
     reset()
@@ -364,11 +360,22 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Assignee</SelectLabel>
-                          {tempAssigneeItems.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
+                          {workspaceUsers && (
+                            <SelectItem value="noassignee">
+                              No assignee
                             </SelectItem>
-                          ))}
+                          )}
+                          {workspaceUsers ? (
+                            workspaceUsers.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>
+                                {u.username}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-users" disabled>
+                              No users in this workspace
+                            </SelectItem>
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -403,11 +410,22 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Reporter</SelectLabel>
-                          {tempReporterItems.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
+                          {workspaceUsers && (
+                            <SelectItem value="noreporter">
+                              No reporter
                             </SelectItem>
-                          ))}
+                          )}
+                          {workspaceUsers ? (
+                            workspaceUsers.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>
+                                {u.username}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-users" disabled>
+                              No users in this workspace
+                            </SelectItem>
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>

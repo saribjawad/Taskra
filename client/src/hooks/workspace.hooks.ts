@@ -3,6 +3,7 @@ import {
   createWorkspace,
   deleteWorkspace,
   getUsersWorkspaces,
+  getWorkspaceUsers,
   switchWorkspace,
 } from '#/service/workspace.service'
 import type { ApiErrorResponse } from '#/type'
@@ -14,6 +15,14 @@ export const useGetUserWorkspace = () => {
   return useQuery({
     queryKey: ['users-workspaces'],
     queryFn: getUsersWorkspaces,
+    retry: 2,
+  })
+}
+
+export const useGetWorkspaceUsers = (workspaceId: string) => {
+  return useQuery({
+    queryKey: [`workspace-$${workspaceId}-users`],
+    queryFn: () => getWorkspaceUsers(workspaceId),
     retry: 2,
   })
 }

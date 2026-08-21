@@ -10,6 +10,12 @@ interface GetUserWorkspacesResponse {
   name: string
 }
 
+interface GetWorkspaceUsersResponse {
+  id: string
+  email: string
+  username: string
+}
+
 interface SwitchWorkspaceResponse {
   id: string
   workspace_id: string
@@ -24,6 +30,14 @@ export async function getUsersWorkspaces(): Promise<
   GetUserWorkspacesResponse[]
 > {
   const resp = await api.get('/workspace')
+
+  return resp.data.data
+}
+
+export async function getWorkspaceUsers(
+  workspaceId: string,
+): Promise<GetWorkspaceUsersResponse[]> {
+  const resp = await api.get(`/workspace/${workspaceId}/users`)
 
   return resp.data.data
 }

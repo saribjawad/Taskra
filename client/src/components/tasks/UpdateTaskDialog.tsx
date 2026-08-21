@@ -1,9 +1,4 @@
-import {
-  useState,
-  type Dispatch,
-  type ReactElement,
-  type SetStateAction,
-} from 'react'
+import { type Dispatch, type ReactElement, type SetStateAction } from 'react'
 import {
   Dialog,
   DialogClose,
@@ -39,6 +34,8 @@ import AttachmentField, {
 } from './AttachmentField'
 import { createAttachmentsSchema } from '#/schema/attachment.schema'
 import { useMemo } from 'react'
+import { useParams } from '@tanstack/react-router'
+import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 
 interface EditTaskDialogProps {
   trigger: ReactElement
@@ -90,18 +87,16 @@ const labelItems = [
   { label: 'Improvement', value: 'improvement' },
 ]
 
-const tempAssigneeItems = [
-  { label: 'Ali', value: '550e8400-e29b-41d4-a716-446655440000' },
-  { label: 'Arthur', value: '6ba7b810-9dad-11d1-80b4-00c04fd430c8' },
-  { label: 'Someone', value: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' },
-]
-
 function EditTaskDialog({
   trigger: dialogTrigger,
   task,
   isDialogOpen,
   setIsDialogOpen,
 }: EditTaskDialogProps) {
+  const params = useParams({ strict: false }) as { workspaceId: string }
+
+  const { data: workspaceUsers } = useGetWorkspaceUsers(params.workspaceId)
+
   const existingAttachments = task.attachments ?? []
   const existingCounts = useMemo(
     () => ({
@@ -155,7 +150,8 @@ function EditTaskDialog({
       taskId: task.id,
       payload: {
         ...data,
-        assignee: data.assignee === '' ? undefined : data.assignee,
+        assignee: data.assignee === 'noassignee' ? undefined : data.assignee,
+        reporter: data.reporter === 'noreporter' ? undefined : data.reporter,
       },
     })
     // Manually close the dialog and reset the form
@@ -164,7 +160,7 @@ function EditTaskDialog({
   }
 
   return (
-    <Dialog open={isDialogOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
@@ -424,11 +420,22 @@ function EditTaskDialog({
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Assignee</SelectLabel>
-                          {tempAssigneeItems.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
+                          {workspaceUsers && (
+                            <SelectItem value="noassignee">
+                              No assignee
                             </SelectItem>
-                          ))}
+                          )}
+                          {workspaceUsers ? (
+                            workspaceUsers.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>
+                                {u.username}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-users" disabled>
+                              No users in this workspace
+                            </SelectItem>
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -462,11 +469,22 @@ function EditTaskDialog({
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>Reporter</SelectLabel>
-                          {tempAssigneeItems.map((item) => (
-                            <SelectItem key={item.value} value={item.value}>
-                              {item.label}
+                          {workspaceUsers && (
+                            <SelectItem value="noreporter">
+                              No reporter
                             </SelectItem>
-                          ))}
+                          )}
+                          {workspaceUsers ? (
+                            workspaceUsers.map((u) => (
+                              <SelectItem key={u.id} value={u.id}>
+                                {u.username}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-users" disabled>
+                              No users in this workspace
+                            </SelectItem>
+                          )}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
