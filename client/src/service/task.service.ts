@@ -1,4 +1,4 @@
-import { ACCEPTED_IMAGE_TYPES } from '#/components/tasks/AttachmentField'
+import { ACCEPTED_IMAGE_TYPES } from '#/components/fields/AttachmentField'
 import { api } from '#/lib/api'
 import type {
   Task,
@@ -79,6 +79,9 @@ interface GetTaskResponse {
     username: string
     email: string
   } | null
+  start_date: string
+  due_date: string
+  completed_date: string
   updated_at: string
   created_at: string
   workspace_id: string
@@ -112,6 +115,8 @@ export interface CreateTaskParams {
   assignee?: string
   reporter?: string
   attachments: (File | undefined)[] | undefined
+  startDate: string | undefined
+  dueDate: string | undefined
 }
 
 export async function createTask(params: CreateTaskParams): Promise<void> {
@@ -124,6 +129,8 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
     title,
     assignee,
     reporter,
+    dueDate,
+    startDate,
   } = params
 
   const formData = new FormData()
@@ -133,6 +140,12 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
   formData.append('status', status)
   formData.append('priority', priority)
   formData.append('label', label)
+  if (startDate) {
+    formData.append('startDate', startDate)
+  }
+  if (dueDate) {
+    formData.append('dueDate', dueDate)
+  }
   if (assignee) {
     formData.append('assignee', assignee)
   }
@@ -164,6 +177,8 @@ export interface UpdateTaskPayload {
   assignee?: string
   reporter?: string
   attachments: (File | undefined)[] | undefined
+  startDate: string | undefined
+  dueDate: string | undefined
   removedAttachmentIds: string[]
 }
 
@@ -180,6 +195,8 @@ export async function updateTask(
     title,
     assignee,
     reporter,
+    dueDate,
+    startDate,
     removedAttachmentIds,
   } = payload
 
@@ -190,6 +207,9 @@ export async function updateTask(
   formData.append('status', status)
   formData.append('priority', priority)
   formData.append('label', label)
+
+  if (startDate) formData.append('startDate', startDate)
+  if (dueDate) formData.append('dueDate', dueDate)
 
   removedAttachmentIds.forEach((item) =>
     formData.append('removedAttachmentIds[]', item),

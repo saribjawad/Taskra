@@ -31,11 +31,12 @@ import AttachmentField, {
   ACCEPTED_DOCUMENT_TYPES,
   ACCEPTED_IMAGE_TYPES,
   type ExistingAttachment,
-} from './AttachmentField'
+} from '../fields/AttachmentField'
 import { createAttachmentsSchema } from '#/schema/attachment.schema'
 import { useMemo } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
+import DateField from '../fields/DateField'
 
 interface EditTaskDialogProps {
   trigger: ReactElement
@@ -48,6 +49,9 @@ interface EditTaskDialogProps {
     label: string
     assignee?: { id: string; username: string; email: string }
     reporter?: { id: string; username: string; email: string }
+    start_date: string
+    due_date: string
+    completed_date: string
     attachments?: ExistingAttachment[]
   }
   isDialogOpen: boolean
@@ -113,20 +117,31 @@ function EditTaskDialog({
   const { mutateAsync: updateTask, isPending } = useUpdateTask()
   const EditTaskFormSchema = useMemo(
     () =>
-      z.object({
-        title: z
-          .string('Invalid title')
-          .min(1, 'Title is required')
-          .max(250, 'Title cannot be more than 250 words'),
-        description: z.string().min(1, 'Description is required'),
-        status: Status,
-        priority: Priority,
-        label: Label,
-        assignee: z.string('Invalid assignee').optional(),
-        reporter: z.string('Invalid reporter').optional(),
-        attachments: createAttachmentsSchema(existingCounts),
-        removedAttachmentIds: z.array(z.string()).optional().default([]),
-      }),
+      z
+        .object({
+          title: z
+            .string('Invalid title')
+            .min(1, 'Title is required')
+            .max(250, 'Title cannot be more than 250 words'),
+          description: z.string().min(1, 'Description is required'),
+          status: Status,
+          priority: Priority,
+          label: Label,
+          assignee: z.string('Invalid assignee').optional(),
+          reporter: z.string('Invalid reporter').optional(),
+          attachments: createAttachmentsSchema(existingCounts),
+          startDate: z.date().optional(),
+          dueDate: z.date().optional(),
+          removedAttachmentIds: z.array(z.string()).optional().default([]),
+        })
+        .refine(
+          (data) =>
+            !data.startDate || !data.dueDate || data.dueDate >= data.startDate,
+          {
+            message: 'Due date cannot be before start date',
+            path: ['dueDate'],
+          },
+        ),
     [existingCounts],
   )
 
@@ -140,6 +155,8 @@ function EditTaskDialog({
       reporter: task.reporter?.id ?? '',
       priority: task.priority as z.infer<typeof Priority>,
       status: task.status as z.infer<typeof Status>,
+      startDate: task.start_date ? new Date(task.start_date) : undefined,
+      dueDate: task.due_date ? new Date(task.due_date) : undefined,
       attachments: [],
       removedAttachmentIds: [],
     },
@@ -152,6 +169,8 @@ function EditTaskDialog({
         ...data,
         assignee: data.assignee === 'noassignee' ? undefined : data.assignee,
         reporter: data.reporter === 'noreporter' ? undefined : data.reporter,
+        startDate: data.startDate ? data.startDate.toISOString() : undefined,
+        dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
       },
     })
     // Manually close the dialog and reset the form
@@ -279,6 +298,51 @@ function EditTaskDialog({
                 />
               )}
             />
+
+            <div className="grid grid-cols-2 gap-2">
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Start date</FieldLabel>
+                    <DateField
+                      id={field.name}
+                      disabled={isPending}
+                      aria-invalid={fieldState.invalid}
+                      value={field.value}
+                      onChange={(date) => {
+                        field.onChange(date)
+                        trigger('dueDate') // re-check the cross-field refine
+                      }}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="dueDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Due date</FieldLabel>
+                    <DateField
+                      id={field.name}
+                      disabled={isPending}
+                      aria-invalid={fieldState.invalid}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
 
             <div className="grid grid-cols-2 gap-2">
               <Controller

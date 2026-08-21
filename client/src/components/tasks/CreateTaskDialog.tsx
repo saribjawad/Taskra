@@ -27,10 +27,11 @@ import {
 import { useCreateTask } from '#/hooks/task.hook'
 import { Spinner } from '../ui/spinner'
 import TaskDescriptionEditor from './TaskDescriptionEditor'
-import AttachmentField from './AttachmentField'
+import AttachmentField from '../fields/AttachmentField'
 import { attachmentsSchema } from '#/schema/attachment.schema'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { useParams } from '@tanstack/react-router'
+import DateField from '../fields/DateField'
 
 interface CreateTaskDialogProps {
   trigger: ReactElement
@@ -46,19 +47,30 @@ const Priority = z.enum(
 )
 const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label')
 
-const CreateTaskFormSchema = z.object({
-  title: z
-    .string('Invalid title')
-    .min(1, 'Title is required')
-    .max(250, 'Title cannot be more than 250 words'),
-  description: z.string().min(1, 'Description is required'),
-  status: Status,
-  priority: Priority,
-  label: Label,
-  assignee: z.string('Invalid assignee').optional(),
-  reporter: z.string('Invalid reporter').optional(),
-  attachments: attachmentsSchema,
-})
+const CreateTaskFormSchema = z
+  .object({
+    title: z
+      .string('Invalid title')
+      .min(1, 'Title is required')
+      .max(250, 'Title cannot be more than 250 words'),
+    description: z.string().min(1, 'Description is required'),
+    status: Status,
+    priority: Priority,
+    label: Label,
+    assignee: z.string('Invalid assignee').optional(),
+    reporter: z.string('Invalid reporter').optional(),
+    attachments: attachmentsSchema,
+    startDate: z.date().optional(),
+    dueDate: z.date().optional(),
+  })
+  .refine(
+    (data) =>
+      !data.startDate || !data.dueDate || data.dueDate >= data.startDate,
+    {
+      message: 'Due date cannot be before start date',
+      path: ['dueDate'],
+    },
+  )
 
 export type CreateTaskFormPayload = z.infer<typeof CreateTaskFormSchema>
 
@@ -104,6 +116,8 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
       priority: 'medium',
       status: 'todo',
       attachments: [],
+      startDate: undefined,
+      dueDate: undefined,
     },
   })
 
@@ -112,6 +126,8 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
       ...data,
       assignee: data.assignee === 'noassignee' ? undefined : data.assignee,
       reporter: data.reporter === 'noreporter' ? undefined : data.reporter,
+      startDate: data.startDate?.toISOString(),
+      dueDate: data.dueDate?.toISOString(),
     })
     // Manually close the dialog and reset the form
     reset()
@@ -219,6 +235,51 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
                 </Field>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-2">
+              <Controller
+                name="startDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Start date</FieldLabel>
+                    <DateField
+                      id={field.name}
+                      disabled={isPending}
+                      aria-invalid={fieldState.invalid}
+                      value={field.value}
+                      onChange={(date) => {
+                        field.onChange(date)
+                        trigger('dueDate') // re-check the cross-field refine
+                      }}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                name="dueDate"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={field.name}>Due date</FieldLabel>
+                    <DateField
+                      id={field.name}
+                      disabled={isPending}
+                      aria-invalid={fieldState.invalid}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </div>
 
             <div className="grid md:grid-cols-4 gap-2 grid-cols-2">
               <Controller

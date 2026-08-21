@@ -4,7 +4,7 @@ import {
   MAX_DOCUMENTS,
   MAX_FILE_SIZE,
   MAX_IMAGES,
-} from '#/components/tasks/AttachmentField'
+} from '#/components/fields/AttachmentField'
 import z from 'zod'
 
 /**

@@ -271,6 +271,25 @@ function RouteComponent() {
     },
     { label: 'Label', value: formatLabel(task.label) },
     {
+      label: 'Start Date',
+      value: formatLabel(
+        task.start_date && new Date(task.start_date).toLocaleDateString(),
+      ),
+    },
+    {
+      label: 'Due Date',
+      value: formatLabel(
+        task.due_date && new Date(task.due_date).toLocaleDateString(),
+      ),
+    },
+    {
+      label: 'Completed Date',
+      value: formatLabel(
+        task.completed_date &&
+          new Date(task.completed_date).toLocaleDateString(),
+      ),
+    },
+    {
       label: 'Created',
       value: new Date(task.created_at).toLocaleDateString(),
     },
@@ -354,6 +373,9 @@ function RouteComponent() {
                         title: task.title,
                         assignee: task.assignee ?? undefined,
                         reporter: task.reporter ?? undefined,
+                        completed_date: task.completed_date,
+                        due_date: task.due_date,
+                        start_date: task.start_date,
                         attachments: task.attachments ?? [],
                       }}
                       isDialogOpen={isEditDialogOpen}

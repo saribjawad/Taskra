@@ -1,0 +1,56 @@
+import { ChevronDownIcon } from 'lucide-react'
+import { Button } from '../ui/button'
+import { Calendar } from '../ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+
+interface DateFieldProps {
+  value?: Date
+  onChange: (date: Date | undefined) => void
+  disabled?: boolean
+  placeholder?: string
+  id?: string
+  'aria-invalid'?: boolean
+}
+
+function DateField({
+  value,
+  onChange,
+  disabled,
+  placeholder = 'Pick a date',
+  id,
+  ...rest
+}: DateFieldProps) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          disabled={disabled}
+          data-empty={!value}
+          className="w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+          {...rest}
+        >
+          {value ? (
+            value.toLocaleDateString(undefined, { dateStyle: 'long' })
+          ) : (
+            <span>{placeholder}</span>
+          )}
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          mode="single"
+          selected={value}
+          onSelect={onChange}
+          disabled={disabled}
+          // initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+export default DateField
