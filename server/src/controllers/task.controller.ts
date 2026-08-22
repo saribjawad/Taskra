@@ -24,6 +24,7 @@ import {
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
 import { v4 as uuidv4 } from 'uuid';
+import { isArray } from 'util';
 
 // ==================================================================================
 // Task Controllers
@@ -160,17 +161,20 @@ export const UpdateTask = async (req: Request, res: Response) => {
     }
   }
 
-  const count = await updateTask(taskId, {
-    title,
-    description,
-    assignee,
-    reporter,
-    label,
-    priority,
-    status,
-    due_date: dueDate,
-    start_date: startDate,
+  const fieldMap: Record<string, string> = {
+    startDate: 'start_date',
+    dueDate: 'due_date',
+  };
+
+  const payload: Record<string, unknown> = {};
+
+  Object.entries(body).forEach(([key, value]) => {
+    if (value != null && !Array.isArray(value)) {
+      payload[fieldMap[key] ?? key] = value;
+    }
   });
+
+  const count = await updateTask(taskId, payload);
 
   // Remove attachments which user have removed
   await Promise.all(
