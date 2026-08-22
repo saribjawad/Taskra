@@ -8,7 +8,7 @@ import type {
   TaskStatusType,
 } from '#/type'
 
-interface GetTasksResponse {
+export interface GetTasksResponse {
   metadata: {
     hasNextPage: Boolean
     page: number
@@ -169,70 +169,48 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
 }
 
 export interface UpdateTaskPayload {
-  title: string
-  description: string
-  status: TaskStatusType
-  priority: TaskPriorityType
-  label: TaskLabelType
+  title?: string
+  description?: string
+  status?: TaskStatusType
+  priority?: TaskPriorityType
+  label?: TaskLabelType
   assignee?: string
   reporter?: string
-  attachments: (File | undefined)[] | undefined
-  startDate: string | undefined
-  dueDate: string | undefined
-  removedAttachmentIds: string[]
+  attachments?: (File | undefined)[] | undefined
+  startDate?: string | undefined
+  dueDate?: string | undefined
+  removedAttachmentIds?: string[]
 }
 
 export async function updateTask(
   taskId: string,
   payload: UpdateTaskPayload,
 ): Promise<void> {
-  const {
-    attachments,
-    description,
-    label,
-    priority,
-    status,
-    title,
-    assignee,
-    reporter,
-    dueDate,
-    startDate,
-    removedAttachmentIds,
-  } = payload
-
   const formData = new FormData()
 
-  formData.append('title', title)
-  formData.append('description', description)
-  formData.append('status', status)
-  formData.append('priority', priority)
-  formData.append('label', label)
+  const { attachments, removedAttachmentIds, ...fields } = payload
 
-  if (startDate) formData.append('startDate', startDate)
-  if (dueDate) formData.append('dueDate', dueDate)
-
-  removedAttachmentIds.forEach((item) =>
-    formData.append('removedAttachmentIds[]', item),
-  )
-
-  if (assignee) {
-    formData.append('assignee', assignee)
-  }
-  if (reporter) {
-    formData.append('reporter', reporter)
-  }
-
-  if (attachments) {
-    for (const file of attachments) {
-      if (file && ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        formData.append('images', file)
-      } else if (file && file.type === 'application/pdf') {
-        formData.append('pdf', file)
-      } else if (file) {
-        formData.append('document', file)
-      }
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) {
+      formData.append(key, value)
     }
-  }
+  })
+
+  removedAttachmentIds?.forEach((id) => {
+    formData.append('removedAttachmentIds[]', id)
+  })
+
+  attachments?.forEach((file) => {
+    if (!file) return
+
+    const field = ACCEPTED_IMAGE_TYPES.includes(file.type)
+      ? 'images'
+      : file.type === 'application/pdf'
+        ? 'pdf'
+        : 'document'
+
+    formData.append(field, file)
+  })
 
   await api.patch(`/tasks/${taskId}`, formData)
 }

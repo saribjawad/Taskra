@@ -1,18 +1,33 @@
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu'
 import { Button } from '../ui/button'
-import { Ellipsis, Trash2 } from 'lucide-react'
+import {
+  CircleAlert,
+  Ellipsis,
+  SignalHigh,
+  SignalLow,
+  SignalMedium,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react'
 import DeleteTaskDialog from './DeleteTaskDialog'
 import { useState } from 'react'
-import { useDeleteTask } from '#/hooks/task.hook'
+import { useDeleteTask, useUpdateTask } from '#/hooks/task.hook'
+import { useQueryClient } from '@tanstack/react-query'
+import { router } from '#/main'
+import type { GetTasksResponse } from '#/service/task.service'
 
 interface TaskCardProps {
   id: string
@@ -24,8 +39,44 @@ interface TaskCardProps {
   created_at: Date
 }
 
+const priorityItems = [
+  {
+    name: 'Low',
+    value: 'low',
+    icon: <SignalLow />,
+  },
+  {
+    name: 'Medium',
+    value: 'medium',
+    icon: <SignalMedium />,
+  },
+  {
+    name: 'High',
+    value: 'high',
+    icon: <SignalHigh />,
+  },
+  {
+    name: 'Urgent',
+    value: 'urgent',
+    icon: <CircleAlert />,
+  },
+  {
+    name: 'No Priority',
+    value: 'no_priority',
+    icon: <Ellipsis />,
+  },
+]
+
 function TaskCard(props: TaskCardProps) {
+  const queryClient = useQueryClient()
+  const pathname = useLocation({
+    select: (location) => location.pathname,
+  })
+  const lastSegment = window.location.pathname.split('/').filter(Boolean).at(-1)
+
+  const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateTask()
   const { mutate: deleteTask, isPending } = useDeleteTask()
+
   const [deleteOpen, setDeleteOpen] = useState(false)
   const { workspaceId } = useParams({ strict: false })
   const navigate = useNavigate()
@@ -77,6 +128,65 @@ function TaskCard(props: TaskCardProps) {
                     <Trash2 />
                     Delete
                   </DropdownMenuItem>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger
+                      onClick={(e) => {
+                        e.stopPropagation()
+                      }}
+                    >
+                      <TrendingUp />
+                      Priority
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent
+                        onClick={(e) => {
+                          e.stopPropagation()
+                        }}
+                      >
+                        {priorityItems.map((p) => (
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              updateTask(
+                                {
+                                  taskId: props.id,
+                                  payload: {
+                                    priority: p.value as TaskPriorityType,
+                                  },
+                                },
+                                {
+                                  // Update the query data manually
+                                  onSuccess: () => {
+                                    queryClient.setQueryData(
+                                      [`${lastSegment}-tasks`],
+                                      (old: GetTasksResponse) => {
+                                        return {
+                                          ...old,
+                                          tasks: old.tasks.map((t) =>
+                                            t.id === props.id
+                                              ? {
+                                                  ...t,
+                                                  priority:
+                                                    p.value as TaskPriorityType,
+                                                }
+                                              : t,
+                                          ),
+                                        }
+                                      },
+                                    )
+                                  },
+                                },
+                              )
+                            }}
+                            key={p.name}
+                            className={`flex items-center gap-3 ${props.priority === p.value ? 'bg-zinc-800' : ''}`}
+                          >
+                            {p.icon}
+                            {p.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
