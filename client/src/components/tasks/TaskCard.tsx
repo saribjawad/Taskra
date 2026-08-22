@@ -69,9 +69,6 @@ const priorityItems = [
 
 function TaskCard(props: TaskCardProps) {
   const queryClient = useQueryClient()
-  const pathname = useLocation({
-    select: (location) => location.pathname,
-  })
   const lastSegment = window.location.pathname.split('/').filter(Boolean).at(-1)
 
   const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateTask()
