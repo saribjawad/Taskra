@@ -218,7 +218,12 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
   const currentDate = new Date();
 
   const count = await markTaskAsComplete(taskId, currentDate);
-  console.log(count);
+
+  if (!count || count <= 0) {
+    throw ApiError.internal(
+      'Something went wrong while marking the task as complete',
+    );
+  }
 
   res.status(200).json(new ApiResponse(200, 'Task marked as completed'));
 };
