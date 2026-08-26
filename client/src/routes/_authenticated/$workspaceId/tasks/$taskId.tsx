@@ -21,6 +21,7 @@ import {
 import { Field } from '#/components/ui/field'
 import { Separator } from '#/components/ui/separator'
 import { SidebarTrigger } from '#/components/ui/sidebar'
+import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { useAuth } from '#/context/auth/auth-hook'
 import { useGetPresignedUrl } from '#/hooks/attachment.hooks'
@@ -29,7 +30,11 @@ import {
   useDeleteComment,
   useUpdateComment,
 } from '#/hooks/comment.hooks'
-import { useDeleteTask, useGetTaskById } from '#/hooks/task.hook'
+import {
+  useDeleteTask,
+  useGetTaskById,
+  useMarkTaskAsComplete,
+} from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
 import usePreviousLocation from '#/hooks/usePreviousLocation'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -176,6 +181,8 @@ function RouteComponent() {
   // Mutations
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask()
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
+  const { mutate: markTaskAsComplete, isPending: isMarkingTaskAsComplete } =
+    useMarkTaskAsComplete()
   const { mutate: deleteComment, isPending: isDeletingComment } =
     useDeleteComment()
   const { mutate: updateComment, isPending: isUpdatingComment } =
@@ -247,6 +254,12 @@ function RouteComponent() {
     )
   }
 
+  function onMarkAsComplete() {
+    if (task) {
+      markTaskAsComplete(task.id)
+    }
+  }
+
   const properties = [
     { label: 'Assignee', value: task.assignee?.username },
     { label: 'Reporter', value: task.reporter?.username },
@@ -304,28 +317,39 @@ function RouteComponent() {
       <main className="flex h-dvh w-full min-h-0 flex-col overflow-hidden">
         {/* Header */}
         <div className="flex shrink-0 flex-col gap-2 px-4 pt-3 sm:px-6">
-          <nav className="flex min-w-0 items-center gap-3">
-            {isMobile && <SidebarTrigger />}
-            <Breadcrumb className="min-w-0">
-              <BreadcrumbList className="flex-nowrap">
-                <BreadcrumbItem className="shrink-0">
-                  <BreadcrumbLink
-                    className="cursor-pointer"
-                    onClick={() => {
-                      navigate({
-                        to: prevLocation,
-                      })
-                    }}
-                  >
-                    My Tasks
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="shrink-0" />
-                <BreadcrumbItem className="min-w-0 truncate text-foreground">
-                  {task.title}
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+          <nav className="flex min-w-0 items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              {isMobile && <SidebarTrigger />}
+              <Breadcrumb className="min-w-0">
+                <BreadcrumbList className="flex-nowrap">
+                  <BreadcrumbItem className="shrink-0">
+                    <BreadcrumbLink
+                      className="cursor-pointer"
+                      onClick={() => {
+                        navigate({
+                          to: prevLocation,
+                        })
+                      }}
+                    >
+                      My Tasks
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="shrink-0" />
+                  <BreadcrumbItem className="min-w-0 truncate text-foreground">
+                    {task.title}
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+
+            {task && task.status !== 'done' ? (
+              <Button onClick={onMarkAsComplete} className="" variant="green">
+                {isMarkingTaskAsComplete && <Spinner />}
+                Mark as done
+              </Button>
+            ) : (
+              ''
+            )}
           </nav>
           <Separator />
         </div>

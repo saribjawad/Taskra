@@ -183,7 +183,7 @@ function EditTaskDialog({
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col"
+        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col "
       >
         {/* Header */}
         <DialogHeader>

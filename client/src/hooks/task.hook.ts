@@ -3,6 +3,7 @@ import {
   deleteTask,
   getTaskById,
   getTasks,
+  markTaskAsCompleted,
   updateTask,
   type CreateTaskParams,
   type GetTasksParams,
@@ -48,6 +49,22 @@ export const useCreateTask = () => {
 
       // TODO: show the toast
       console.log('Successfully created the task')
+    },
+  })
+}
+
+export const useMarkTaskAsComplete = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (taskId: string) => markTaskAsCompleted(taskId),
+    onSuccess: (_, taskId) => {
+      queryClient.invalidateQueries({
+        queryKey: [`task-${taskId}`],
+      })
+
+      // TODO: show the toast
+      console.log('Successfully marked task as completed')
     },
   })
 }
