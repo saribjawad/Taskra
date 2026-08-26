@@ -1,5 +1,5 @@
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
-import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import {
@@ -26,7 +26,6 @@ import DeleteTaskDialog from './DeleteTaskDialog'
 import { useState } from 'react'
 import { useDeleteTask, useUpdateTask } from '#/hooks/task.hook'
 import { useQueryClient } from '@tanstack/react-query'
-import { router } from '#/main'
 import type { GetTasksResponse } from '#/service/task.service'
 
 interface TaskCardProps {
