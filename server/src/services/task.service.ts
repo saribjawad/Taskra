@@ -135,6 +135,25 @@ export const updateTask = async (
 };
 
 /**
+ * Mark task as completed in database
+ *
+ * @param id - Task ID
+ * @param completedDate - Date of task completed at
+ * @returns Count of updated row
+ */
+export const markTaskAsComplete = async (id: string, completedDate: Date) => {
+  const results = await dbPool.query(
+    `
+    UPDATE tasks
+    SET status = 'done', completed_date = $1
+    WHERE id = $2`,
+    [completedDate, id],
+  );
+
+  return results.rowCount;
+};
+
+/**
  * Get tasks from database
  *
  * @param limit - Query limit

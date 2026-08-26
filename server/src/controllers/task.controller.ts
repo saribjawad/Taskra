@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import {
   CreateTaskSchema,
   GetTaskQuerySchema,
+  MarkTaskAsCompletedParamsSchema,
   TaskParamsSchema,
   UpdateTaskSchema,
 } from '../schemas/task.schema';
@@ -12,6 +13,7 @@ import {
   deleteTask,
   findTaskById,
   getTasks,
+  markTaskAsComplete,
   updateTask,
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
@@ -124,18 +126,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
     files: req.files,
   });
 
-  const {
-    assignee,
-    description,
-    label,
-    priority,
-    reporter,
-    status,
-    title,
-    dueDate,
-    startDate,
-    removedAttachmentIds,
-  } = body;
+  const { removedAttachmentIds } = body;
 
   const task = await findTaskById(taskId, workspaceId);
 
@@ -213,6 +204,23 @@ export const UpdateTask = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Task updated'));
+};
+
+export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
+  const activeWorkspaceId = req.user.activeWorkspace;
+  const { taskId } = MarkTaskAsCompletedParamsSchema.parse(req.params);
+
+  const task = await findTaskById(taskId, activeWorkspaceId);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+  const currentDate = new Date();
+
+  const count = await markTaskAsComplete(taskId, currentDate);
+  console.log(count);
+
+  res.status(200).json(new ApiResponse(200, 'Task marked as completed'));
 };
 
 export const GetTasks = async (req: Request, res: Response) => {

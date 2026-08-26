@@ -4,6 +4,7 @@ import {
   DeleteTask,
   GetTask,
   GetTasks,
+  MarkTaskAsCompleted,
   UpdateTask,
 } from '../controllers/task.controller';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -57,5 +58,7 @@ taskRouter
     asyncHandler(UpdateTask),
   )
   .delete(asyncHandler(DeleteTask));
+
+taskRouter.route('/:taskId/completed').patch(asyncHandler(MarkTaskAsCompleted));
 
 export default taskRouter;
