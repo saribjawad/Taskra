@@ -1,5 +1,5 @@
 import { dbPool } from '../db';
-import { Workspace } from '../models/workspace.model';
+import { Workspace, WorkspaceMemberRole } from '../models/workspace.model';
 import { WorkspaceMember } from '../models/workspace.model';
 
 /**
@@ -107,14 +107,15 @@ const deleteWorkspace = async (workspaceId: string) => {
 const createWorkspaceMember = async (
   userId: string,
   workspaceId: string,
+  role: WorkspaceMemberRole,
 ): Promise<WorkspaceMember> => {
   const result = await dbPool.query(
     `
-    INSERT INTO workspace_members (user_id, workspace_id)
-    VALUES ($1, $2)
+    INSERT INTO workspace_members (user_id, workspace_id, role)
+    VALUES ($1, $2, $3)
     RETURNING*
     `,
-    [userId, workspaceId],
+    [userId, workspaceId, role],
   );
 
   return result.rows[0];

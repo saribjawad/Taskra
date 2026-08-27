@@ -19,6 +19,7 @@ export const RemoveMemberFromWorkspaceSchema = z.object({
 export const InviteToWorkspaceParamsSchema = WorkspaceIdParamsSchema;
 export const InviteToWorkspaceSchema = z.object({
   email: z.email('Invalid email'),
+  role: z.enum(['member', 'admin', 'viewer', 'owner']),
 });
 
 export const VerifyWorkspaceInvitationParamsSchema = z.object({

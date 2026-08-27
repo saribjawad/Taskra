@@ -42,6 +42,7 @@ import {
 } from '../services/invitation.service';
 import { sendInviteToWorkspace } from '../lib/resend';
 import { env } from '../config/env';
+import { WorkspaceMemberRole } from '../models/workspace.model';
 
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -119,7 +120,11 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   }
 
   // Create the workspace member
-  const workspaceMember = await createWorkspaceMember(user.id, workspace.id);
+  const workspaceMember = await createWorkspaceMember(
+    user.id,
+    workspace.id,
+    'admin',
+  );
 
   if (!workspaceMember) {
     throw ApiError.internal(
@@ -276,10 +281,8 @@ export const RemoveMemberFromWorkspace = async (
 };
 
 export const InviteToWorkspace = async (req: Request, res: Response) => {
-  // TODO: add role option
-
   const { workspaceId } = InviteToWorkspaceParamsSchema.parse(req.params);
-  const { email } = InviteToWorkspaceSchema.parse(req.body);
+  const { email, role } = InviteToWorkspaceSchema.parse(req.body);
   const userId = req.user.id;
 
   const user = await findUserById(userId);
@@ -320,7 +323,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
   // Create and save invitation
   const invitation = await createInvitation(
     email,
-    'member',
+    role as WorkspaceMemberRole,
     userId,
     workspaceId,
     hashedToken,
@@ -403,7 +406,11 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   // Add user to workspace
-  const member = await createWorkspaceMember(user.id, invitation.workspace_id);
+  const member = await createWorkspaceMember(
+    user.id,
+    invitation.workspace_id,
+    invitation.role,
+  );
 
   if (!member) {
     throw ApiError.internal(

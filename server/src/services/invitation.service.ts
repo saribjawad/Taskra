@@ -1,9 +1,10 @@
 import { dbPool } from '../db';
-import { Invitation, InvitationStatus, Role } from '../models/invitation.model';
+import { Invitation, InvitationStatus } from '../models/invitation.model';
+import { WorkspaceMemberRole } from '../models/workspace.model';
 
 export async function createInvitation(
   email: string,
-  role: Role,
+  role: WorkspaceMemberRole,
   sentBy: string,
   workspaceId: string,
   token: string,
