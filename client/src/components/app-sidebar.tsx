@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { NavUser } from '@/components/nav-user'
-import { WorkspaceSwitcher } from '#/components/workspace-switcher'
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +9,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Inbox, CircleDotDashed } from 'lucide-react'
 import MyNav from './my-nav'
-import { useGetUserWorkspace } from '#/hooks/workspace.hooks'
+import { SidebarHeaderMenu } from './sidebar-header-menu'
 
 // This is sample data.
 const data = {
@@ -34,12 +33,10 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: userWorkspaces } = useGetUserWorkspace()
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {userWorkspaces && <WorkspaceSwitcher workspaces={userWorkspaces} />}
+        <SidebarHeaderMenu />
       </SidebarHeader>
       <SidebarContent>
         <MyNav items={data.myNav} />
