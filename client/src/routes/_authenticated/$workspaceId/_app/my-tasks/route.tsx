@@ -11,7 +11,7 @@ import {
 } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 
-export const Route = createFileRoute('/_authenticated/$workspaceId/my-tasks')({
+export const Route = createFileRoute('/_authenticated/$workspaceId/_app/my-tasks')({
   component: RouteComponent,
 })
 

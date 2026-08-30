@@ -1,5 +1,5 @@
 import { useMatchRoute, useNavigate, useParams } from '@tanstack/react-router'
-import { SidebarGroup, SidebarMenu, SidebarMenuButton } from './ui/sidebar'
+import { SidebarGroup, SidebarMenu, SidebarMenuButton } from '../ui/sidebar'
 
 function MyNav({
   items,

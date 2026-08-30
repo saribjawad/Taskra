@@ -23,7 +23,7 @@ import {
   BellIcon,
   LogOutIcon,
 } from 'lucide-react'
-import { Spinner } from './ui/spinner'
+import { Spinner } from '../ui/spinner'
 import { useNavigate } from '@tanstack/react-router'
 
 export function NavUser({

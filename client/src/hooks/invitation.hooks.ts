@@ -2,10 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   acceptWorkspaceInvitation,
   declineWorkspaceInvitation,
+  getPendingInvites,
+  inviteUser,
+  revokeInvite,
   verifyWorkspaceInvitation,
 } from '#/service/invitation.service'
 import { router } from '#/main'
 import { useNavigate } from '@tanstack/react-router'
+import type { MemberRole } from '#/type'
+import { toast } from 'sonner'
 
 export function useVerifyInvitation(token: string) {
   return useQuery({
@@ -42,6 +47,60 @@ export function useDeclineInvitation() {
       navigate({
         to: '/',
       })
+    },
+  })
+}
+
+export function useInviteUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      emails,
+      workspaceId,
+      role,
+    }: {
+      emails: string[]
+      workspaceId: string
+      role: MemberRole
+    }) => inviteUser(emails, workspaceId, role),
+    // TODO: improve the toast message
+    onSuccess: (data) => {
+      const messages = [
+        ...data.invited,
+        ...data.alreadyMembers,
+        ...data.alreadyInvited,
+        ...data.failedToCreate,
+        ...data.failedToSend,
+      ]
+
+      toast('Invitation results', {
+        description: messages.join('\n'),
+      })
+
+      queryClient.invalidateQueries({
+        queryKey: ['pending-invites'],
+      })
+    },
+  })
+}
+
+export function useGetPendingInvites(workspaceId: string) {
+  return useQuery({
+    queryKey: ['pending-invites'],
+    queryFn: () => getPendingInvites(workspaceId),
+    enabled: !!workspaceId,
+  })
+}
+
+export function useRevokeInvite() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (invitationId: string) => revokeInvite(invitationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-invites'] })
+      console.log('revoked invitation')
     },
   })
 }

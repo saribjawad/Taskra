@@ -1,5 +1,6 @@
 import { api } from '#/lib/api'
 import type { CreateWorkspaceFormPayload } from '#/routes/_authenticated/create-workspace'
+import type { MemberRole } from '#/type'
 
 interface CreateWorkspaceResponse {
   workspaceId: string
@@ -12,8 +13,10 @@ interface GetUserWorkspacesResponse {
 
 interface GetWorkspaceUsersResponse {
   id: string
-  email: string
   username: string
+  email: string
+  role: MemberRole
+  joined_at: string
 }
 
 interface SwitchWorkspaceResponse {

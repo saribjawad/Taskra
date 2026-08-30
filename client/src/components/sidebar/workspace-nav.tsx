@@ -1,4 +1,4 @@
-import { SidebarGroup, SidebarMenu, SidebarMenuButton } from './ui/sidebar'
+import { SidebarGroup, SidebarMenu, SidebarMenuButton } from '../ui/sidebar'
 
 function WorkspaceNav({
   items,

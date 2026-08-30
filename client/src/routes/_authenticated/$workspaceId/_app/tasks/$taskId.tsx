@@ -55,7 +55,7 @@ import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 
 export const Route = createFileRoute(
-  '/_authenticated/$workspaceId/tasks/$taskId',
+  '/_authenticated/$workspaceId/_app/tasks/$taskId',
 )({
   component: RouteComponent,
 })
