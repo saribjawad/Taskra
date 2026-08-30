@@ -62,7 +62,7 @@ workspaceRouter.post(
   asyncHandler(DeclineWorkspaceInvite),
 );
 workspaceRouter.post(
-  '/invite/:token/revoke',
+  '/invite/:invitationId/revoke',
   asyncHandler(RevokeWorkspaceInvite),
 );
 

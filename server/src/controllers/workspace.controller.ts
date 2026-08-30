@@ -36,6 +36,7 @@ import {
   createInvitation,
   deleteInvitation,
   getInvitationByHash,
+  getInvitationById,
   getInvitationDetailByHash,
   getPendingInvitationByEmail,
   getPendingInvitations,
@@ -530,11 +531,9 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
 
 export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
   const userId = req.user.id;
-  const { token } = RevokeWorkspaceInviteParamsSchema.parse(req.params);
+  const { invitationId } = RevokeWorkspaceInviteParamsSchema.parse(req.params);
 
-  const hashToken = crypto.hash('SHA-256', token);
-
-  const invitation = await getInvitationByHash(hashToken);
+  const invitation = await getInvitationById(invitationId);
 
   if (!invitation) {
     throw ApiError.notFound('Invitation not found');

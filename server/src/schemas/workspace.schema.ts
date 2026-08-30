@@ -34,8 +34,9 @@ export const AcceptWorkspaceInviteParamsSchema =
 
 export const DeclineWorkspaceInviteParamsSchema =
   VerifyWorkspaceInvitationParamsSchema;
-export const RevokeWorkspaceInviteParamsSchema =
-  VerifyWorkspaceInvitationParamsSchema;
-
 export const GetWorkspaceInvitesParamsSchema = WorkspaceIdParamsSchema;
 export const GetWorkspaceUsersParamsSchema = WorkspaceIdParamsSchema;
+
+export const RevokeWorkspaceInviteParamsSchema = z.object({
+  invitationId: z.uuid('Invalid invitation ID'),
+});

@@ -29,6 +29,16 @@ export async function deleteInvitation(id: string): Promise<void> {
   );
 }
 
+export async function getInvitationById(id: string) {
+  const result = await dbPool.query(
+    `SELECT * FROM invitations
+    WHERE id = $1`,
+    [id],
+  );
+
+  return result.rows[0];
+}
+
 export async function getInvitationByHash(
   hashedToken: string,
 ): Promise<Invitation> {
