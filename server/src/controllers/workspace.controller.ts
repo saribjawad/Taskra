@@ -22,6 +22,7 @@ import {
   RevokeWorkspaceInviteParamsSchema,
   WorkspaceIdParamsSchema,
   AcceptWorkspaceInviteParamsSchema,
+  GetPendingWorkspaceInvitesSchema,
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
 import {
@@ -36,7 +37,8 @@ import {
   deleteInvitation,
   getInvitationByHash,
   getInvitationDetailByHash,
-  getPendingInvitation,
+  getPendingInvitationByEmail,
+  getPendingInvitations,
   getWorkspaceInvitations,
   updateInvitationStatus,
 } from '../services/invitation.service';
@@ -282,75 +284,100 @@ export const RemoveMemberFromWorkspace = async (
 
 export const InviteToWorkspace = async (req: Request, res: Response) => {
   const { workspaceId } = InviteToWorkspaceParamsSchema.parse(req.params);
-  const { email, role } = InviteToWorkspaceSchema.parse(req.body);
+  const { emails, role } = InviteToWorkspaceSchema.parse(req.body);
   const userId = req.user.id;
 
   const user = await findUserById(userId);
   const workspace = await getWorkspaceById(workspaceId);
-  const existingInvite = await getPendingInvitation(email, workspaceId);
 
-  // TODO: enforce this at the database level too.
-  if (existingInvite) {
-    throw ApiError.badRequest(
-      'An invitation has already been sent to this user',
-    );
-  }
-  // If user exists check
-  const userToBeInvited = await findUserByEmail(email);
+  const response: Record<string, any> = {
+    invited: [],
+    alreadyMembers: [],
+    alreadyInvited: [],
+    failedToCreate: [],
+    failedToSend: [],
+  };
 
-  if (userToBeInvited) {
-    // Check if user is already member of workspace
-    const userWorkspaceMemberShip = await getWorkspaceMember(
-      userToBeInvited.id,
+  // Loop over array of emails
+  for (const email of emails) {
+    // If user exists check
+    const userToBeInvited = await findUserByEmail(email);
+
+    if (userToBeInvited) {
+      // Check if user is already member of workspace
+      const userWorkspaceMembership = await getWorkspaceMember(
+        userToBeInvited.id,
+        workspaceId,
+      );
+      if (userWorkspaceMembership) {
+        response.alreadyMembers.push(
+          `Person with ${email} is already member of this workspace`,
+        );
+        continue;
+      }
+    }
+
+    const existingInvite = await getPendingInvitationByEmail(
+      email,
       workspaceId,
     );
-    if (userWorkspaceMemberShip) {
-      return res
-        .status(200)
-        .json(new ApiResponse(200, 'User is already member of the workspace'));
+
+    // TODO: enforce this at the database level too.
+    if (existingInvite) {
+      response.alreadyInvited.push(`${email} already invited`);
+      continue;
+    }
+
+    // Create token
+    const token = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.hash('SHA-256', token);
+
+    // Expiry date of 15 minutes
+    const currentTimeAsMs = Date.now();
+    const adjustedTimeAsMs = currentTimeAsMs + 15 * 60 * 1000;
+    const expiryDate = new Date(adjustedTimeAsMs);
+
+    // Create and save invitation
+    const invitation = await createInvitation(
+      email,
+      role as WorkspaceMemberRole,
+      userId,
+      workspaceId,
+      hashedToken,
+      expiryDate,
+    );
+
+    if (!invitation) {
+      response.failedToCreate.push(
+        `Something went wrong while creating the invitation for ${email}`,
+      );
+      continue;
+    }
+
+    const invitationLink = `${env.APP_URL}/invite?token=${token}`;
+
+    // Send the email to the user
+    try {
+      await sendInviteToWorkspace(
+        user.username,
+        workspace.name,
+        invitationLink,
+      );
+
+      response.invited.push(`Invitation has been sent to ${email}`);
+    } catch (error) {
+      // Delete the created invitation
+      await deleteInvitation(invitation.id);
+
+      response.failedToSend.push(
+        `Something went wrong while sending invitation to ${email}`,
+      );
     }
   }
 
-  // Create token
-  const token = crypto.randomBytes(32).toString('hex');
-  const hashedToken = crypto.hash('SHA-256', token);
-
-  // Expiry date of 15 minutes
-  const currentTimeAsMs = Date.now();
-  const adjustedTimeAsMs = currentTimeAsMs + 15 * 60 * 1000;
-  const expiryDate = new Date(adjustedTimeAsMs);
-
-  // Create and save invitation
-  const invitation = await createInvitation(
-    email,
-    role as WorkspaceMemberRole,
-    userId,
-    workspaceId,
-    hashedToken,
-    expiryDate,
-  );
-
-  if (!invitation) {
-    throw ApiError.internal(
-      'Something went wrong while creating the invitation',
-    );
-  }
-
-  const invitationLink = `${env.APP_URL}/invite?token=${token}`;
-
-  // Send the email to the user
-  try {
-    await sendInviteToWorkspace(user.username, workspace.name, invitationLink);
-  } catch (error) {
-    // Delete the created invitation
-    await deleteInvitation(invitation.id);
-
-    throw ApiError.internal(
-      'Something went wrong while sending invitation, Try again later.',
-    );
-  }
-
-  res.status(201).json(new ApiResponse(201, 'Invitation has been sent'));
+  res
+    .status(201)
+    .json(new ApiResponse(201, 'Invitations has been sent', response));
 };
 
 export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
@@ -589,6 +616,25 @@ export const GetWorkspaceUsers = async (req: Request, res: Response) => {
   res
     .status(200)
     .json(new ApiResponse(200, 'Workspace users', workspaceMembers));
+};
+
+export const GetPendingWorkspaceInvites = async (
+  req: Request,
+  res: Response,
+) => {
+  const userId = req.user.id;
+  const { workspaceId } = GetPendingWorkspaceInvitesSchema.parse(req.params);
+
+  const isWorkspaceMember = await getWorkspaceMember(userId, workspaceId);
+  if (!isWorkspaceMember) {
+    throw ApiError.badRequest('You are not member of this workspace');
+  }
+
+  const pendingInvites = await getPendingInvitations(workspaceId);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Pending workspace invites', pendingInvites));
 };
 
 export const VerifyWorkspaceInvitation = async (

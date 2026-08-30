@@ -6,6 +6,7 @@ import {
   CreateWorkspace,
   DeclineWorkspaceInvite,
   DeleteWorkspace,
+  GetPendingWorkspaceInvites,
   GetUserWorkspaces,
   GetWorkspaceInvites,
   GetWorkspaceUsers,
@@ -48,7 +49,10 @@ workspaceRouter
 workspaceRouter
   .route('/:workspaceId/users')
   .get(asyncHandler(GetWorkspaceUsers));
-
+workspaceRouter.get(
+  '/:workspaceId/invite/pending',
+  asyncHandler(GetPendingWorkspaceInvites),
+);
 workspaceRouter.post(
   '/invite/:token/accept',
   asyncHandler(AcceptWorkspaceInvite),

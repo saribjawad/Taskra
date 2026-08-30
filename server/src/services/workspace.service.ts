@@ -152,7 +152,7 @@ const deleteWorkspaceMember = async (
 const getWorkspaceUsers = async (workspaceId: string) => {
   const results = await dbPool.query(
     `
-    SELECT u.id, u.username, u.email
+    SELECT u.id, u.username, u.email, wm.role, wm.joined_at
     FROM workspace_members wm
     INNER JOIN users u
       ON u.id = wm.user_id

@@ -3,6 +3,7 @@ import z from 'zod';
 export const WorkspaceIdParamsSchema = z.object({
   workspaceId: z.uuid('Invalid uuid'),
 });
+export const GetPendingWorkspaceInvitesSchema = WorkspaceIdParamsSchema;
 
 export const CreateWorkspaceSchema = z.object({
   name: z
@@ -18,7 +19,7 @@ export const RemoveMemberFromWorkspaceSchema = z.object({
 
 export const InviteToWorkspaceParamsSchema = WorkspaceIdParamsSchema;
 export const InviteToWorkspaceSchema = z.object({
-  email: z.email('Invalid email'),
+  emails: z.array(z.email('Invalid email'), 'Required array of emails'),
   role: z.enum(['member', 'admin', 'viewer', 'owner']),
 });
 

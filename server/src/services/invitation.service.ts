@@ -86,7 +86,10 @@ export async function updateInvitationStatus(
   return result.rowCount;
 }
 
-export async function getPendingInvitation(email: string, workspaceId: string) {
+export async function getPendingInvitationByEmail(
+  email: string,
+  workspaceId: string,
+) {
   const result = await dbPool.query(
     `
     SELECT * FROM invitations
@@ -96,6 +99,18 @@ export async function getPendingInvitation(email: string, workspaceId: string) {
   );
 
   return result.rows[0];
+}
+
+export async function getPendingInvitations(workspaceId: string) {
+  const result = await dbPool.query(
+    `
+    SELECT id, sent_by, status, email, role, created_at, expires_at FROM invitations
+    WHERE status = 'pending' AND workspace_id = $1
+    `,
+    [workspaceId],
+  );
+
+  return result.rows;
 }
 
 export async function getWorkspaceInvitations(
