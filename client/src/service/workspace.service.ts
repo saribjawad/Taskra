@@ -45,6 +45,13 @@ export async function getWorkspaceUsers(
   return resp.data.data
 }
 
+export async function removeUserFromWorkspace(
+  workspaceId: string,
+  memberId: string,
+) {
+  await api.delete(`/workspace/${workspaceId}/member/${memberId}`)
+}
+
 export async function deleteWorkspace(
   workspaceId: string,
 ): Promise<DeleteWorkspaceResponse> {

@@ -30,9 +30,14 @@ import {
   useResendInvite,
   useRevokeInvite,
 } from '#/hooks/invitation.hooks'
-import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
+import {
+  useGetWorkspaceUsers,
+  useRemoveMemberFromWorkspace,
+} from '#/hooks/workspace.hooks'
 import { Spinner } from '#/components/ui/spinner'
 import { Button } from '#/components/ui/button'
+import { Skeleton } from '#/components/ui/skeleton'
+import { useAuth } from '#/context/auth/auth-hook'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/settings/members',
@@ -76,9 +81,68 @@ function RoleBadge({ role }: { role: MemberRole }) {
   )
 }
 
+function PendingInvitesSkeleton() {
+  return (
+    <div className="mt-8">
+      <Skeleton className="h-3 w-28" />
+      <div className="mt-2 divide-y divide-border rounded-lg border border-border">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className="flex items-center justify-between px-3 py-2.5"
+          >
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-7 w-7 rounded-full" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MemberTableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <TableRow key={index}>
+          <TableCell className="py-2.5">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="h-7 w-7 rounded-full" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-36" />
+              </div>
+            </div>
+          </TableCell>
+          <TableCell className="py-2.5">
+            <Skeleton className="h-7 w-24" />
+          </TableCell>
+          <TableCell className="py-2.5">
+            <Skeleton className="h-4 w-24" />
+          </TableCell>
+          <TableCell className="py-2.5">
+            <Skeleton className="ml-auto h-8 w-8" />
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  )
+}
+
 // ---------- Page ----------
 
 function RouteComponent() {
+  const { user: loggedInUser } = useAuth()
   const params = useParams({
     strict: false,
   })
@@ -98,6 +162,11 @@ function RouteComponent() {
     isPending: isResendingInvitation,
     variables: resendingInvitationId,
   } = useResendInvite()
+  const {
+    mutate: removeMemberFromWorkspace,
+    isPending: isRemovingMemberFromWorkspace,
+    variables: removingMemberVariables,
+  } = useRemoveMemberFromWorkspace()
 
   const [query, setQuery] = useState('')
 
@@ -110,7 +179,10 @@ function RouteComponent() {
   }
 
   const handleRemoveMember = (id: string) => {
-    // TODO: call your remove-member mutation here instead
+    removeMemberFromWorkspace({
+      workspaceId: params.workspaceId!!,
+      memberId: id,
+    })
   }
 
   const handleRevokeInvite = (id: string) => {
@@ -150,63 +222,69 @@ function RouteComponent() {
       </div>
 
       {/* pending invites */}
-      {pendingInvites && pendingInvites.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Pending invites
-          </h2>
-          <div className="mt-2 divide-y divide-border rounded-lg border border-border">
-            {pendingInvites.map((invite) => {
-              const isResendingThisInvite =
-                isResendingInvitation && resendingInvitationId === invite.id
-              const isRevokingThisInvite =
-                isRevokingInvitation && revokingInvitationId === invite.id
-              const isUpdatingThisInvite =
-                isResendingThisInvite || isRevokingThisInvite
+      {isPendingInvitesLoading && <PendingInvitesSkeleton />}
 
-              return (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between px-3 py-2.5"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+      {!isPendingInvitesLoading &&
+        pendingInvites &&
+        pendingInvites.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Pending invites
+            </h2>
+            <div className="mt-2 divide-y divide-border rounded-lg border border-border">
+              {pendingInvites.map((invite) => {
+                const isResendingThisInvite =
+                  isResendingInvitation && resendingInvitationId === invite.id
+                const isRevokingThisInvite =
+                  isRevokingInvitation && revokingInvitationId === invite.id
+                const isUpdatingThisInvite =
+                  isResendingThisInvite || isRevokingThisInvite
+
+                return (
+                  <div
+                    key={invite.id}
+                    className="flex items-center justify-between px-3 py-2.5"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
+                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-foreground">
+                          {invite.email}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Invited {formatDate(invite.created_at)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-foreground">{invite.email}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Invited {formatDate(invite.created_at)}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <RoleBadge role={invite.role} />
+                      <Button
+                        variant="ghost"
+                        disabled={isUpdatingThisInvite}
+                        onClick={() => handleResendInvite(invite.id)}
+                        className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                      >
+                        {isResendingThisInvite && <Spinner />}
+                        Resend
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={isUpdatingThisInvite}
+                        onClick={() => handleRevokeInvite(invite.id)}
+                        className="text-xs font-medium text-muted-foreground hover:text-destructive"
+                      >
+                        {isRevokingThisInvite && <Spinner />}
+                        Revoke
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <RoleBadge role={invite.role} />
-                    <Button
-                      variant="ghost"
-                      disabled={isUpdatingThisInvite}
-                      onClick={() => handleResendInvite(invite.id)}
-                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                    >
-                      {isResendingThisInvite && <Spinner />}
-                      Resend
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      disabled={isUpdatingThisInvite}
-                      onClick={() => handleRevokeInvite(invite.id)}
-                      className="text-xs font-medium text-muted-foreground hover:text-destructive"
-                    >
-                      {isRevokingThisInvite && <Spinner />}
-                      Revoke
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* member table */}
       <div className="mt-8">
@@ -230,61 +308,77 @@ function RouteComponent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {workspaceUsers &&
-                workspaceUsers.map((user) => (
-                  <TableRow key={user.id} className="group">
-                    <TableCell className="py-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <Avatar className="h-7 w-7">
-                          <AvatarImage src={user.username} />
-                          <AvatarFallback className="text-[10px]">
-                            {initials(user.username)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="text-sm font-medium leading-none text-foreground">
-                            {user.username}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {user.username}
-                          </p>
+              {isWorkspaceUsersLoading && <MemberTableSkeleton />}
+
+              {!isWorkspaceUsersLoading &&
+                workspaceUsers &&
+                workspaceUsers.map((user) => {
+                  const isRemovingThisMember =
+                    isRemovingMemberFromWorkspace &&
+                    removingMemberVariables?.memberId === user.id
+                  const isYourself = user.id === loggedInUser?.id
+
+                  return (
+                    <TableRow key={user.id} className="group">
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={user.username} />
+                            <AvatarFallback className="text-[10px]">
+                              {initials(user.username)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium leading-none text-foreground">
+                              {user.username}
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-2.5">
-                      {user.role === 'owner' ? (
-                        <RoleBadge role={user.role} />
-                      ) : (
-                        <RoleSelect
-                          value={user.role}
-                          onChange={(r) => handleRoleChange(user.id, r)}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-sm text-muted-foreground">
-                      {formatDate(user?.joined_at)}
-                    </TableCell>
-                    <TableCell className="py-2.5 text-right">
-                      {user.role !== 'owner' && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="rounded-md p-1 text-muted-foreground opacity-0 hover:bg-accent hover:text-foreground group-hover:opacity-100">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem
-                              onClick={() => handleRemoveMember(user.id)}
-                              className="text-sm text-destructive focus:text-destructive"
-                            >
-                              Remove from workspace
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        {user.role === 'owner' || isYourself ? (
+                          <RoleBadge role={user.role} />
+                        ) : (
+                          <RoleSelect
+                            value={user.role}
+                            onChange={(r) => handleRoleChange(user.id, r)}
+                          />
+                        )}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-sm text-muted-foreground">
+                        {formatDate(user?.joined_at)}
+                      </TableCell>
+                      <TableCell className="py-2.5 text-right">
+                        {user.role !== 'owner' && !isYourself && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="rounded-md p-1 text-muted-foreground opacity-0 hover:bg-accent hover:text-foreground group-hover:opacity-100">
+                                {isRemovingThisMember ? (
+                                  <Spinner />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem
+                                disabled={isRemovingThisMember}
+                                onClick={() => handleRemoveMember(user.id)}
+                                className="text-sm text-destructive focus:text-destructive"
+                              >
+                                {isRemovingThisMember && <Spinner />}
+                                Remove from workspace
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
 
               {/* {filteredMembers.length === 0 && (
                 <TableRow>

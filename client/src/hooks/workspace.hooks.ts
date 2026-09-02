@@ -4,12 +4,14 @@ import {
   deleteWorkspace,
   getUsersWorkspaces,
   getWorkspaceUsers,
+  removeUserFromWorkspace,
   switchWorkspace,
 } from '#/service/workspace.service'
 import type { ApiErrorResponse } from '#/type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { AxiosError } from 'axios'
+import { toast } from 'sonner'
 
 export const useGetUserWorkspace = () => {
   return useQuery({
@@ -21,7 +23,7 @@ export const useGetUserWorkspace = () => {
 
 export const useGetWorkspaceUsers = (workspaceId: string) => {
   return useQuery({
-    queryKey: [`workspace-$${workspaceId}-users`],
+    queryKey: [`workspace-${workspaceId}-users`],
     queryFn: () => getWorkspaceUsers(workspaceId),
     retry: 2,
   })
@@ -55,6 +57,29 @@ export const useDeleteWorkspace = () => {
           to: '/create-workspace',
         })
       }
+    },
+  })
+}
+
+export const useRemoveMemberFromWorkspace = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      workspaceId,
+      memberId,
+    }: {
+      workspaceId: string
+      memberId: string
+    }) => removeUserFromWorkspace(workspaceId, memberId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [`workspace-${variables.workspaceId}-users`],
+      })
+      toast.success('Member removed from workspace')
+    },
+    onError: () => {
+      toast.error('Failed to remove member')
     },
   })
 }
