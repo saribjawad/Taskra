@@ -4,6 +4,7 @@ import {
   declineWorkspaceInvitation,
   getPendingInvites,
   inviteUser,
+  resendInvite,
   revokeInvite,
   verifyWorkspaceInvitation,
 } from '#/service/invitation.service'
@@ -100,7 +101,25 @@ export function useRevokeInvite() {
     mutationFn: (invitationId: string) => revokeInvite(invitationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pending-invites'] })
-      console.log('revoked invitation')
+      toast.success('Invitation revoked')
+    },
+    onError: () => {
+      toast.error('Failed to revoke invitation')
+    },
+  })
+}
+
+export function useResendInvite() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (invitationId: string) => resendInvite(invitationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-invites'] })
+      toast.success('Invitation resent')
+    },
+    onError: () => {
+      toast.error('Failed to resend invitation')
     },
   })
 }

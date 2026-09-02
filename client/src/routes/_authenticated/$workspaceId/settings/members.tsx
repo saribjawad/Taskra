@@ -27,6 +27,7 @@ import { ROLE_LABEL } from '#/constants'
 import {
   useGetPendingInvites,
   useInviteUser,
+  useResendInvite,
   useRevokeInvite,
 } from '#/hooks/invitation.hooks'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
@@ -87,8 +88,16 @@ function RouteComponent() {
     useGetPendingInvites(params.workspaceId!!)
   const { data: workspaceUsers, isPending: isWorkspaceUsersLoading } =
     useGetWorkspaceUsers(params.workspaceId!!)
-  const { mutate: revokeInvitation, isPending: isRevokingInvitation } =
-    useRevokeInvite()
+  const {
+    mutate: revokeInvitation,
+    isPending: isRevokingInvitation,
+    variables: revokingInvitationId,
+  } = useRevokeInvite()
+  const {
+    mutate: resendInvitation,
+    isPending: isResendingInvitation,
+    variables: resendingInvitationId,
+  } = useResendInvite()
 
   const [query, setQuery] = useState('')
 
@@ -108,9 +117,8 @@ function RouteComponent() {
     revokeInvitation(id)
   }
 
-  const handleResendInvite = (email: string) => {
-    // TODO: call your resend-invite mutation here
-    console.log('resend invite to', email)
+  const handleResendInvite = (id: string) => {
+    resendInvitation(id)
   }
 
   return (
@@ -148,42 +156,54 @@ function RouteComponent() {
             Pending invites
           </h2>
           <div className="mt-2 divide-y divide-border rounded-lg border border-border">
-            {pendingInvites.map((invite) => (
-              <div
-                key={invite.id}
-                className="flex items-center justify-between px-3 py-2.5"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
-                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+            {pendingInvites.map((invite) => {
+              const isResendingThisInvite =
+                isResendingInvitation && resendingInvitationId === invite.id
+              const isRevokingThisInvite =
+                isRevokingInvitation && revokingInvitationId === invite.id
+              const isUpdatingThisInvite =
+                isResendingThisInvite || isRevokingThisInvite
+
+              return (
+                <div
+                  key={invite.id}
+                  className="flex items-center justify-between px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-foreground">{invite.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Invited {formatDate(invite.created_at)}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-foreground">{invite.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Invited {formatDate(invite.created_at)}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <RoleBadge role={invite.role} />
+                    <Button
+                      variant="ghost"
+                      disabled={isUpdatingThisInvite}
+                      onClick={() => handleResendInvite(invite.id)}
+                      className="text-xs font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      {isResendingThisInvite && <Spinner />}
+                      Resend
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      disabled={isUpdatingThisInvite}
+                      onClick={() => handleRevokeInvite(invite.id)}
+                      className="text-xs font-medium text-muted-foreground hover:text-destructive"
+                    >
+                      {isRevokingThisInvite && <Spinner />}
+                      Revoke
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <RoleBadge role={invite.role} />
-                  <button
-                    onClick={() => handleResendInvite(invite.email)}
-                    className="text-xs font-medium text-muted-foreground hover:text-foreground"
-                  >
-                    Resend
-                  </button>
-                  <Button
-                    variant="ghost"
-                    disabled={isRevokingInvitation}
-                    onClick={() => handleRevokeInvite(invite.id)}
-                    className="text-xs font-medium text-muted-foreground hover:text-destructive"
-                  >
-                    {isRevokingInvitation && <Spinner />}
-                    Revoke
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

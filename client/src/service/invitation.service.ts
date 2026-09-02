@@ -82,3 +82,7 @@ export async function getPendingInvites(
 export async function revokeInvite(invitationId: string) {
   await api.post(`workspace/invite/${invitationId}/revoke`)
 }
+
+export async function resendInvite(invitationId: string) {
+  await api.post(`workspace/invite/${invitationId}/resend`)
+}
