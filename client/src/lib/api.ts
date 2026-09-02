@@ -1,5 +1,9 @@
 import { queryClient, router } from '#/main'
-import axios from 'axios'
+import axios, {
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
+} from 'axios'
 
 export const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
@@ -16,24 +20,67 @@ const PUBLIC_ROUTES = [
   '/invite',
 ]
 
+type RetriableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+}
+
+let isRefreshing = false
+let reqQueue: {
+  resolve: (value: AxiosResponse | PromiseLike<AxiosResponse>) => void
+  reject: (reason?: unknown) => void
+  request: RetriableRequestConfig
+}[] = []
+
+const processQueue = (error?: unknown) => {
+  reqQueue.forEach(({ resolve, reject, request }) => {
+    if (error) {
+      reject(error)
+      return
+    }
+
+    resolve(api(request))
+  })
+
+  reqQueue = []
+}
+
 // Add a response interceptor
 api.interceptors.response.use(
   (response) => response,
-  async function (error) {
-    const originalRequest = error.config
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true // Mark the request as retired to avoid infinite loop
+  async function (error: AxiosError) {
+    const originalRequest = error.config as RetriableRequestConfig | undefined
 
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       // Break the loop if the refresh call itself failed with a 401
       if (originalRequest.url?.includes('/refresh-access-token')) {
         return Promise.reject(error)
       }
 
+      originalRequest._retry = true // Mark the request as retired to avoid infinite loop
+
+      if (isRefreshing) {
+        return new Promise<AxiosResponse>((resolve, reject) => {
+          reqQueue.push({
+            resolve,
+            reject,
+            request: originalRequest,
+          })
+        })
+      }
+
+      isRefreshing = true
       try {
         await api.post('/refresh-access-token')
 
+        processQueue()
         return api(originalRequest) // Retry the original request
       } catch (refreshError) {
+        processQueue(refreshError)
+
         // Use router.navigate to change routes cleanly
         const currentPath = window.location.pathname
         const isPublicRoute = PUBLIC_ROUTES.some(
@@ -47,6 +94,8 @@ api.interceptors.response.use(
           router.navigate({ to: '/sign-in' })
         }
         return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
       }
     }
     return Promise.reject(error)

@@ -176,6 +176,7 @@ function RouteComponent() {
 
   const handleRoleChange = (id: string, role: MemberRole) => {
     // TODO: call your update-role mutation here instead
+    console.log(id, role)
   }
 
   const handleRemoveMember = (id: string) => {
