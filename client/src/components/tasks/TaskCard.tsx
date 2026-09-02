@@ -1,5 +1,5 @@
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import {
@@ -68,7 +68,14 @@ const priorityItems = [
 
 function TaskCard(props: TaskCardProps) {
   const queryClient = useQueryClient()
-  const lastSegment = window.location.pathname.split('/').filter(Boolean).at(-1)
+  const { pathname } = useLocation()
+  const lastSegment = pathname.split('/').filter(Boolean).at(-1)
+  const returnFilter =
+    lastSegment === 'assigned' ||
+    lastSegment === 'created' ||
+    lastSegment === 'all'
+      ? lastSegment
+      : 'all'
 
   const { mutate: updateTask, isPending: isUpdatingTask } = useUpdateTask()
   const { mutate: deleteTask, isPending } = useDeleteTask()
@@ -89,6 +96,7 @@ function TaskCard(props: TaskCardProps) {
             navigate({
               to: '/$workspaceId/tasks/$taskId',
               params: { workspaceId: workspaceId!!, taskId: props.id },
+              search: { from: returnFilter },
             })
           }
         }}

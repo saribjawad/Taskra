@@ -52,7 +52,7 @@ export async function inviteUser(
   emails: string[],
   workspaceId: string,
   role: MemberRole,
-) {
+): Promise<InviteUserResponse> {
   const resp = await api.post(`/workspace/${workspaceId}/invite`, {
     emails,
     role,

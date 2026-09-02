@@ -36,7 +36,6 @@ import {
   useMarkTaskAsComplete,
 } from '#/hooks/task.hook'
 import { useIsMobile } from '#/hooks/use-mobile'
-import usePreviousLocation from '#/hooks/usePreviousLocation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
 import {
@@ -57,6 +56,14 @@ import z from 'zod'
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/tasks/$taskId',
 )({
+  validateSearch: (search) => ({
+    from:
+      search.from === 'assigned' ||
+      search.from === 'created' ||
+      search.from === 'all'
+        ? search.from
+        : 'all',
+  }),
   component: RouteComponent,
 })
 
@@ -172,11 +179,12 @@ function RouteComponent() {
   })
 
   // Hooks
-  const prevLocation = usePreviousLocation()
-
+  const { from } = Route.useSearch()
   const navigate = useNavigate()
   const params = useParams({ strict: false })
   const isMobile = useIsMobile()
+
+  const returnTo = `/${params.workspaceId}/my-tasks/${from}`
 
   // Mutations
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask()
@@ -197,9 +205,12 @@ function RouteComponent() {
   }
 
   function onTaskDelete() {
-    deleteTask(params.taskId!!)
-    navigate({
-      to: prevLocation,
+    deleteTask(params.taskId!!, {
+      onSuccess: () => {
+        navigate({
+          to: returnTo,
+        })
+      },
     })
   }
 
@@ -327,7 +338,7 @@ function RouteComponent() {
                       className="cursor-pointer"
                       onClick={() => {
                         navigate({
-                          to: prevLocation,
+                          to: returnTo,
                         })
                       }}
                     >
