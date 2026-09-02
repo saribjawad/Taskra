@@ -29,7 +29,7 @@ export async function deleteInvitation(id: string): Promise<void> {
   );
 }
 
-export async function getInvitationById(id: string) {
+export async function getInvitationById(id: string): Promise<Invitation> {
   const result = await dbPool.query(
     `SELECT * FROM invitations
     WHERE id = $1`,
@@ -80,6 +80,23 @@ export async function getInvitationDetailByHash(hashedToken: string) {
   );
 
   return results.rows[0];
+}
+
+export async function renewInvitation(
+  id: string,
+  hashedToken: string,
+  expiresAt: Date,
+) {
+  const result = await dbPool.query(
+    `
+    UPDATE invitations
+    SET status = 'pending', token = $1, expires_at = $2
+    WHERE id = $3
+    `,
+    [hashedToken, expiresAt, id],
+  );
+
+  return result.rowCount;
 }
 
 export async function updateInvitationStatus(

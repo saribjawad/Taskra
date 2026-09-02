@@ -23,6 +23,7 @@ import {
   WorkspaceIdParamsSchema,
   AcceptWorkspaceInviteParamsSchema,
   GetPendingWorkspaceInvitesSchema,
+  ResendWorkspaceInviteParamsSchema,
 } from '../schemas/workspace.schema';
 import { ApiError } from '../utils/ApiErrors';
 import {
@@ -41,6 +42,7 @@ import {
   getPendingInvitationByEmail,
   getPendingInvitations,
   getWorkspaceInvitations,
+  renewInvitation,
   updateInvitationStatus,
 } from '../services/invitation.service';
 import { sendInviteToWorkspace } from '../lib/resend';
@@ -566,6 +568,77 @@ export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Workspace invite revoked'));
+};
+
+export const ResendWorkspaceInvite = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { invitationId } = ResendWorkspaceInviteParamsSchema.parse(req.params);
+
+  const invitation = await getInvitationById(invitationId);
+
+  if (!invitation) {
+    throw ApiError.notFound('Invitation not found');
+  }
+
+  if (!['pending', 'expired'].includes(invitation.status)) {
+    throw ApiError.badRequest(
+      'Only pending or expired invitations can be resent',
+    );
+  }
+
+  const user = await findUserById(userId);
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  const workspace = await getWorkspaceById(invitation.workspace_id);
+  if (!workspace) {
+    throw ApiError.notFound('Workspace not found');
+  }
+
+  // Check if the user is part of the workspace
+  const workspaceMember = await getWorkspaceMember(
+    userId,
+    invitation.workspace_id,
+  );
+
+  if (!workspaceMember) {
+    throw ApiError.forbidden('You are not allowed to resend this invitation');
+  }
+
+  // Create token
+  const token = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.hash('SHA-256', token);
+
+  // Expiry date of 15 minutes
+  const currentTimeAsMs = Date.now();
+  const adjustedTimeAsMs = currentTimeAsMs + 15 * 60 * 1000;
+  const expiryDate = new Date(adjustedTimeAsMs);
+
+  // Renew invitation
+  const updatedRowsCount = await renewInvitation(
+    invitation.id,
+    hashedToken,
+    expiryDate,
+  );
+
+  if (!updatedRowsCount || updatedRowsCount <= 0) {
+    throw ApiError.internal(
+      'Something went wrong while updating the invitation',
+    );
+  }
+
+  // Send the email to the user
+  try {
+    const invitationLink = `${env.APP_URL}/invite?token=${token}`;
+    await sendInviteToWorkspace(user.username, workspace.name, invitationLink);
+  } catch (error) {
+    throw ApiError.internal(
+      'Something went wrong while sending invitation email',
+    );
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Resent the invitation'));
 };
 
 export const GetWorkspaceInvites = async (req: Request, res: Response) => {

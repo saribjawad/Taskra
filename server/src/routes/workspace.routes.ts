@@ -12,6 +12,7 @@ import {
   GetWorkspaceUsers,
   InviteToWorkspace,
   RemoveMemberFromWorkspace,
+  ResendWorkspaceInvite,
   RevokeWorkspaceInvite,
   SwitchWorkspace,
   VerifyWorkspaceInvitation,
@@ -64,6 +65,10 @@ workspaceRouter.post(
 workspaceRouter.post(
   '/invite/:invitationId/revoke',
   asyncHandler(RevokeWorkspaceInvite),
+);
+workspaceRouter.post(
+  '/invite/:invitationId/resend',
+  asyncHandler(ResendWorkspaceInvite),
 );
 
 export default workspaceRouter;
