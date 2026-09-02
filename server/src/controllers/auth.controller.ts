@@ -11,6 +11,7 @@ import {
   createUser,
   findUserByEmail,
   findUserByUsername,
+  removeRefreshToken,
   updateUser,
 } from '../services/user.service';
 import {
@@ -157,6 +158,16 @@ export const SignUpUser = async (req: Request, res: Response) => {
  * Remove the cookies
  */
 export const SignOutUser = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  const updatedCounts = await removeRefreshToken(user.email);
+
+  if (!updatedCounts || updatedCounts <= 0) {
+    throw ApiError.internal(
+      'Something went wrong while removing refresh token',
+    );
+  }
+
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken', {
     path: '/api/v1/refresh-access-token',

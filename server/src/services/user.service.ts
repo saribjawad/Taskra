@@ -84,6 +84,24 @@ const saveRefreshToken = async (email: string, refreshToken: string) => {
 };
 
 /**
+ * Remove refresh token from database
+ *
+ * @param email - User email
+ * @returns The updated row count
+ */
+const removeRefreshToken = async (email: string) => {
+  const result = await dbPool.query(
+    `
+    UPDATE users
+    SET refresh_token = null
+    WHERE email = ($1)`,
+    [email],
+  );
+
+  return result.rowCount;
+};
+
+/**
  * Update the user in database
  *
  * @param id - User ID
@@ -126,5 +144,6 @@ export {
   findUserByUsername,
   createUser,
   saveRefreshToken,
+  removeRefreshToken,
   updateUser,
 };
