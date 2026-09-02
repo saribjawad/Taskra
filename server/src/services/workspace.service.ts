@@ -135,7 +135,7 @@ const deleteWorkspaceMember = async (
   const result = await dbPool.query(
     `
     DELETE FROM workspace_members
-    WHERE user_id = $1 & workspace_id = $2
+    WHERE user_id = $1 AND workspace_id = $2
     `,
     [userId, workspaceId],
   );
