@@ -266,7 +266,7 @@ export const GetTasks = async (req: Request, res: Response) => {
         limit,
         offset,
       },
-      tasks,
+      tasks: tasks.slice(0, limit),
     }),
   );
 };
