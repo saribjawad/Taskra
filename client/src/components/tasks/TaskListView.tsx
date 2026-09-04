@@ -9,8 +9,9 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Skeleton } from '#/components/ui/skeleton'
+import { LABEL_ITEMS, PRIORITY_ITEMS, STATUS_ITEMS } from '#/constants'
 import { useGetTasks } from '#/hooks/task.hook'
-import { cn } from '#/lib/utils'
+import { cn, normalizeSearchValue } from '#/lib/utils'
 import type {
   TaskFilterType,
   TaskLabelType,
@@ -39,33 +40,11 @@ type TaskListViewProps = {
 
 const ALL_VALUE = 'all'
 
-const statusItems: { label: string; value: TaskStatusType }[] = [
-  { label: 'Backlog', value: 'backlog' },
-  { label: 'Todo', value: 'todo' },
-  { label: 'In progress', value: 'in_progress' },
-  { label: 'Done', value: 'done' },
-  { label: 'Cancelled', value: 'cancelled' },
-]
-
-const priorityItems: { label: string; value: TaskPriorityType }[] = [
-  { label: 'Urgent', value: 'urgent' },
-  { label: 'High', value: 'high' },
-  { label: 'Medium', value: 'medium' },
-  { label: 'Low', value: 'low' },
-  { label: 'No priority', value: 'no_priority' },
-]
-
-const labelItems: { label: string; value: TaskLabelType }[] = [
-  { label: 'Bug', value: 'bug' },
-  { label: 'Feature', value: 'feature' },
-  { label: 'Improvement', value: 'improvement' },
-]
-
 const pageSizeItems = [5, 10, 20, 50]
 
-const taskStatuses = statusItems.map((item) => item.value)
-const taskPriorities = priorityItems.map((item) => item.value)
-const taskLabels = labelItems.map((item) => item.value)
+const taskStatuses = STATUS_ITEMS.map((item) => item.value)
+const taskPriorities = PRIORITY_ITEMS.map((item) => item.value)
+const taskLabels = LABEL_ITEMS.map((item) => item.value)
 
 export function parseTaskListSearch(
   search: Record<string, unknown>,
@@ -120,11 +99,6 @@ function TaskListSkeleton() {
       ))}
     </div>
   )
-}
-
-function normalizeSearchValue(value: string) {
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : undefined
 }
 
 function FilterSelect({
@@ -244,21 +218,21 @@ export default function TaskListView({
             value={search.status}
             placeholder="Status"
             allLabel="Any status"
-            items={statusItems}
+            items={STATUS_ITEMS}
             onChange={(value) => setFilterValue('status', value)}
           />
           <FilterSelect
             value={search.priority}
             placeholder="Priority"
             allLabel="Any priority"
-            items={priorityItems}
+            items={PRIORITY_ITEMS}
             onChange={(value) => setFilterValue('priority', value)}
           />
           <FilterSelect
             value={search.label}
             placeholder="Label"
             allLabel="Any label"
-            items={labelItems}
+            items={LABEL_ITEMS}
             onChange={(value) => setFilterValue('label', value)}
           />
 
