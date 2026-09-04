@@ -1,33 +1,32 @@
-import TaskCard from '#/components/tasks/TaskCard'
-import { useGetTasks } from '#/hooks/task.hook'
+import TaskListView, {
+  parseTaskListSearch,
+} from '#/components/tasks/TaskListView'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/my-tasks/assigned',
 )({
+  validateSearch: parseTaskListSearch,
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { data, isLoading } = useGetTasks({ filter: 'assigned' })
-
-  if (isLoading) {
-    return <div>loading</div>
-  }
-
-  if (!data?.tasks.length) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3">
-        <p className="text-muted-foreground">No tasks assigned to you.</p>
-      </div>
-    )
-  }
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
 
   return (
-    <div className="space-y-3">
-      {data.tasks.map((task) => (
-        <TaskCard key={task.id} {...task} />
-      ))}
-    </div>
+    <TaskListView
+      filter="assigned"
+      search={search}
+      onSearchChange={(nextSearch) => {
+        navigate({
+          search: {
+            ...search,
+            ...nextSearch,
+          },
+        })
+      }}
+      emptyMessage="No tasks assigned to you."
+    />
   )
 }

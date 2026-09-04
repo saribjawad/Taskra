@@ -14,11 +14,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 export const useGetTasks = ({
   page = 1,
   limit = 10,
+  label,
+  priority,
+  status,
+  search,
   filter,
 }: GetTasksParams) => {
   return useQuery({
-    queryKey: [`${filter}-tasks`],
-    queryFn: () => getTasks({ filter, page, limit }),
+    queryKey: ['tasks', filter, page, limit, label, priority, status, search],
+    queryFn: () =>
+      getTasks({ filter, page, limit, label, priority, status, search }),
   })
 }
 
@@ -107,6 +112,9 @@ export const useUpdateTask = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [`task-${variables.taskId}`],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['tasks'],
       })
 
       // TODO: show the toast

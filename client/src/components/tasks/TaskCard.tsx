@@ -25,8 +25,6 @@ import {
 import DeleteTaskDialog from './DeleteTaskDialog'
 import { useState } from 'react'
 import { useDeleteTask, useUpdateTask } from '#/hooks/task.hook'
-import { useQueryClient } from '@tanstack/react-query'
-import type { GetTasksResponse } from '#/service/task.service'
 
 interface TaskCardProps {
   id: string
@@ -67,7 +65,6 @@ const priorityItems = [
 ]
 
 function TaskCard(props: TaskCardProps) {
-  const queryClient = useQueryClient()
   const { pathname } = useLocation()
   const lastSegment = pathname.split('/').filter(Boolean).at(-1)
   const returnFilter =
@@ -114,7 +111,7 @@ function TaskCard(props: TaskCardProps) {
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost">
+                  <Button variant="ghost" disabled={isUpdatingTask}>
                     <Ellipsis />
                   </Button>
                 </DropdownMenuTrigger>
@@ -150,36 +147,12 @@ function TaskCard(props: TaskCardProps) {
                         {priorityItems.map((p) => (
                           <DropdownMenuItem
                             onSelect={() => {
-                              updateTask(
-                                {
-                                  taskId: props.id,
-                                  payload: {
-                                    priority: p.value as TaskPriorityType,
-                                  },
+                              updateTask({
+                                taskId: props.id,
+                                payload: {
+                                  priority: p.value as TaskPriorityType,
                                 },
-                                {
-                                  // Update the query data manually
-                                  onSuccess: () => {
-                                    queryClient.setQueryData(
-                                      [`${lastSegment}-tasks`],
-                                      (old: GetTasksResponse) => {
-                                        return {
-                                          ...old,
-                                          tasks: old.tasks.map((t) =>
-                                            t.id === props.id
-                                              ? {
-                                                  ...t,
-                                                  priority:
-                                                    p.value as TaskPriorityType,
-                                                }
-                                              : t,
-                                          ),
-                                        }
-                                      },
-                                    )
-                                  },
-                                },
-                              )
+                              })
                             }}
                             key={p.name}
                             className={`flex items-center gap-3 ${props.priority === p.value ? 'bg-zinc-800' : ''}`}
