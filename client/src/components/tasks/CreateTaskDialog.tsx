@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { type ReactElement, type SetStateAction } from 'react'
 import {
   Dialog,
   DialogClose,
@@ -34,6 +34,8 @@ import { useParams } from '@tanstack/react-router'
 import DateField from '../fields/DateField'
 
 interface CreateTaskDialogProps {
+  isDialogOpen: boolean
+  setIsDialogOpen: React.Dispatch<SetStateAction<boolean>>
   trigger: ReactElement
 }
 
@@ -96,10 +98,12 @@ const labelItems = [
   { label: 'Improvement', value: 'improvement' },
 ]
 
-function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
+function CreateTaskDialog({
+  trigger: dialogTrigger,
+  isDialogOpen,
+  setIsDialogOpen,
+}: CreateTaskDialogProps) {
   const params = useParams({ strict: false }) as { workspaceId: string }
-
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>()
 
   // Mutation and queries
   const { mutateAsync: createTask, isPending } = useCreateTask()
@@ -135,7 +139,7 @@ function CreateTaskDialog({ trigger: dialogTrigger }: CreateTaskDialogProps) {
   }
 
   return (
-    <Dialog open={isDialogOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent
         showCloseButton={false}

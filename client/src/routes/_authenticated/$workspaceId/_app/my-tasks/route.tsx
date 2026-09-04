@@ -10,8 +10,11 @@ import {
   useLocation,
 } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
+import { useState } from 'react'
 
-export const Route = createFileRoute('/_authenticated/$workspaceId/_app/my-tasks')({
+export const Route = createFileRoute(
+  '/_authenticated/$workspaceId/_app/my-tasks',
+)({
   component: RouteComponent,
 })
 
@@ -26,6 +29,8 @@ function RouteComponent() {
   const { workspaceId } = Route.useParams()
   const { pathname } = useLocation()
 
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
+
   return (
     <main className="h-screen w-full p-3 flex flex-col gap-2">
       {/* Header */}
@@ -35,8 +40,10 @@ function RouteComponent() {
           <h5 className="text-sm">My tasks</h5>
         </div>
         <CreateTaskDialog
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
           trigger={
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={() => setIsDialogOpen(true)}>
               <Plus />
             </Button>
           }
