@@ -26,7 +26,6 @@ import {
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
 import { v4 as uuidv4 } from 'uuid';
-import { isArray } from 'util';
 
 // ==================================================================================
 // Task Controllers
