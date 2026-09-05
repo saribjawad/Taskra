@@ -176,6 +176,7 @@ export interface UpdateTaskPayload {
   label?: TaskLabelType
   assignee?: string
   reporter?: string
+  clearFields?: ('assignee' | 'reporter')[]
   attachments?: (File | undefined)[] | undefined
   startDate?: string | undefined
   dueDate?: string | undefined
@@ -188,12 +189,16 @@ export async function updateTask(
 ): Promise<void> {
   const formData = new FormData()
 
-  const { attachments, removedAttachmentIds, ...fields } = payload
+  const { attachments, clearFields, removedAttachmentIds, ...fields } = payload
 
   Object.entries(fields).forEach(([key, value]) => {
     if (value !== undefined) {
       formData.append(key, value)
     }
+  })
+
+  clearFields?.forEach((field) => {
+    formData.append('clearFields', field)
   })
 
   removedAttachmentIds?.forEach((id) => {

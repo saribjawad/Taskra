@@ -163,12 +163,27 @@ function EditTaskDialog({
   })
 
   async function onSubmit(data: z.infer<typeof EditTaskFormSchema>) {
+    const clearFields: ('assignee' | 'reporter')[] = []
+
+    if (data.assignee === 'noassignee') {
+      clearFields.push('assignee')
+    }
+
+    if (data.reporter === 'noreporter') {
+      clearFields.push('reporter')
+    }
+
     await updateTask({
       taskId: task.id,
       payload: {
         ...data,
-        assignee: data.assignee === 'noassignee' ? undefined : data.assignee,
-        reporter: data.reporter === 'noreporter' ? undefined : data.reporter,
+        assignee: clearFields.includes('assignee')
+          ? undefined
+          : data.assignee || undefined,
+        reporter: clearFields.includes('reporter')
+          ? undefined
+          : data.reporter || undefined,
+        clearFields,
         startDate: data.startDate ? data.startDate.toISOString() : undefined,
         dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
       },
