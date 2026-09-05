@@ -108,8 +108,8 @@ export const updateTask = async (
   data: {
     title?: string;
     description?: string;
-    assignee?: string;
-    reporter?: string;
+    assignee?: string | null;
+    reporter?: string | null;
     label?: TaskLabel;
     priority?: TaskPriority;
     status?: TaskStatus;

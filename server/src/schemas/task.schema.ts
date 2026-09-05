@@ -11,6 +11,7 @@ const Priority = z.enum(
   ['urgent', 'high', 'medium', 'low', 'no_priority'],
   'Invalid priority',
 );
+const ClearableTaskField = z.enum(['assignee', 'reporter']);
 
 export type FilterType = z.infer<typeof Filter>;
 export type StatusType = z.infer<typeof Status>;
@@ -136,6 +137,14 @@ export const UpdateTaskSchema = z
       label: Label.optional(),
       assignee: z.uuid('Invalid assignee UUID').optional(),
       reporter: z.uuid('Invalid reporter UUID').optional(),
+      clearFields: z
+        .preprocess(
+          (value) =>
+            value === undefined ? [] : Array.isArray(value) ? value : [value],
+          z.array(ClearableTaskField),
+        )
+        .optional()
+        .default([]),
       startDate: z.coerce.date('Invalid start date').optional(),
       dueDate: z.coerce.date('Invalid due date').optional(),
       removedAttachmentIds: z.array(z.string()).optional().default([]),

@@ -26,13 +26,16 @@ import {
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
 import { v4 as uuidv4 } from 'uuid';
+import { createTaskActivity } from '../services/taskActivity.service';
+import { TaskActivityType } from '../models/taskActivity.model';
+import { Task } from '../models/task.model';
 
 // ==================================================================================
 // Task Controllers
 // ==================================================================================
 
 export const CreateTask = async (req: Request, res: Response) => {
-  const userId = req.user.id;
+  const user = req.user;
   const activeWorkspace = req.user.activeWorkspace;
 
   const parsedBody = CreateTaskSchema.parse({
@@ -79,7 +82,7 @@ export const CreateTask = async (req: Request, res: Response) => {
     priority,
     label,
     activeWorkspace,
-    userId,
+    user.id,
     startDate,
     dueDate,
     assigneeUser ? assigneeUser.id : null,
@@ -111,11 +114,25 @@ export const CreateTask = async (req: Request, res: Response) => {
     }),
   );
 
+  // Create task activity
+  const taskActivity = await createTaskActivity(
+    task.id,
+    user.id,
+    'task_created',
+    `${user.email} created the task.`,
+  );
+
+  if (!taskActivity) {
+    throw ApiError.internal(
+      'Something went wrong while creating task activity',
+    );
+  }
+
   res.status(201).json(new ApiResponse(201, 'Task created'));
 };
 
 export const UpdateTask = async (req: Request, res: Response) => {
-  const workspaceId = req.user.activeWorkspace;
+  const user = req.user;
 
   const parsedParams = TaskParamsSchema.parse(req.params);
 
@@ -125,9 +142,9 @@ export const UpdateTask = async (req: Request, res: Response) => {
     files: req.files,
   });
 
-  const { removedAttachmentIds } = body;
+  const { clearFields, removedAttachmentIds } = body;
 
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskById(taskId, user.activeWorkspace);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -137,6 +154,13 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   let assigneeUser;
   let reporterUser;
+
+  if (
+    (assigneeId && clearFields.includes('assignee')) ||
+    (reporterId && clearFields.includes('reporter'))
+  ) {
+    throw ApiError.badRequest('Cannot set and clear the same field');
+  }
 
   if (assigneeId) {
     assigneeUser = await findUserById(assigneeId);
@@ -164,7 +188,55 @@ export const UpdateTask = async (req: Request, res: Response) => {
     }
   });
 
+  clearFields.forEach((field) => {
+    payload[field] = null;
+  });
+
   const count = await updateTask(taskId, payload);
+
+  if (!count || count <= 0) {
+    throw ApiError.internal('Something went wrong while update the task');
+  }
+
+  const activityMap = {
+    title: 'title_changed',
+    status: 'status_changed',
+    priority: 'priority_changed',
+    assignee: 'assignee_changed',
+    reporter: 'reporter_changed',
+  };
+
+  //  Create task activity
+  for (const [field, activityValue] of Object.entries(activityMap)) {
+    if (
+      payload[field] !== undefined &&
+      payload[field] !== task[field as keyof Task]
+    ) {
+      const nextValue = payload[field];
+
+      let description = `${user.email} changed ${field} to ${nextValue ?? 'none'}`;
+
+      // Manually add assignee/reporter email
+      if (field === 'assignee' && payload['assignee'] !== null) {
+        description = `${user.email} changed the assignee to ${assigneeUser?.email}`;
+      }
+      if (field === 'reporter' && payload['reporter'] !== null) {
+        description = `${user.email} changed the reporter to ${reporterUser?.email}`;
+      }
+
+      await createTaskActivity(
+        task.id,
+        user.id,
+        activityValue as TaskActivityType,
+        description,
+        {
+          field: field,
+          from: String(task[field as keyof Task] ?? ''),
+          to: String(nextValue ?? ''),
+        },
+      );
+    }
+  }
 
   // Remove attachments which user have removed
   await Promise.all(
@@ -195,21 +267,25 @@ export const UpdateTask = async (req: Request, res: Response) => {
         f.mimetype,
         storageId,
       );
+
+      // Create task activity
+      await createTaskActivity(
+        task.id,
+        user.id,
+        'attachment_added',
+        `${user.email} attached an attachment '${f.originalname}'`,
+      );
     }),
   );
-
-  if (!count || count <= 0) {
-    throw ApiError.internal('Something went wrong while update the task');
-  }
 
   res.status(200).json(new ApiResponse(200, 'Task updated'));
 };
 
 export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
-  const activeWorkspaceId = req.user.activeWorkspace;
+  const user = req.user;
   const { taskId } = MarkTaskAsCompletedParamsSchema.parse(req.params);
 
-  const task = await findTaskById(taskId, activeWorkspaceId);
+  const task = await findTaskById(taskId, user.activeWorkspace);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -221,6 +297,19 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
   if (!count || count <= 0) {
     throw ApiError.internal(
       'Something went wrong while marking the task as complete',
+    );
+  }
+
+  const taskActivity = await createTaskActivity(
+    taskId,
+    user.id,
+    'task_completed',
+    `${user.email} marked the task as completed`,
+  );
+
+  if (!taskActivity) {
+    throw ApiError.internal(
+      'Something went wrong while creating the task activity',
     );
   }
 
