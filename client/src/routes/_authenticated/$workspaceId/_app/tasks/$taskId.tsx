@@ -677,7 +677,7 @@ function RouteComponent() {
         <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
           <form
             onSubmit={handleSubmit(onComment)}
-            className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-end"
+            className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center"
           >
             <Controller
               control={control}
