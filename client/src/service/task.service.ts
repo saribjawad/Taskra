@@ -2,6 +2,7 @@ import { ACCEPTED_IMAGE_TYPES } from '#/components/fields/AttachmentField'
 import { api } from '#/lib/api'
 import type {
   Task,
+  TaskActivity,
   TaskFilterType,
   TaskLabelType,
   TaskPriorityType,
@@ -226,4 +227,11 @@ export async function deleteTask(taskId: string): Promise<void> {
 
 export async function markTaskAsCompleted(taskId: string): Promise<void> {
   await api.patch(`/tasks/${taskId}/completed`)
+}
+
+export async function getTaskActivities(
+  taskId: string,
+): Promise<TaskActivity[]> {
+  const result = await api.get(`/tasks/${taskId}/activity`)
+  return result.data.data
 }

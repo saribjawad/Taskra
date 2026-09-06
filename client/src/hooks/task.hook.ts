@@ -1,6 +1,7 @@
 import {
   createTask,
   deleteTask,
+  getTaskActivities,
   getTaskById,
   getTasks,
   markTaskAsCompleted,
@@ -67,6 +68,9 @@ export const useMarkTaskAsComplete = () => {
       queryClient.invalidateQueries({
         queryKey: [`task-${taskId}`],
       })
+      queryClient.invalidateQueries({
+        queryKey: [`task-activity-${taskId}`],
+      })
 
       // TODO: show the toast
       console.log('Successfully marked task as completed')
@@ -114,11 +118,22 @@ export const useUpdateTask = () => {
         queryKey: [`task-${variables.taskId}`],
       })
       queryClient.invalidateQueries({
+        queryKey: [`task-activity-${variables.taskId}`],
+      })
+      queryClient.invalidateQueries({
         queryKey: ['tasks'],
       })
 
       // TODO: show the toast
       console.log('Successfully updated the task')
     },
+  })
+}
+
+export const useGetTaskActivity = (taskId: string) => {
+  return useQuery({
+    queryKey: [`task-activity-${taskId}`],
+    queryFn: () => getTaskActivities(taskId),
+    enabled: !!taskId,
   })
 }
