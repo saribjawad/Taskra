@@ -4,7 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse';
 import { getAttachmentById } from '../services/attachment.service';
 import { ApiError } from '../utils/ApiErrors';
 import { generatePresignedUrl } from '../config/s3';
-import { findTaskById } from '../services/task.service';
+import { findTaskByIdAndWorkspaceId } from '../services/task.service';
 
 // ==================================================================================
 // Attachment Controllers
@@ -25,7 +25,10 @@ export const GetPresignedUrlOfAttachment = async (
     throw ApiError.notFound('Unable to found the attachment');
   }
 
-  const task = await findTaskById(attachment.task_id, activeWorkspaceId);
+  const task = await findTaskByIdAndWorkspaceId(
+    attachment.task_id,
+    activeWorkspaceId,
+  );
 
   if (!task) {
     throw ApiError.unauthorized('You are not member of this workspace');

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import {
   CreateTaskSchema,
+  GetTaskActivityParamsSchema,
   GetTaskQuerySchema,
   MarkTaskAsCompletedParamsSchema,
   TaskParamsSchema,
@@ -11,7 +12,7 @@ import { ApiError } from '../utils/ApiErrors';
 import {
   createTask,
   deleteTask,
-  findTaskById,
+  findTaskByIdAndWorkspaceId,
   getTasks,
   markTaskAsComplete,
   updateTask,
@@ -26,7 +27,10 @@ import {
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
 import { v4 as uuidv4 } from 'uuid';
-import { createTaskActivity } from '../services/taskActivity.service';
+import {
+  createTaskActivity,
+  getTaskActivitiesByTaskId,
+} from '../services/taskActivity.service';
 import { TaskActivityType } from '../models/taskActivity.model';
 import { Task } from '../models/task.model';
 
@@ -144,7 +148,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   const { clearFields, removedAttachmentIds } = body;
 
-  const task = await findTaskById(taskId, user.activeWorkspace);
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -214,7 +218,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
     ) {
       const nextValue = payload[field];
 
-      let description = `${user.email} changed ${field} to ${nextValue ?? 'none'}`;
+      let description = `${user.email} changed ${field} to '${nextValue ?? 'none'}'`;
 
       // Manually add assignee/reporter email
       if (field === 'assignee' && payload['assignee'] !== null) {
@@ -285,7 +289,7 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
   const user = req.user;
   const { taskId } = MarkTaskAsCompletedParamsSchema.parse(req.params);
 
-  const task = await findTaskById(taskId, user.activeWorkspace);
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -365,7 +369,7 @@ export const GetTask = async (req: Request, res: Response) => {
   const parsedParam = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParam;
 
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 
   if (!task) {
     throw ApiError.notFound('Task not found');
@@ -429,7 +433,7 @@ export const DeleteTask = async (req: Request, res: Response) => {
   const { taskId } = parsedParams;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
@@ -443,4 +447,25 @@ export const DeleteTask = async (req: Request, res: Response) => {
   }
 
   return res.status(200).json(new ApiResponse(200, 'Task deleted'));
+};
+
+export const GetTaskActivity = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { taskId } = GetTaskActivityParamsSchema.parse(req.params);
+
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  const taskActivities = await getTaskActivitiesByTaskId(taskId);
+
+  if (!taskActivities) {
+    throw ApiError.notFound(
+      'Something went wrong while getting task activities',
+    );
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Task activity', taskActivities));
 };

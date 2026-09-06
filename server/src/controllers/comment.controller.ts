@@ -6,7 +6,7 @@ import {
   UpdateCommentSchema,
 } from '../schemas/comment.schema';
 import { ApiResponse } from '../utils/ApiResponse';
-import { findTaskById } from '../services/task.service';
+import { findTaskByIdAndWorkspaceId } from '../services/task.service';
 import { ApiError } from '../utils/ApiErrors';
 import {
   createComment,
@@ -31,7 +31,7 @@ export const CreateComment = async (req: Request, res: Response) => {
   const { content } = parsedBody;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
@@ -58,7 +58,7 @@ export const UpdateComment = async (req: Request, res: Response) => {
   const { content } = parsedBody;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {
@@ -90,7 +90,7 @@ export const DeleteComment = async (req: Request, res: Response) => {
   const { taskId, commentId } = parsedParams;
 
   // Check if taskId is valid
-  const task = await findTaskById(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 
   // Throw error 404 if not found
   if (!task) {

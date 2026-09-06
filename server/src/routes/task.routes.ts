@@ -3,6 +3,7 @@ import {
   CreateTask,
   DeleteTask,
   GetTask,
+  GetTaskActivity,
   GetTasks,
   MarkTaskAsCompleted,
   UpdateTask,
@@ -59,6 +60,7 @@ taskRouter
   )
   .delete(asyncHandler(DeleteTask));
 
+taskRouter.route('/:taskId/activity').get(asyncHandler(GetTaskActivity));
 taskRouter.route('/:taskId/completed').patch(asyncHandler(MarkTaskAsCompleted));
 
 export default taskRouter;

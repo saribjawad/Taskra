@@ -13,13 +13,13 @@ import {
 } from '../schemas/task.schema';
 
 /**
- * Find task by ID in database
+ * Find task by ID and workspaceId in database
  *
  * @param id - Task uuid
  * @param workspaceId - Workspace uuid task belongs to
  * @returns The task row if found, otherwise undefined
  */
-export const findTaskById = async (
+export const findTaskByIdAndWorkspaceId = async (
   id: string,
   workspaceId: string,
 ): Promise<Task> => {

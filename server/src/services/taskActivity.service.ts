@@ -1,5 +1,5 @@
 import { dbPool } from '../db';
-import { TaskActivityType } from '../models/taskActivity.model';
+import { TaskActivity, TaskActivityType } from '../models/taskActivity.model';
 
 /**
  * Create task activty in database
@@ -27,4 +27,23 @@ export const createTaskActivity = async (
   );
 
   return result.rows[0];
+};
+
+/**
+ * Get task activties by taskId in database
+ *
+ * @returns Array of tasks activity
+ */
+export const getTaskActivitiesByTaskId = async (
+  taskId: string,
+): Promise<TaskActivity[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM task_activity
+    WHERE task_id = $1;
+    `,
+    [taskId],
+  );
+
+  return result.rows;
 };

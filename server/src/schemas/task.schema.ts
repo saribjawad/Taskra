@@ -23,7 +23,9 @@ export type LabelType = z.infer<typeof Label>;
 export const TaskParamsSchema = z.object({
   taskId: z.uuid('Invalid task UUID'),
 });
+
 export const MarkTaskAsCompletedParamsSchema = TaskParamsSchema;
+export const GetTaskActivityParamsSchema = TaskParamsSchema;
 
 export const GetTaskQuerySchema = z.object({
   page: z.coerce
@@ -217,4 +219,5 @@ export const UpdateTaskSchema = z
       });
     }
   });
+
 export type UpdateSchema = z.infer<typeof UpdateTaskSchema>;
