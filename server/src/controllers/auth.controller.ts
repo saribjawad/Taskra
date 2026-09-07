@@ -36,6 +36,7 @@ import {
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiErrors';
 import { generateAccessToken, generateRefreshToken } from '../utils/token';
+import { getWorkspaceMember } from '../services/workspace.service';
 
 // ==================================================================================
 // Controllers
@@ -74,15 +75,23 @@ export const LoginUser = async (req: Request, res: Response) => {
     throw new ApiError(403, 'Please verify the user to get started');
   }
 
+  // Check the role for passing in the token
+  let workspaceMember;
+  if (user.active_workspace) {
+    workspaceMember = await getWorkspaceMember(user.id, user.active_workspace);
+  }
+
   const accessToken = generateAccessToken(
     user.id,
     user.email,
     user.active_workspace,
+    workspaceMember?.role ?? null,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     user.active_workspace,
+    workspaceMember?.role ?? null,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -203,15 +212,23 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     throw ApiError.unauthorized('Invalid or expired token');
   }
 
+  // Check for the role in active workspace
+  let workspaceMember;
+  if (user.active_workspace) {
+    workspaceMember = await getWorkspaceMember(user.id, user.active_workspace);
+  }
+
   const accessToken = generateAccessToken(
     user.id,
     user.email,
     user.active_workspace,
+    workspaceMember?.role ?? null,
   );
   const newRefreshToken = await generateRefreshToken(
     user.id,
     user.email,
     user.active_workspace,
+    workspaceMember?.role ?? null,
   );
 
   res.cookie('accessToken', accessToken, {

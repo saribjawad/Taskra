@@ -47,7 +47,10 @@ const getUserWorkspaces = async (userId: string) => {
  * @param workspaceId - workspace UUID
  * @returns workspace member
  */
-const getWorkspaceMember = async (userId: string, workspaceId: string) => {
+const getWorkspaceMember = async (
+  userId: string,
+  workspaceId: string,
+): Promise<WorkspaceMember> => {
   const result = await dbPool.query(
     `
     SELECT * FROM workspace_members

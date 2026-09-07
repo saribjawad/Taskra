@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { saveRefreshToken } from '../services/user.service';
+import { WorkspaceMemberRole } from '../models/workspace.model';
 
 /**
  * Generates a signed JWT for authorization.
@@ -8,16 +9,22 @@ import { saveRefreshToken } from '../services/user.service';
  * @param id - Internal User UUID
  * @param email - User email
  * @param activeWorkspace - User's active workspace
+ * @param role - User's role in workspace
  * @returns A HS256 signed JWT signed valid for 10 minutes
  */
 export function generateAccessToken(
   id: string,
   email: string,
   activeWorkspace: string | null,
+  role: WorkspaceMemberRole | null,
 ) {
-  const accessToken = jwt.sign({ id, email, activeWorkspace }, env.JWT_SECRET, {
-    expiresIn: '600000ms', // 10 minutes
-  });
+  const accessToken = jwt.sign(
+    { id, email, activeWorkspace, role },
+    env.JWT_SECRET,
+    {
+      expiresIn: '600000ms', // 10 minutes
+    },
+  );
 
   return accessToken;
 }
@@ -34,9 +41,10 @@ export async function generateRefreshToken(
   id: string,
   email: string,
   activeWorkspace: string | null,
+  role: WorkspaceMemberRole | null,
 ) {
   const refreshToken = jwt.sign(
-    { id, email, activeWorkspace },
+    { id, email, activeWorkspace, role },
     env.REFRESH_SECRET,
     {
       expiresIn: '7d',

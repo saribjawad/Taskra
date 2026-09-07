@@ -1,4 +1,4 @@
-export type User = {
+export interface User {
   id: string;
   active_workspace: string | null;
   username: string;
@@ -8,4 +8,4 @@ export type User = {
   refresh_token: string | null;
   created_at: Date;
   updated_at: Date;
-};
+}

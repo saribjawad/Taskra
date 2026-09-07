@@ -2,12 +2,13 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { env } from '../config/env';
 import { ApiError } from '../utils/ApiErrors';
+import { WorkspaceMemberRole } from '../models/workspace.model';
 
 export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
   active_workspace: string;
-  purpose?: string;
+  role: WorkspaceMemberRole | null;
 }
 
 export function AuthMiddleware(
@@ -32,6 +33,7 @@ export function AuthMiddleware(
     id: decoded.id,
     email: decoded.email,
     activeWorkspace: decoded.activeWorkspace,
+    role: decoded.role,
   };
 
   next();

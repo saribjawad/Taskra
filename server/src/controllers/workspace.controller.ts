@@ -85,11 +85,13 @@ export const SwitchWorkspace = async (req: Request, res: Response) => {
     user.id,
     user.email,
     (user.activeWorkspace = workspaceId),
+    workspaceMember.role,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     (user.activeWorkspace = workspaceId),
+    workspaceMember.role,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -137,11 +139,17 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
     );
   }
 
-  const accessToken = generateAccessToken(user.id, user.email, workspace.id);
+  const accessToken = generateAccessToken(
+    user.id,
+    user.email,
+    workspace.id,
+    workspaceMember.role,
+  );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     workspace.id,
+    workspaceMember.role,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -182,11 +190,13 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
       user.id,
       user.email,
       (user.activeWorkspace = ''),
+      null,
     );
     const refreshToken = await generateRefreshToken(
       user.id,
       user.email,
       (user.activeWorkspace = ''),
+      null,
     );
 
     res.cookie('accessToken', accessToken, {
@@ -216,15 +226,26 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
     );
   }
 
+  // Get role of the user in new active workspace
+  const workspaceMember = await getWorkspaceMember(
+    user.id,
+    newActiveWorkspaceId,
+  );
+
+  if (!workspaceMember) {
+    throw ApiError.notFound('Workspace member not found');
+  }
   const accessToken = generateAccessToken(
     user.id,
     user.email,
     (user.activeWorkspace = newActiveWorkspaceId),
+    workspaceMember.role,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     (user.activeWorkspace = newActiveWorkspaceId),
+    workspaceMember.role,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -472,11 +493,13 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     user.id,
     user.email,
     member.workspace_id,
+    member.role,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     member.workspace_id,
+    member.role,
   );
 
   res.cookie('accessToken', accessToken, {
