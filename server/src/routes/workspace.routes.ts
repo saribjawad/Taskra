@@ -17,6 +17,7 @@ import {
   SwitchWorkspace,
   VerifyWorkspaceInvitation,
 } from '../controllers/workspace.controller';
+import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 
 const workspaceRouter = Router();
 
@@ -35,23 +36,24 @@ workspaceRouter
 
 workspaceRouter
   .route('/:workspaceId')
-  .delete(asyncHandler(DeleteWorkspace))
+  .delete(RequiredRoles(['owner']), asyncHandler(DeleteWorkspace))
   .post(asyncHandler(SwitchWorkspace));
 
 workspaceRouter
   .route('/:workspaceId/member/:memberId')
-  .delete(asyncHandler(RemoveMemberFromWorkspace));
+  .delete(RequiredRoles(['owner']), asyncHandler(RemoveMemberFromWorkspace));
 
 workspaceRouter
   .route('/:workspaceId/invite')
   .get(asyncHandler(GetWorkspaceInvites))
-  .post(asyncHandler(InviteToWorkspace));
+  .post(RequiredRoles(['owner', 'admin']), asyncHandler(InviteToWorkspace));
 
 workspaceRouter
   .route('/:workspaceId/users')
   .get(asyncHandler(GetWorkspaceUsers));
 workspaceRouter.get(
   '/:workspaceId/invite/pending',
+  RequiredRoles(['owner', 'admin']),
   asyncHandler(GetPendingWorkspaceInvites),
 );
 workspaceRouter.post(
@@ -64,10 +66,12 @@ workspaceRouter.post(
 );
 workspaceRouter.post(
   '/invite/:invitationId/revoke',
+  RequiredRoles(['owner', 'admin']),
   asyncHandler(RevokeWorkspaceInvite),
 );
 workspaceRouter.post(
   '/invite/:invitationId/resend',
+  RequiredRoles(['owner', 'admin']),
   asyncHandler(ResendWorkspaceInvite),
 );
 

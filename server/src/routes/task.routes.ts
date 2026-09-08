@@ -12,6 +12,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 import { upload } from '../middlewares/multer.middleware';
+import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 
 const taskRouter = Router();
 taskRouter.use(AuthMiddleware);
@@ -34,13 +35,20 @@ taskRouter
         maxCount: 1,
       },
     ]),
+    RequiredRoles(['owner', 'admin', 'member']),
     asyncHandler(CreateTask),
   )
-  .get(asyncHandler(GetTasks));
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetTasks),
+  );
 
 taskRouter
   .route('/:taskId')
-  .get(asyncHandler(GetTask))
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetTask),
+  )
   .patch(
     upload.fields([
       {
@@ -56,11 +64,23 @@ taskRouter
         maxCount: 1,
       },
     ]),
+    RequiredRoles(['owner', 'admin', 'member']),
     asyncHandler(UpdateTask),
   )
-  .delete(asyncHandler(DeleteTask));
 
-taskRouter.route('/:taskId/activity').get(asyncHandler(GetTaskActivity));
-taskRouter.route('/:taskId/completed').patch(asyncHandler(MarkTaskAsCompleted));
+  .delete(RequiredRoles(['owner', 'admin']), asyncHandler(DeleteTask));
+
+taskRouter
+  .route('/:taskId/activity')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetTaskActivity),
+  );
+taskRouter
+  .route('/:taskId/completed')
+  .patch(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(MarkTaskAsCompleted),
+  );
 
 export default taskRouter;

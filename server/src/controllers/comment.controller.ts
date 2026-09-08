@@ -84,13 +84,13 @@ export const UpdateComment = async (req: Request, res: Response) => {
 };
 
 export const DeleteComment = async (req: Request, res: Response) => {
-  const workspaceId = req.user.activeWorkspace;
+  const user = req.user;
 
   const parsedParams = UpdateCommentParamSchema.parse(req.params);
   const { taskId, commentId } = parsedParams;
 
   // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
 
   // Throw error 404 if not found
   if (!task) {
@@ -103,6 +103,10 @@ export const DeleteComment = async (req: Request, res: Response) => {
   // Throw error 404 if not found
   if (!comment) {
     throw ApiError.notFound('Comment not found');
+  }
+
+  if (comment.user_id !== user.id) {
+    throw ApiError.forbidden('You are not allowed to delete others comment');
   }
 
   const rowsDeleted = await deleteComment(commentId);
