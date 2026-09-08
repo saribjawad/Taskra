@@ -1,3 +1,4 @@
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import DeleteCommentDialog from '#/components/comments/DeleteCommentDialog'
 import UpdateCommentDialog from '#/components/comments/UpdateCommentDialog'
 import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
@@ -197,6 +198,7 @@ const CreateCommentSchema = z.object({
 })
 
 function RouteComponent() {
+  const { can } = useWorkspacePermissions()
   // Hooks
   const { user } = useAuth()
   const { from } = Route.useSearch()
@@ -388,7 +390,7 @@ function RouteComponent() {
               </Breadcrumb>
             </div>
 
-            {task.status !== 'done' ? (
+            {can('task:complete') && task.status !== 'done' ? (
               <Button
                 onClick={onMarkAsComplete}
                 size="sm"
@@ -439,42 +441,47 @@ function RouteComponent() {
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">
-                    <EditTaskDialog
-                      task={{
-                        id: task.id,
-                        description: task.description,
-                        label: task.label,
-                        priority: task.priority,
-                        status: task.status,
-                        title: task.title,
-                        assignee: task.assignee ?? undefined,
-                        reporter: task.reporter ?? undefined,
-                        completed_date: task.completed_date,
-                        due_date: task.due_date,
-                        start_date: task.start_date,
-                        attachments: task.attachments ?? [],
-                      }}
-                      isDialogOpen={isEditDialogOpen}
-                      setIsDialogOpen={setEditIsDialogOpen}
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditIsDialogOpen(true)}
-                        >
-                          <Pencil />
-                          Edit
-                        </Button>
-                      }
-                    />
-                    <Button
-                      onClick={() => setTaskDeleteOpen(true)}
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 />
-                    </Button>
+                    {can('task:update') && (
+                      <EditTaskDialog
+                        task={{
+                          id: task.id,
+                          description: task.description,
+                          label: task.label,
+                          priority: task.priority,
+                          status: task.status,
+                          title: task.title,
+                          assignee: task.assignee ?? undefined,
+                          reporter: task.reporter ?? undefined,
+                          completed_date: task.completed_date,
+                          due_date: task.due_date,
+                          start_date: task.start_date,
+                          attachments: task.attachments ?? [],
+                        }}
+                        isDialogOpen={isEditDialogOpen}
+                        setIsDialogOpen={setEditIsDialogOpen}
+                        trigger={
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditIsDialogOpen(true)}
+                          >
+                            <Pencil />
+                            Edit
+                          </Button>
+                        }
+                      />
+                    )}
+                    {can('task:delete') && (
+                      <Button
+                        aria-label="Delete task"
+                        onClick={() => setTaskDeleteOpen(true)}
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 />
+                      </Button>
+                    )}
                   </div>
                 </div>
 
@@ -603,50 +610,55 @@ function RouteComponent() {
                             </div>
                           </div>
 
-                          {isUsersComment && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label="Comment actions"
-                                  className="shrink-0 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                          {(can('comment:update') || can('comment:delete')) &&
+                            isUsersComment && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    aria-label="Comment actions"
+                                    className="shrink-0 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                                  >
+                                    <Ellipsis />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  side="bottom"
+                                  className="mr-3"
                                 >
-                                  <Ellipsis />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                side="bottom"
-                                className="mr-3"
-                              >
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    setSelectedComment(comment)
-                                  }}
-                                  onSelect={() => {
-                                    setCommentDeleteOpen(true)
-                                  }}
-                                >
-                                  <Trash2 />
-                                  Delete
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={(event) => {
-                                    event.stopPropagation()
-                                    setSelectedComment(comment)
-                                  }}
-                                  onSelect={() => {
-                                    setCommentUpdateOpen(true)
-                                  }}
-                                >
-                                  <Pencil />
-                                  Edit
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                                  {can('comment:delete') && (
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={(event) => {
+                                        event.stopPropagation()
+                                        setSelectedComment(comment)
+                                      }}
+                                      onSelect={() => {
+                                        setCommentDeleteOpen(true)
+                                      }}
+                                    >
+                                      <Trash2 />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  )}
+                                  {can('comment:update') && (
+                                    <DropdownMenuItem
+                                      onClick={(event) => {
+                                        event.stopPropagation()
+                                        setSelectedComment(comment)
+                                      }}
+                                      onSelect={() => {
+                                        setCommentUpdateOpen(true)
+                                      }}
+                                    >
+                                      <Pencil />
+                                      Edit
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                         </div>
                       )
                     })
@@ -674,51 +686,53 @@ function RouteComponent() {
           </div>
         </div>
 
-        <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
-          <form
-            onSubmit={handleSubmit(onComment)}
-            className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center"
-          >
-            <Controller
-              control={control}
-              name="content"
-              render={({ field, fieldState }) => (
-                <Field
-                  className="min-w-0 flex-1"
-                  data-invalid={fieldState.invalid}
-                >
-                  <Textarea
-                    disabled={isCommenting}
-                    aria-invalid={fieldState.invalid}
-                    {...field}
-                    placeholder="Leave a comment..."
-                    rows={2}
-                    className="max-h-32 resize-none"
-                  />
-                </Field>
-              )}
-            />
-            <Button size="sm" disabled={isCommenting}>
-              {isCommenting ? 'Commenting...' : 'Add comment'}
-            </Button>
-          </form>
-        </div>
+        {can('comment:create') && (
+          <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
+            <form
+              onSubmit={handleSubmit(onComment)}
+              className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center"
+            >
+              <Controller
+                control={control}
+                name="content"
+                render={({ field, fieldState }) => (
+                  <Field
+                    className="min-w-0 flex-1"
+                    data-invalid={fieldState.invalid}
+                  >
+                    <Textarea
+                      disabled={isCommenting}
+                      aria-invalid={fieldState.invalid}
+                      {...field}
+                      placeholder="Leave a comment..."
+                      rows={2}
+                      className="max-h-32 resize-none"
+                    />
+                  </Field>
+                )}
+              />
+              <Button size="sm" disabled={isCommenting}>
+                {isCommenting ? 'Commenting...' : 'Add comment'}
+              </Button>
+            </form>
+          </div>
+        )}
       </main>
 
       <DeleteTaskDialog
-        open={taskDeleteOpen}
+        open={can('task:delete') && taskDeleteOpen}
         onOpenChange={setTaskDeleteOpen}
         onDelete={onTaskDelete}
         isDeleting={isDeletingTask}
       />
       <DeleteCommentDialog
-        open={commentDeleteOpen}
+        open={can('comment:delete') && commentDeleteOpen}
         onOpenChange={setCommentDeleteOpen}
         isDeleting={isDeletingComment}
         onDelete={onCommentDelete}
       />
       <UpdateCommentDialog
-        open={commentUpdateOpen}
+        open={can('comment:update') && commentUpdateOpen}
         onOpenChange={setCommentUpdateOpen}
         isUpdating={isUpdatingComment}
         onUpdate={onUpdate}

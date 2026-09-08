@@ -6,7 +6,7 @@ export async function getMe(): Promise<{
   email: string
   username: string
   activeWorkspace: string | null
-  role: MemberRole
+  role: MemberRole | null
 }> {
   const resp = await api.get('/users/me')
 

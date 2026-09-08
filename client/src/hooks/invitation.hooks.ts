@@ -86,11 +86,11 @@ export function useInviteUser() {
   })
 }
 
-export function useGetPendingInvites(workspaceId: string) {
+export function useGetPendingInvites(workspaceId: string, enabled = true) {
   return useQuery({
-    queryKey: ['pending-invites'],
+    queryKey: ['pending-invites', workspaceId],
     queryFn: () => getPendingInvites(workspaceId),
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && enabled,
   })
 }
 

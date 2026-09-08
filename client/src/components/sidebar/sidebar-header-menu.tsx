@@ -1,10 +1,10 @@
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import { Check, ChevronsUpDownIcon, PlusIcon, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
@@ -25,6 +25,7 @@ import { Spinner } from '../ui/spinner'
 import { useIsMobile } from '#/hooks/use-mobile'
 
 export function SidebarHeaderMenu() {
+  const { can } = useWorkspacePermissions()
   const params = useParams({
     strict: false,
   })
@@ -78,7 +79,7 @@ export function SidebarHeaderMenu() {
               })
             }}
           >
-            Invite and manage members
+            {can('invitation:manage') ? 'Invite and manage members' : 'Members'}
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -106,15 +107,22 @@ export function SidebarHeaderMenu() {
                       </div>
                       {w.name}
                       {w.id === user?.activeWorkspace && <Check />}
-                      <DropdownMenuShortcut
-                        className="text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteWorkspace(w.id)
-                        }}
-                      >
-                        {isDeleteingWorkspacePending ? <Spinner /> : <Trash2 />}
-                      </DropdownMenuShortcut>
+                      {can('workspace:delete') &&
+                        w.id === user?.activeWorkspace && (
+                          <DropdownMenuShortcut
+                            className="text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteWorkspace(w.id)
+                            }}
+                          >
+                            {isDeleteingWorkspacePending ? (
+                              <Spinner />
+                            ) : (
+                              <Trash2 />
+                            )}
+                          </DropdownMenuShortcut>
+                        )}
                     </DropdownMenuItem>
                   )
                 })}

@@ -1,3 +1,4 @@
+import type { MemberRole } from '#/type'
 import { createContext } from 'react'
 
 interface IUser {
@@ -5,6 +6,7 @@ interface IUser {
   email: string
   username: string
   activeWorkspace: string | null
+  role: MemberRole | null
 }
 
 export interface IAuthContext {

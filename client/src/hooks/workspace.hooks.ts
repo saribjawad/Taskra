@@ -1,3 +1,4 @@
+import { getMe } from '#/service/user.service'
 import type { CreateWorkspaceFormPayload } from '#/routes/_authenticated/create-workspace'
 import {
   createWorkspace,
@@ -35,12 +36,9 @@ export const useDeleteWorkspace = () => {
 
   return useMutation({
     mutationFn: (workspaceId: string) => deleteWorkspace(workspaceId),
-    onSuccess: (data, deletedWorkspaceId) => {
+    onSuccess: async (data, deletedWorkspaceId) => {
       // Manually update the user's active workspace & remove deleted workspace from users workspaces
-      query.setQueryData(['me'], (old: any) => ({
-        ...old,
-        activeWorkspace: data.newActiveWorkspaceId,
-      }))
+      query.setQueryData(['me'], await getMe())
 
       query.setQueryData(['users-workspaces'], (old: any) => {
         return old.filter(
@@ -89,11 +87,8 @@ export const useSwitchWorkspace = () => {
   const navigate = useNavigate()
   return useMutation({
     mutationFn: (workspaceId: string) => switchWorkspace(workspaceId),
-    onSuccess: (data) => {
-      query.setQueryData(['me'], (old: any) => ({
-        ...old,
-        activeWorkspace: data.workspace_id,
-      }))
+    onSuccess: async (data) => {
+      query.setQueryData(['me'], await getMe())
 
       navigate({
         to: `/${data.workspace_id}`,
@@ -116,10 +111,7 @@ export const useCreateWorkspace = () => {
       console.error('error inside the on error', serverErrorMessage)
     },
     onSuccess: async (data) => {
-      query.setQueryData(['me'], (old: any) => ({
-        ...old,
-        activeWorkspace: data.workspaceId,
-      }))
+      query.setQueryData(['me'], await getMe())
 
       navigate({
         to: `/${data.workspaceId}`,

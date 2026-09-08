@@ -1,3 +1,4 @@
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
@@ -65,6 +66,7 @@ const priorityItems = [
 ]
 
 function TaskCard(props: TaskCardProps) {
+  const { can } = useWorkspacePermissions()
   const { pathname } = useLocation()
   const lastSegment = pathname.split('/').filter(Boolean).at(-1)
   const returnFilter =
@@ -98,7 +100,7 @@ function TaskCard(props: TaskCardProps) {
           }
         }}
         key={props.id}
-        className="rounded-lg border bg-card p-4 transition-colors hover:bg-accent/40 cursor-pointer"
+        className="border-b px-3 py-3 transition-colors hover:bg-accent/40 cursor-pointer"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -108,65 +110,75 @@ function TaskCard(props: TaskCardProps) {
           <div className="flex items-center gap-2">
             <Badge>{props.status}</Badge>
 
-            <div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" disabled={isUpdatingTask}>
-                    <Ellipsis />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="bottom" className="mr-3">
-                  <DropdownMenuItem
-                    disabled={isPending}
-                    variant="destructive"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                    }}
-                    onSelect={() => {
-                      setDeleteOpen(true)
-                    }}
-                  >
-                    <Trash2 />
-                    Delete
-                  </DropdownMenuItem>
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger
-                      onClick={(e) => {
-                        e.stopPropagation()
-                      }}
+            {can('task:update') && (
+              <div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      aria-label="Task actions"
+                      variant="ghost"
+                      size="icon-sm"
+                      disabled={isUpdatingTask}
+                      onClick={(event) => event.stopPropagation()}
                     >
-                      <TrendingUp />
-                      Priority
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuPortal>
-                      <DropdownMenuSubContent
+                      <Ellipsis />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="bottom" className="mr-3">
+                    {can('task:delete') && (
+                      <DropdownMenuItem
+                        disabled={isPending}
+                        variant="destructive"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                        }}
+                        onSelect={() => {
+                          setDeleteOpen(true)
+                        }}
+                      >
+                        <Trash2 />
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger
                         onClick={(e) => {
                           e.stopPropagation()
                         }}
                       >
-                        {priorityItems.map((p) => (
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              updateTask({
-                                taskId: props.id,
-                                payload: {
-                                  priority: p.value as TaskPriorityType,
-                                },
-                              })
-                            }}
-                            key={p.name}
-                            className={`flex items-center gap-3 ${props.priority === p.value ? 'bg-zinc-800' : ''}`}
-                          >
-                            {p.icon}
-                            {p.name}
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuSubContent>
-                    </DropdownMenuPortal>
-                  </DropdownMenuSub>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                        <TrendingUp />
+                        Priority
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuPortal>
+                        <DropdownMenuSubContent
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                        >
+                          {priorityItems.map((p) => (
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                updateTask({
+                                  taskId: props.id,
+                                  payload: {
+                                    priority: p.value as TaskPriorityType,
+                                  },
+                                })
+                              }}
+                              key={p.name}
+                              className={`flex items-center gap-3 ${props.priority === p.value ? 'bg-accent' : ''}`}
+                            >
+                              {p.icon}
+                              {p.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuPortal>
+                    </DropdownMenuSub>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         </div>
 
@@ -187,7 +199,7 @@ function TaskCard(props: TaskCardProps) {
         </div>
       </div>
       <DeleteTaskDialog
-        open={deleteOpen}
+        open={can('task:delete') && deleteOpen}
         onOpenChange={setDeleteOpen}
         onDelete={onDelete}
         isDeleting={isPending}

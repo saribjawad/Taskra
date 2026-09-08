@@ -1,3 +1,4 @@
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import CreateTaskDialog from '#/components/tasks/CreateTaskDialog'
 import { Button } from '#/components/ui/button'
 import { Separator } from '#/components/ui/separator'
@@ -25,6 +26,7 @@ const filterButtons = [
 ]
 
 function RouteComponent() {
+  const { can } = useWorkspacePermissions()
   const isMobile = useIsMobile()
   const { workspaceId } = Route.useParams()
   const { pathname } = useLocation()
@@ -39,15 +41,21 @@ function RouteComponent() {
           {isMobile && <SidebarTrigger />}
           <h5 className="text-sm">My tasks</h5>
         </div>
-        <CreateTaskDialog
-          isDialogOpen={isDialogOpen}
-          setIsDialogOpen={setIsDialogOpen}
-          trigger={
-            <Button variant="ghost" onClick={() => setIsDialogOpen(true)}>
-              <Plus />
-            </Button>
-          }
-        />
+        {can('task:create') && (
+          <CreateTaskDialog
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            trigger={
+              <Button
+                aria-label="Create task"
+                variant="ghost"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                <Plus />
+              </Button>
+            }
+          />
+        )}
       </nav>
       <Separator />
 
@@ -63,7 +71,9 @@ function RouteComponent() {
               variant="secondary"
               size="sm"
               className={
-                pathname.split('/').pop() === btnPathname ? 'bg-zinc-600' : ''
+                pathname.split('/').pop() === btnPathname
+                  ? 'bg-accent text-foreground'
+                  : 'bg-transparent text-muted-foreground'
               }
             >
               {/* {btn.name} */}

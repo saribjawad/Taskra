@@ -1,3 +1,5 @@
+import CreateTaskDialog from './CreateTaskDialog'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import TaskCard from '#/components/tasks/TaskCard'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -144,6 +146,8 @@ export default function TaskListView({
   emptyMessage,
   showCreateButton,
 }: TaskListViewProps) {
+  const [createOpen, setCreateOpen] = useState(false)
+  const { can } = useWorkspacePermissions()
   // Keep the input responsive while the URL/query update waits for typing to pause.
   const [searchInput, setSearchInput] = useState(search.search ?? '')
 
@@ -264,10 +268,20 @@ export default function TaskListView({
       ) : !data?.tasks.length ? (
         <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-center">
           <p className="text-sm text-muted-foreground">{emptyMessage}</p>
-          {showCreateButton && <Button size="sm">Create new task</Button>}
+          {showCreateButton && can('task:create') && (
+            <CreateTaskDialog
+              isDialogOpen={createOpen}
+              setIsDialogOpen={setCreateOpen}
+              trigger={
+                <Button size="sm" onClick={() => setCreateOpen(true)}>
+                  Create task
+                </Button>
+              }
+            />
+          )}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="border-t">
           {data.tasks.map((task) => (
             <TaskCard key={task.id} {...task} />
           ))}

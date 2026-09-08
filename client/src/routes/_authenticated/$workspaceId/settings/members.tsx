@@ -1,3 +1,4 @@
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import { useState } from 'react'
 import { createFileRoute, useParams } from '@tanstack/react-router'
 import { MoreHorizontal, Search, Mail } from 'lucide-react'
@@ -22,7 +23,6 @@ import {
 import { cn } from '#/lib/utils'
 import type { MemberRole } from '#/type'
 import InviteDialog from '#/components/invites/InviteDialog'
-import RoleSelect from '#/components/invites/RoleSelect'
 import { ROLE_LABEL } from '#/constants'
 import {
   useGetPendingInvites,
@@ -142,6 +142,7 @@ function MemberTableSkeleton() {
 // ---------- Page ----------
 
 function RouteComponent() {
+  const { can } = useWorkspacePermissions()
   const { user: loggedInUser } = useAuth()
   const params = useParams({
     strict: false,
@@ -149,7 +150,7 @@ function RouteComponent() {
 
   const { mutateAsync: inviteUser, isPending: isInvitingUser } = useInviteUser()
   const { data: pendingInvites, isPending: isPendingInvitesLoading } =
-    useGetPendingInvites(params.workspaceId!!)
+    useGetPendingInvites(params.workspaceId!!, can('invitation:manage'))
   const { data: workspaceUsers, isPending: isWorkspaceUsersLoading } =
     useGetWorkspaceUsers(params.workspaceId!!)
   const {
@@ -172,11 +173,6 @@ function RouteComponent() {
 
   const handleInvite = async (emails: string[], role: MemberRole) => {
     await inviteUser({ emails, role, workspaceId: params.workspaceId!! })
-  }
-
-  const handleRoleChange = (id: string, role: MemberRole) => {
-    // TODO: call your update-role mutation here instead
-    console.log(id, role)
   }
 
   const handleRemoveMember = (id: string) => {
@@ -208,7 +204,9 @@ function RouteComponent() {
             access to this workspace
           </p>
         </div>
-        <InviteDialog onInvite={handleInvite} isInviting={isInvitingUser} />
+        {can('invitation:manage') && (
+          <InviteDialog onInvite={handleInvite} isInviting={isInvitingUser} />
+        )}
       </div>
 
       {/* search */}
@@ -223,13 +221,16 @@ function RouteComponent() {
       </div>
 
       {/* pending invites */}
-      {isPendingInvitesLoading && <PendingInvitesSkeleton />}
+      {can('invitation:manage') && isPendingInvitesLoading && (
+        <PendingInvitesSkeleton />
+      )}
 
-      {!isPendingInvitesLoading &&
+      {can('invitation:manage') &&
+        !isPendingInvitesLoading &&
         pendingInvites &&
         pendingInvites.length > 0 && (
           <div className="mt-8">
-            <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <h2 className="text-xs font-medium text-muted-foreground">
               Pending invites
             </h2>
             <div className="mt-2 divide-y divide-border rounded-lg border border-border">
@@ -289,7 +290,7 @@ function RouteComponent() {
 
       {/* member table */}
       <div className="mt-8">
-        <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <h2 className="text-xs font-medium text-muted-foreground">
           All members
         </h2>
         <div className="mt-2 overflow-hidden rounded-lg border border-border">
@@ -313,73 +314,80 @@ function RouteComponent() {
 
               {!isWorkspaceUsersLoading &&
                 workspaceUsers &&
-                workspaceUsers.map((user) => {
-                  const isRemovingThisMember =
-                    isRemovingMemberFromWorkspace &&
-                    removingMemberVariables?.memberId === user.id
-                  const isYourself = user.id === loggedInUser?.id
-
-                  return (
-                    <TableRow key={user.id} className="group">
-                      <TableCell className="py-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={user.username} />
-                            <AvatarFallback className="text-[10px]">
-                              {initials(user.username)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium leading-none text-foreground">
-                              {user.username}
-                            </p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {user.email}
-                            </p>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-2.5">
-                        {user.role === 'owner' || isYourself ? (
-                          <RoleBadge role={user.role} />
-                        ) : (
-                          <RoleSelect
-                            value={user.role}
-                            onChange={(r) => handleRoleChange(user.id, r)}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-sm text-muted-foreground">
-                        {formatDate(user?.joined_at)}
-                      </TableCell>
-                      <TableCell className="py-2.5 text-right">
-                        {user.role !== 'owner' && !isYourself && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="rounded-md p-1 text-muted-foreground opacity-0 hover:bg-accent hover:text-foreground group-hover:opacity-100">
-                                {isRemovingThisMember ? (
-                                  <Spinner />
-                                ) : (
-                                  <MoreHorizontal className="h-4 w-4" />
-                                )}
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem
-                                disabled={isRemovingThisMember}
-                                onClick={() => handleRemoveMember(user.id)}
-                                className="text-sm text-destructive focus:text-destructive"
-                              >
-                                {isRemovingThisMember && <Spinner />}
-                                Remove from workspace
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                workspaceUsers
+                  .filter((user) =>
+                    `${user.username} ${user.email}`
+                      .toLowerCase()
+                      .includes(query.trim().toLowerCase()),
                   )
-                })}
+                  .map((user) => {
+                    const isRemovingThisMember =
+                      isRemovingMemberFromWorkspace &&
+                      removingMemberVariables?.memberId === user.id
+                    const isYourself = user.id === loggedInUser?.id
+
+                    return (
+                      <TableRow key={user.id} className="group">
+                        <TableCell className="py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={user.username} />
+                              <AvatarFallback className="text-[10px]">
+                                {initials(user.username)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium leading-none text-foreground">
+                                {user.username}
+                              </p>
+                              <p className="mt-0.5 text-xs text-muted-foreground">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2.5">
+                          <RoleBadge role={user.role} />
+                        </TableCell>
+                        <TableCell className="py-2.5 text-sm text-muted-foreground">
+                          {formatDate(user?.joined_at)}
+                        </TableCell>
+                        <TableCell className="py-2.5 text-right">
+                          {can('member:remove') &&
+                            user.role !== 'owner' &&
+                            !isYourself && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    aria-label="Member actions"
+                                    className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline focus-visible:outline-ring"
+                                  >
+                                    {isRemovingThisMember ? (
+                                      <Spinner />
+                                    ) : (
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  className="w-40"
+                                >
+                                  <DropdownMenuItem
+                                    disabled={isRemovingThisMember}
+                                    onClick={() => handleRemoveMember(user.id)}
+                                    className="text-sm text-destructive focus:text-destructive"
+                                  >
+                                    {isRemovingThisMember && <Spinner />}
+                                    Remove from workspace
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
 
               {/* {filteredMembers.length === 0 && (
                 <TableRow>
