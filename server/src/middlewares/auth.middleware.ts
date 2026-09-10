@@ -7,7 +7,7 @@ import { WorkspaceMemberRole } from '../models/workspace.model';
 export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
-  active_workspace: string;
+  activeWorkspace: string;
   role: WorkspaceMemberRole | null;
 }
 

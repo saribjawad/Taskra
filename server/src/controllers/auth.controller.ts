@@ -96,9 +96,13 @@ export const LoginUser = async (req: Request, res: Response) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
   });
 
