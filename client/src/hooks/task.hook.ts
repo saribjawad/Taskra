@@ -1,3 +1,5 @@
+import { useAuth } from '#/context/auth/auth-hook'
+import { useParams } from '@tanstack/react-router'
 import {
   createTask,
   deleteTask,
@@ -21,8 +23,23 @@ export const useGetTasks = ({
   search,
   filter,
 }: GetTasksParams) => {
+  const { workspaceId } = useParams({ strict: false })
+  const { user } = useAuth()
+
   return useQuery({
-    queryKey: ['tasks', filter, page, limit, label, priority, status, search],
+    queryKey: [
+      'tasks',
+      workspaceId,
+      filter,
+      page,
+      limit,
+      label,
+      priority,
+      status,
+      search,
+    ],
+    // The API selects the workspace from the session cookie, not the URL.
+    enabled: !!workspaceId && workspaceId === user?.activeWorkspace,
     queryFn: () =>
       getTasks({ filter, page, limit, label, priority, status, search }),
   })

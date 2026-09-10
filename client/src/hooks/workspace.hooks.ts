@@ -85,10 +85,13 @@ export const useRemoveMemberFromWorkspace = () => {
 export const useSwitchWorkspace = () => {
   const query = useQueryClient()
   const navigate = useNavigate()
+
   return useMutation({
     mutationFn: (workspaceId: string) => switchWorkspace(workspaceId),
     onSuccess: async (data) => {
       query.setQueryData(['me'], await getMe())
+      // Mark caches stale without fetching the old page with the new session.
+      await query.invalidateQueries({ refetchType: 'none' })
 
       navigate({
         to: `/${data.workspace_id}`,
