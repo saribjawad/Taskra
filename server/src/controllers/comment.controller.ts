@@ -14,16 +14,16 @@ import {
   findCommentById,
   updateComment,
 } from '../services/comment.service';
+import { notifyMemberInWorkspace } from '../websockets/init';
 
 // ==================================================================================
 // Comment Controllers
 // ==================================================================================
 
 export const CreateComment = async (req: Request, res: Response) => {
-  const workspaceId = req.user.activeWorkspace;
+  const user = req.user;
 
   const parsedParams = CommentParamSchema.parse(req.params);
-  const userId = req.user.id;
 
   const { taskId } = parsedParams;
 
@@ -31,7 +31,7 @@ export const CreateComment = async (req: Request, res: Response) => {
   const { content } = parsedBody;
 
   // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
 
   // Throw error 404 if not found
   if (!task) {
@@ -39,10 +39,26 @@ export const CreateComment = async (req: Request, res: Response) => {
   }
 
   // Create the comment
-  const comment = await createComment(taskId, userId, content);
+  const comment = await createComment(taskId, user.id, content);
 
   if (!comment) {
     throw ApiError.internal('Something went wrong while creating comment');
+  }
+
+  // Notfiy the assignee and reporter if they are not the actor
+  const notificationRecipents = new Set<string>([task.assignee, task.reporter]);
+
+  for (const recipent of notificationRecipents) {
+    if (recipent && recipent !== user.id) {
+      notifyMemberInWorkspace(recipent, task.workspace_id, {
+        type: 'task:commented',
+        message: 'Someone commented on a task',
+        metaData: {
+          actorId: user.id,
+          taskId: task.id,
+        },
+      });
+    }
   }
 
   return res.status(201).json(new ApiResponse(201, 'Comment created'));

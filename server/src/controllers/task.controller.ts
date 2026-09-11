@@ -33,6 +33,8 @@ import {
 } from '../services/taskActivity.service';
 import { TaskActivityType } from '../models/taskActivity.model';
 import { Task } from '../models/task.model';
+import { notifyMemberInWorkspace } from '../websockets/init';
+import { getWorkspaceMember } from '../services/workspace.service';
 
 // ==================================================================================
 // Task Controllers
@@ -60,21 +62,21 @@ export const CreateTask = async (req: Request, res: Response) => {
     reporter: reporterId,
   } = body;
 
-  let assigneeUser;
-  let reporterUser;
+  let assigneeMember;
+  let reporterMember;
 
   // If the assigne exists query the user
 
   if (assigneeId) {
-    assigneeUser = await findUserById(assigneeId);
-    if (!assigneeUser) {
+    assigneeMember = await getWorkspaceMember(assigneeId, activeWorkspace);
+    if (!assigneeMember) {
       throw ApiError.notFound('Assignee not found');
     }
   }
 
   if (reporterId) {
-    reporterUser = await findUserById(reporterId);
-    if (!reporterUser) {
+    reporterMember = await getWorkspaceMember(reporterId, activeWorkspace);
+    if (!reporterMember) {
       throw ApiError.notFound('Reporter not found');
     }
   }
@@ -89,8 +91,8 @@ export const CreateTask = async (req: Request, res: Response) => {
     user.id,
     startDate,
     dueDate,
-    assigneeUser ? assigneeUser.id : null,
-    reporterUser ? reporterUser.id : null,
+    assigneeMember ? assigneeMember.user_id : null,
+    reporterMember ? reporterMember.user_id : null,
   );
 
   if (!task) {
@@ -132,6 +134,34 @@ export const CreateTask = async (req: Request, res: Response) => {
     );
   }
 
+  // Notify the assignee if the actor himself is not the assignee
+
+  if (assigneeMember && assigneeMember.user_id !== user.id) {
+    notifyMemberInWorkspace(assigneeMember.user_id, task.workspace_id, {
+      type: 'task:assigned',
+      message: 'A task has been assigned to you',
+      metaData: {
+        actorId: user.id,
+        taskId: task.id,
+      },
+    });
+  }
+  // Notify the reporter if the actor himself is not the reporter
+  if (
+    reporterMember &&
+    reporterMember.user_id !== user.id &&
+    reporterMember.user_id !== assigneeMember?.user_id
+  ) {
+    notifyMemberInWorkspace(reporterMember.user_id, task.workspace_id, {
+      type: 'task:reporter_assigned',
+      message: 'You were assigned as the reporter of a task',
+      metaData: {
+        actorId: user.id,
+        taskId: task.id,
+      },
+    });
+  }
+
   res.status(201).json(new ApiResponse(201, 'Task created'));
 };
 
@@ -167,13 +197,32 @@ export const UpdateTask = async (req: Request, res: Response) => {
   }
 
   if (assigneeId) {
-    assigneeUser = await findUserById(assigneeId);
+    const isAssigneeMember = await getWorkspaceMember(
+      assigneeId,
+      user.activeWorkspace,
+    );
+
+    if (!isAssigneeMember) {
+      throw ApiError.forbidden('Assignee is not member of this workspace');
+    }
+
+    assigneeUser = await findUserById(isAssigneeMember.user_id);
+
     if (!assigneeUser) {
       throw ApiError.notFound('Assignee not found');
     }
   }
   if (reporterId) {
-    reporterUser = await findUserById(reporterId);
+    const isReporterMember = await getWorkspaceMember(
+      reporterId,
+      user.activeWorkspace,
+    );
+    if (!isReporterMember) {
+      throw ApiError.forbidden('Reporter is not member of this workspace');
+    }
+
+    reporterUser = await findUserById(isReporterMember.user_id);
+
     if (!reporterUser) {
       throw ApiError.notFound('Reporter not found');
     }
@@ -282,6 +331,32 @@ export const UpdateTask = async (req: Request, res: Response) => {
     }),
   );
 
+  if (assigneeUser && assigneeUser.id !== user.id) {
+    notifyMemberInWorkspace(assigneeUser.id, task.workspace_id, {
+      type: 'task:assigned',
+      message: 'A task has been assigned to you',
+      metaData: {
+        actorId: user.id,
+        taskId: task.id,
+      },
+    });
+  }
+  // Notify the reporter if the actor himself is not the reporter
+  if (
+    reporterUser &&
+    reporterUser.id !== user.id &&
+    reporterUser.id !== assigneeUser?.id
+  ) {
+    notifyMemberInWorkspace(reporterUser.id, task.workspace_id, {
+      type: 'task:reporter_assigned',
+      message: 'You were assigned as the reporter of a task',
+      metaData: {
+        actorId: user.id,
+        taskId: task.id,
+      },
+    });
+  }
+
   res.status(200).json(new ApiResponse(200, 'Task updated'));
 };
 
@@ -315,6 +390,22 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
     throw ApiError.internal(
       'Something went wrong while creating the task activity',
     );
+  }
+
+  // Notify the assignee and the reporter - Don't notify if the assignee or reporter himself is the actor
+  const notificationRecipents = new Set([task.assignee, task.reporter]);
+
+  for (const recipent of notificationRecipents) {
+    if (recipent && recipent !== user.id) {
+      notifyMemberInWorkspace('', task.workspace_id, {
+        type: 'task:completed',
+        message: 'Task has been marked as completed',
+        metaData: {
+          taskId: task.id,
+          actorId: user.id,
+        },
+      });
+    }
   }
 
   res.status(200).json(new ApiResponse(200, 'Task marked as completed'));
