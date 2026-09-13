@@ -397,7 +397,7 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
 
   for (const recipent of notificationRecipents) {
     if (recipent && recipent !== user.id) {
-      notifyMemberInWorkspace('', task.workspace_id, {
+      notifyMemberInWorkspace(recipent, task.workspace_id, {
         type: 'task:completed',
         message: 'Task has been marked as completed',
         metaData: {

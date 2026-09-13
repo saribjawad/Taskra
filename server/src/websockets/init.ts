@@ -73,7 +73,7 @@ export function initWebSocket(server: Server) {
     ws.on('error', console.error);
 
     ws.on('message', function (message) {
-      // Temp, revist one in app messaging
+      // Temp, revist on in app messaging
       const workspaceRoom = workspaceRooms.get(user.activeWorkspace);
 
       workspaceRoom?.forEach((m) => {
@@ -124,7 +124,9 @@ export function notifyMemberInWorkspace(
 
   if (members && members.length >= 1) {
     for (const m of members) {
-      if (m.id === userId) m.ws.send(JSON.stringify(payload));
+      if (m.id === userId) {
+        m.ws.send(JSON.stringify(payload));
+      }
     }
   }
 }
