@@ -2,7 +2,6 @@ import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
 import { useLocation, useNavigate, useParams } from '@tanstack/react-router'
 import { Badge } from '../ui/badge'
-import { Separator } from '../ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,13 +93,13 @@ function TaskCard(props: TaskCardProps) {
           if (!isPending) {
             navigate({
               to: '/$workspaceId/tasks/$taskId',
-              params: { workspaceId: workspaceId!!, taskId: props.id },
+              params: { workspaceId: workspaceId!, taskId: props.id },
               search: { from: returnFilter },
             })
           }
         }}
         key={props.id}
-        className="border-b px-3 py-3 transition-colors hover:bg-accent/40 cursor-pointer"
+        className="border-b px-3 py-3 transition-colors hover:bg-accent/40 cursor-pointer flex flex-col gap-8"
       >
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -181,8 +180,6 @@ function TaskCard(props: TaskCardProps) {
             )}
           </div>
         </div>
-
-        <Separator className="my-3" />
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {/* TODO: improve the badge */}
