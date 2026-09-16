@@ -5,6 +5,7 @@ import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { Server } from 'node:http';
 import { NotificationPayloadType } from './types';
+import logger from '../utils/logger';
 
 // Websocket Server
 const wss = new WebSocketServer({
@@ -50,7 +51,8 @@ export function initWebSocket(server: Server) {
   });
 
   wss.on('connection', (ws, payload) => {
-    ws.send('Connected to websocket');
+    logger.info(`${payload.user.email} connected`);
+
     const user = payload.user;
 
     // Check if the room for user's active workspace exist
@@ -104,7 +106,7 @@ export function initWebSocket(server: Server) {
 
 export function notifyWorkspace(
   workspaceId: string,
-  payload: { type: any; message: any },
+  payload: NotificationPayloadType,
 ) {
   const members = workspaceRooms.get(workspaceId);
 

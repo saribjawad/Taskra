@@ -1,9 +1,4 @@
-export type NotificationType =
-  | 'task:completed'
-  | 'task:assigned'
-  | 'task:reporter_assigned'
-  | 'task:commented'
-  | 'task:due_soon';
+import { NotificationType } from '../models/notifications.model';
 
 export interface NotificationPayloadType {
   type: NotificationType;

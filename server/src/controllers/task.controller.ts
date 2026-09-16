@@ -35,6 +35,7 @@ import { TaskActivityType } from '../models/taskActivity.model';
 import { Task } from '../models/task.model';
 import { notifyMemberInWorkspace } from '../websockets/init';
 import { getWorkspaceMember } from '../services/workspace.service';
+import { createNotification } from '../services/notifications.service';
 
 // ==================================================================================
 // Task Controllers
@@ -137,6 +138,21 @@ export const CreateTask = async (req: Request, res: Response) => {
   // Notify the assignee if the actor himself is not the assignee
 
   if (assigneeMember && assigneeMember.user_id !== user.id) {
+    const createdNotification = await createNotification(
+      assigneeMember.user_id,
+      task.workspace_id,
+      'task:assigned',
+      'A task has been assigned to you',
+      user.id,
+      task.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
     notifyMemberInWorkspace(assigneeMember.user_id, task.workspace_id, {
       type: 'task:assigned',
       message: 'A task has been assigned to you',
@@ -152,6 +168,21 @@ export const CreateTask = async (req: Request, res: Response) => {
     reporterMember.user_id !== user.id &&
     reporterMember.user_id !== assigneeMember?.user_id
   ) {
+    const createdNotification = await createNotification(
+      reporterMember.user_id,
+      task.workspace_id,
+      'task:reporter_assigned',
+      'You were assigned as the reporter of a task',
+      user.id,
+      task.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
     notifyMemberInWorkspace(reporterMember.user_id, task.workspace_id, {
       type: 'task:reporter_assigned',
       message: 'You were assigned as the reporter of a task',
@@ -332,6 +363,21 @@ export const UpdateTask = async (req: Request, res: Response) => {
   );
 
   if (assigneeUser && assigneeUser.id !== user.id) {
+    const createdNotification = await createNotification(
+      assigneeUser.id,
+      task.workspace_id,
+      'task:assigned',
+      'A task has been assigned to you',
+      user.id,
+      task.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
     notifyMemberInWorkspace(assigneeUser.id, task.workspace_id, {
       type: 'task:assigned',
       message: 'A task has been assigned to you',
@@ -347,6 +393,21 @@ export const UpdateTask = async (req: Request, res: Response) => {
     reporterUser.id !== user.id &&
     reporterUser.id !== assigneeUser?.id
   ) {
+    const createdNotification = await createNotification(
+      reporterUser.id,
+      task.workspace_id,
+      'task:reporter_assigned',
+      'You were assigned as the reporter of a task',
+      user.id,
+      task.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
     notifyMemberInWorkspace(reporterUser.id, task.workspace_id, {
       type: 'task:reporter_assigned',
       message: 'You were assigned as the reporter of a task',
@@ -397,6 +458,21 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
 
   for (const recipent of notificationRecipents) {
     if (recipent && recipent !== user.id) {
+      const createdNotification = await createNotification(
+        recipent,
+        task.workspace_id,
+        'task:commented',
+        'Task has been marked as completed',
+        user.id,
+        task.id,
+      );
+
+      if (!createdNotification) {
+        throw ApiError.internal(
+          'Something went wrong while creating notification',
+        );
+      }
+
       notifyMemberInWorkspace(recipent, task.workspace_id, {
         type: 'task:completed',
         message: 'Task has been marked as completed',
