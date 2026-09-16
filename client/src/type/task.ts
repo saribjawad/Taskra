@@ -21,8 +21,12 @@ export interface Task {
   priority: TaskPriorityType
   label: TaskLabelType
   assignee: string
+  creator: string
+  reporter: string
+  start_date: Date | null
+  due_date: Date | null
+  completed_date: Date | null
+  workspace_id: string
   updated_at: Date
   created_at: Date
-  workspace_id: string
-  created_by: string
 }

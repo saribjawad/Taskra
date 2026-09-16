@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from './components/ui/sonner'
 import { useAuth } from './context/auth/auth-hook'
 import { AuthContextProvider } from './context/auth/auth-provider'
+import { WebsocketProvider } from './context/websocket/websocket-provider'
 
 export const router = createRouter({
   routeTree,
@@ -37,8 +38,10 @@ if (!rootElement.innerHTML) {
   root.render(
     <QueryClientProvider client={queryClient}>
       <AuthContextProvider>
-        <Toaster position="top-right" />
-        <App />
+        <WebsocketProvider>
+          <Toaster position="top-right" />
+          <App />
+        </WebsocketProvider>
       </AuthContextProvider>
     </QueryClientProvider>,
   )
