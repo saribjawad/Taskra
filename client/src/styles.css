@@ -19,6 +19,19 @@ body {
   margin: 0;
 }
 
+/* Inbox owns its scroll area; the document must not scroll behind it. */
+html:has([data-slot='inbox-layout']),
+body:has([data-slot='inbox-layout']) {
+  height: 100%;
+  overflow: hidden;
+}
+
+[data-slot='sidebar-wrapper']:has([data-slot='inbox-layout']) {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;
