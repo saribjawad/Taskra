@@ -461,7 +461,7 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
       const createdNotification = await createNotification(
         recipent,
         task.workspace_id,
-        'task:commented',
+        'task:completed',
         'Task has been marked as completed',
         user.id,
         task.id,
