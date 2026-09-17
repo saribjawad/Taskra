@@ -1,5 +1,5 @@
 import { dbPool } from '../db';
-import { NotificationType } from '../models/notifications.model';
+import { Notification, NotificationType } from '../models/notifications.model';
 
 /**
  * Create notifications in database
@@ -19,7 +19,7 @@ export async function createNotification(
   message: string,
   actorId?: string,
   taskId?: string,
-) {
+): Promise<Notification> {
   const result = await dbPool.query(
     `
     INSERT INTO notifications
@@ -31,4 +31,39 @@ export async function createNotification(
   );
 
   return result.rows[0];
+}
+
+/**
+ * Get notifications by userId
+ *
+ * @param userId - User uuid
+ * @returns Array of notifications
+ */
+export async function getNotificationsByUserId(
+  userId: string,
+  cursorTime: string | undefined,
+  cursorId: string | undefined,
+  limit: number,
+): Promise<Notification[]> {
+  console.log({
+    userId,
+    cursorTime,
+    cursorId,
+  });
+
+  const result = await dbPool.query(
+    `
+    SELECT * FROM notifications
+    WHERE user_id = $1
+    AND (
+          $2::timestamptz IS NULL 
+          OR (created_at, id) < ($2::timestamptz, $3::uuid)
+        )
+    ORDER BY created_at DESC, id DESC
+    LIMIT $4;
+    `,
+    [userId, cursorTime ?? null, cursorId ?? null, limit],
+  );
+
+  return result.rows;
 }

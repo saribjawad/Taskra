@@ -6,6 +6,7 @@ import commentRouter from './comment.route';
 import userRouter from './user.routes';
 import workspaceRouter from './workspace.routes';
 import attachmentRouter from './attachment.routes';
+import notificationRouter from './notification.routes';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/tasks', taskRouter);
 router.use('/tasks', commentRouter);
 router.use('/workspace', workspaceRouter);
 router.use('/attachment', attachmentRouter);
+router.use('/notifications', notificationRouter);
 
 export default router;

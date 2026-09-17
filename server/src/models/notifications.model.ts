@@ -13,4 +13,7 @@ export interface Notification {
   workspace_id: string;
   seen: boolean;
   type: NotificationType;
+  message: string;
+  updated_at: Date;
+  created_at: Date;
 }
