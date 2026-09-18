@@ -52,7 +52,7 @@ export const CreateComment = async (req: Request, res: Response) => {
     if (recipent && recipent !== user.id) {
       notifyMemberInWorkspace(recipent, task.workspace_id, {
         type: 'task:commented',
-        message: 'Someone commented on a task',
+        message: 'A new comment was added to a task you’re involved in',
         metaData: {
           actorId: user.id,
           taskId: task.id,
