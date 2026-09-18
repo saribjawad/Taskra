@@ -36,6 +36,7 @@ import { Task } from '../models/task.model';
 import { notifyMemberInWorkspace } from '../websockets/init';
 import { getWorkspaceMember } from '../services/workspace.service';
 import { createNotification } from '../services/notifications.service';
+import { isObjectEmpty } from '../utils/isObjectEmpty';
 
 // ==================================================================================
 // Task Controllers
@@ -202,7 +203,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
   const parsedParams = TaskParamsSchema.parse(req.params);
 
   const { taskId } = parsedParams;
-  const { body } = UpdateTaskSchema.parse({
+  const { body, files: files2 } = UpdateTaskSchema.parse({
     body: req.body,
     files: req.files,
   });
@@ -276,49 +277,52 @@ export const UpdateTask = async (req: Request, res: Response) => {
     payload[field] = null;
   });
 
-  const count = await updateTask(taskId, payload);
+  // Check if the payload is empty
+  if (!isObjectEmpty(payload)) {
+    const count = await updateTask(taskId, payload);
 
-  if (!count || count <= 0) {
-    throw ApiError.internal('Something went wrong while update the task');
-  }
+    if (!count || count <= 0) {
+      throw ApiError.internal('Something went wrong while update the task');
+    }
 
-  const activityMap = {
-    title: 'title_changed',
-    status: 'status_changed',
-    priority: 'priority_changed',
-    assignee: 'assignee_changed',
-    reporter: 'reporter_changed',
-  };
+    const activityMap = {
+      title: 'title_changed',
+      status: 'status_changed',
+      priority: 'priority_changed',
+      assignee: 'assignee_changed',
+      reporter: 'reporter_changed',
+    };
 
-  //  Create task activity
-  for (const [field, activityValue] of Object.entries(activityMap)) {
-    if (
-      payload[field] !== undefined &&
-      payload[field] !== task[field as keyof Task]
-    ) {
-      const nextValue = payload[field];
+    //  Create task activity
+    for (const [field, activityValue] of Object.entries(activityMap)) {
+      if (
+        payload[field] !== undefined &&
+        payload[field] !== task[field as keyof Task]
+      ) {
+        const nextValue = payload[field];
 
-      let description = `${user.email} changed ${field} to '${nextValue ?? 'none'}'`;
+        let description = `${user.email} changed ${field} to '${nextValue ?? 'none'}'`;
 
-      // Manually add assignee/reporter email
-      if (field === 'assignee' && payload['assignee'] !== null) {
-        description = `${user.email} changed the assignee to ${assigneeUser?.email}`;
+        // Manually add assignee/reporter email
+        if (field === 'assignee' && payload['assignee'] !== null) {
+          description = `${user.email} changed the assignee to ${assigneeUser?.email}`;
+        }
+        if (field === 'reporter' && payload['reporter'] !== null) {
+          description = `${user.email} changed the reporter to ${reporterUser?.email}`;
+        }
+
+        await createTaskActivity(
+          task.id,
+          user.id,
+          activityValue as TaskActivityType,
+          description,
+          {
+            field: field,
+            from: String(task[field as keyof Task] ?? ''),
+            to: String(nextValue ?? ''),
+          },
+        );
       }
-      if (field === 'reporter' && payload['reporter'] !== null) {
-        description = `${user.email} changed the reporter to ${reporterUser?.email}`;
-      }
-
-      await createTaskActivity(
-        task.id,
-        user.id,
-        activityValue as TaskActivityType,
-        description,
-        {
-          field: field,
-          from: String(task[field as keyof Task] ?? ''),
-          to: String(nextValue ?? ''),
-        },
-      );
     }
   }
 

@@ -37,6 +37,7 @@ import { useMemo } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import DateField from '../fields/DateField'
+import type { UpdateTaskPayload } from '#/service/task.service'
 
 interface EditTaskDialogProps {
   trigger: ReactElement
@@ -145,14 +146,20 @@ function EditTaskDialog({
     [existingCounts],
   )
 
-  const { handleSubmit, control, reset, trigger } = useForm({
+  const {
+    handleSubmit,
+    control,
+    reset,
+    trigger,
+    formState: { isDirty, dirtyFields },
+  } = useForm({
     resolver: zodResolver(EditTaskFormSchema),
-    defaultValues: {
+    values: {
       title: task.title,
       description: task.description,
-      assignee: task.assignee?.id ?? '',
+      assignee: task.assignee?.id ?? 'noassignee',
       label: task.label as z.infer<typeof Label>,
-      reporter: task.reporter?.id ?? '',
+      reporter: task.reporter?.id ?? 'noreporter',
       priority: task.priority as z.infer<typeof Priority>,
       status: task.status as z.infer<typeof Status>,
       startDate: task.start_date ? new Date(task.start_date) : undefined,
@@ -163,33 +170,51 @@ function EditTaskDialog({
   })
 
   async function onSubmit(data: z.infer<typeof EditTaskFormSchema>) {
+    if (!isDirty || isPending) return
+
+    const payload: UpdateTaskPayload = {}
     const clearFields: ('assignee' | 'reporter')[] = []
 
-    if (data.assignee === 'noassignee') {
-      clearFields.push('assignee')
+    for (const field of [
+      'title',
+      'description',
+      'status',
+      'priority',
+      'label',
+    ] as const) {
+      if (dirtyFields[field]) Object.assign(payload, { [field]: data[field] })
     }
 
-    if (data.reporter === 'noreporter') {
-      clearFields.push('reporter')
+    for (const field of ['assignee', 'reporter'] as const) {
+      if (!dirtyFields[field]) continue
+      if (data[field] === `no${field}`) {
+        clearFields.push(field)
+      } else if (data[field]) {
+        payload[field] = data[field]
+      }
     }
+
+    if (clearFields.length) payload.clearFields = clearFields
+
+    for (const field of ['startDate', 'dueDate'] as const) {
+      if (dirtyFields[field] && data[field]) {
+        payload[field] = data[field].toISOString()
+      }
+    }
+
+    if (data.attachments?.length) payload.attachments = data.attachments
+    if (data.removedAttachmentIds.length) {
+      payload.removedAttachmentIds = data.removedAttachmentIds
+    }
+
+    if (!Object.keys(payload).length) return
 
     await updateTask({
       taskId: task.id,
-      payload: {
-        ...data,
-        assignee: clearFields.includes('assignee')
-          ? undefined
-          : data.assignee || undefined,
-        reporter: clearFields.includes('reporter')
-          ? undefined
-          : data.reporter || undefined,
-        clearFields,
-        startDate: data.startDate ? data.startDate.toISOString() : undefined,
-        dueDate: data.dueDate ? data.dueDate.toISOString() : undefined,
-      },
+      payload,
     })
     // Manually close the dialog and reset the form
-    reset(data)
+    reset({ ...data, attachments: [], removedAttachmentIds: [] })
     setIsDialogOpen(false)
   }
 
@@ -584,7 +609,7 @@ function EditTaskDialog({
               </Button>
             </DialogClose>
 
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || !isDirty}>
               {isPending && <Spinner />}
               Save changes
             </Button>
