@@ -4,6 +4,8 @@ export type NotificationType =
   | 'task:reporter_assigned'
   | 'task:commented'
   | 'task:due_soon'
+  | 'invite:accepted'
+  | 'invite:declined'
 
 export interface Notification {
   id: string

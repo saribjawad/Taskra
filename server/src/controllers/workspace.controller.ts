@@ -48,6 +48,8 @@ import {
 import { sendInviteToWorkspace } from '../lib/resend';
 import { env } from '../config/env';
 import { WorkspaceMemberRole } from '../models/workspace.model';
+import { createNotification } from '../services/notifications.service';
+import { notifyMemberInWorkspace } from '../websockets/init';
 
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -510,10 +512,36 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     path: '/api/v1/refresh-access-token',
   });
 
+  // Notify sender
+  if (invitation.sent_by) {
+    const createdNotification = await createNotification(
+      invitation.sent_by,
+      invitation.workspace_id,
+      'invite:accepted',
+      `The invite you sent to ${user.email} has been accepted`,
+      user.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
+    notifyMemberInWorkspace(invitation.sent_by, invitation.workspace_id, {
+      type: 'invite:accepted',
+      message: `The invite you sent to ${user.email} has been accepted`,
+      metaData: {
+        actorId: user.id,
+      },
+    });
+  }
+
   res.status(200).json(new ApiResponse(200, 'Invite accepted'));
 };
 
 export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
+  const user = req.user;
   const { token } = DeclineWorkspaceInviteParamsSchema.parse(req.params);
 
   const hashToken = crypto.hash('SHA-256', token);
@@ -549,6 +577,31 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
     throw ApiError.internal(
       'Something went wrong while updating the invitation status',
     );
+  }
+
+  // Notify sender
+  if (invitation.sent_by) {
+    const createdNotification = await createNotification(
+      invitation.sent_by,
+      invitation.workspace_id,
+      'invite:declined',
+      `The invite you sent to ${user.email} has been declined`,
+      user.id,
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
+    notifyMemberInWorkspace(invitation.sent_by, invitation.workspace_id, {
+      type: 'invite:declined',
+      message: `The invite you sent to ${user.email} has been declined`,
+      metaData: {
+        actorId: user.id,
+      },
+    });
   }
 
   res.status(200).json(new ApiResponse(200, 'Workspace invite declined'));

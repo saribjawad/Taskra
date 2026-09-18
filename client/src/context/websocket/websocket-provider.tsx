@@ -5,13 +5,9 @@ import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { WebsocketContext } from './websocket-context'
 import { useQueryClient } from '@tanstack/react-query'
+import type { NotificationType } from '#/type/notification'
 
-export type MessageType =
-  | 'task:completed'
-  | 'task:assigned'
-  | 'task:reporter_assigned'
-  | 'task:commented'
-  | 'task:due_soon'
+export type MessageType = NotificationType
 
 export interface MessagePayloadType {
   type: MessageType
@@ -115,6 +111,8 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
           }
           break
         case 'task:due_soon':
+        case 'invite:accepted':
+        case 'invite:declined':
           {
             const { title, icon: Icon } = notificationPresentation[type]
 
