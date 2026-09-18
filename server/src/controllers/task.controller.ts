@@ -362,6 +362,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
     }),
   );
 
+  // Notify the assignee if the actor himself is not the assignee
   if (assigneeUser && assigneeUser.id !== user.id) {
     const createdNotification = await createNotification(
       assigneeUser.id,
