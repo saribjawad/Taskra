@@ -45,12 +45,6 @@ export async function getNotificationsByUserId(
   cursorId: string | undefined,
   limit: number,
 ): Promise<Notification[]> {
-  console.log({
-    userId,
-    cursorTime,
-    cursorId,
-  });
-
   const result = await dbPool.query(
     `
     SELECT * FROM notifications
