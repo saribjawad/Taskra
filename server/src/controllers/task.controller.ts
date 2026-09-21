@@ -203,7 +203,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
   const parsedParams = TaskParamsSchema.parse(req.params);
 
   const { taskId } = parsedParams;
-  const { body, files: files2 } = UpdateTaskSchema.parse({
+  const { body } = UpdateTaskSchema.parse({
     body: req.body,
     files: req.files,
   });

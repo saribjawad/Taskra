@@ -11,8 +11,9 @@ export interface Project {
   short_summary: string | null;
   description: string | null;
   priority: ProjectPriorityType;
-  status: string | null;
-  lead: string | null;
+  status: ProjectStatusType;
+  lead_id: string | null;
+  workspace_id: string;
   start_date: Date | null;
   target_date: Date | null;
   updated_at: Date;
