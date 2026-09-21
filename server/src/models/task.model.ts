@@ -1,3 +1,7 @@
+import z from 'zod';
+import { Priority } from '../schemas/common.schema';
+import { TaskFilter, TaskLabel, TaskStatus } from '../schemas/task.schema';
+
 export type TaskStatus =
   | 'backlog'
   | 'todo'
@@ -5,17 +9,18 @@ export type TaskStatus =
   | 'done'
   | 'cancelled';
 
-export type TaskPriority = 'urgent' | 'high' | 'medium' | 'low' | 'no_priority';
-
-export type TaskLabel = 'bug' | 'feature' | 'improvement';
+export type TaskPriorityType = z.infer<typeof Priority>;
+export type TaskLabelType = z.infer<typeof TaskLabel>;
+export type TaskFilterType = z.infer<typeof TaskFilter>;
+export type TaskStatusType = z.infer<typeof TaskStatus>;
 
 export type Task = {
   id: string;
   title: string;
   description: string;
-  status: TaskStatus;
-  priority: TaskPriority;
-  label: TaskLabel;
+  status: TaskStatusType;
+  priority: TaskPriorityType;
+  label: TaskLabelType;
   assignee: string;
   creator: string;
   reporter: string;

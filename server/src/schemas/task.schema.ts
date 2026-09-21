@@ -1,29 +1,22 @@
-import z, { ZodUUID } from 'zod';
+import z from 'zod';
+import { Priority } from './common.schema';
 
-// Resusable Schema
-const Status = z.enum(
+// Reusable field schemas
+export const TaskStatus = z.enum(
   ['backlog', 'todo', 'in_progress', 'done', 'cancelled'],
   'Invalid status',
 );
-const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label');
-const Filter = z.enum(['assigned', 'created', 'all']);
-const Priority = z.enum(
-  ['urgent', 'high', 'medium', 'low', 'no_priority'],
-  'Invalid priority',
+export const TaskLabel = z.enum(
+  ['bug', 'feature', 'improvement'],
+  'Invalid label',
 );
+export const TaskFilter = z.enum(['assigned', 'created', 'all']);
 const ClearableTaskField = z.enum(['assignee', 'reporter']);
 
-export type FilterType = z.infer<typeof Filter>;
-export type StatusType = z.infer<typeof Status>;
-export type Priority = z.infer<typeof Priority>;
-export type LabelType = z.infer<typeof Label>;
-
 // Schemas
-
 export const TaskParamsSchema = z.object({
   taskId: z.uuid('Invalid task UUID'),
 });
-
 export const MarkTaskAsCompletedParamsSchema = TaskParamsSchema;
 export const GetTaskActivityParamsSchema = TaskParamsSchema;
 
@@ -34,10 +27,10 @@ export const GetTaskQuerySchema = z.object({
   limit: z.coerce
     .number('Invalid number')
     .positive('Should be a positive number'),
-  filter: Filter.optional().default('all'),
-  status: Status.optional(),
+  filter: TaskFilter.optional().default('all'),
+  status: TaskStatus.optional(),
   priority: Priority.optional(),
-  label: Label.optional(),
+  label: TaskLabel.optional(),
   search: z.string('Invalid search').optional(),
 });
 
@@ -49,9 +42,9 @@ export const CreateTaskSchema = z
         .min(1, 'Title is required')
         .max(250, 'Title cannot be more than 250 words'),
       description: z.string('Invalid description'),
-      status: Status,
+      status: TaskStatus,
       priority: Priority,
-      label: Label,
+      label: TaskLabel,
       startDate: z.coerce.date('Invalid start date').optional(),
       dueDate: z.coerce.date('Invalid due date').optional(),
       assignee: z.uuid('Invalid assignee UUID').optional(),
@@ -134,9 +127,9 @@ export const UpdateTaskSchema = z
         .max(250, 'Title cannot be more than 250 words')
         .optional(),
       description: z.string('Invalid description').optional(),
-      status: Status.optional(),
+      status: TaskStatus.optional(),
       priority: Priority.optional(),
-      label: Label.optional(),
+      label: TaskLabel.optional(),
       assignee: z.uuid('Invalid assignee UUID').optional(),
       reporter: z.uuid('Invalid reporter UUID').optional(),
       clearFields: z

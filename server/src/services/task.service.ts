@@ -1,16 +1,12 @@
 import { dbPool } from '../db';
 import {
   Task,
-  TaskLabel,
-  TaskPriority,
+  TaskLabelType,
+  TaskPriorityType,
   TaskStatus,
+  TaskStatusType,
+  TaskFilterType,
 } from '../models/task.model';
-import {
-  FilterType,
-  LabelType,
-  Priority,
-  StatusType,
-} from '../schemas/task.schema';
 
 /**
  * Find task by ID and workspaceId in database
@@ -110,8 +106,8 @@ export const updateTask = async (
     description?: string;
     assignee?: string | null;
     reporter?: string | null;
-    label?: TaskLabel;
-    priority?: TaskPriority;
+    label?: TaskLabelType;
+    priority?: TaskPriorityType;
     status?: TaskStatus;
     start_date?: Date;
     due_date?: Date;
@@ -171,12 +167,12 @@ export const getTasks = async (
   limit: number,
   workspaceId: string,
   offset: number,
-  status?: StatusType,
-  label?: LabelType,
-  priority?: Priority,
+  status?: TaskStatusType,
+  label?: TaskLabelType,
+  priority?: TaskPriorityType,
   search?: string,
   userId?: string,
-  filter: FilterType = 'all',
+  filter: TaskFilterType = 'all',
 ) => {
   if (search) search = `%${search}%`;
   let result;
