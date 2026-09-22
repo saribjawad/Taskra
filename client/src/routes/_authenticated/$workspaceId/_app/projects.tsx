@@ -157,7 +157,7 @@ function ProjectsPage() {
             return (
               <li key={project.id} className="py-5 sm:px-2">
                 <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-                  <h2 className="min-w-0 break-words text-sm font-medium">
+                  <h2 className="min-w-0 wrap-break-word text-sm font-medium">
                     {project.name}
                   </h2>
                   <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
@@ -169,7 +169,7 @@ function ProjectsPage() {
                   </span>
                 </div>
                 {project.short_summary && (
-                  <p className="mt-1.5 max-w-prose break-words text-sm leading-6 text-muted-foreground">
+                  <p className="mt-1.5 max-w-prose wrap-break-word text-sm leading-6 text-muted-foreground">
                     {project.short_summary}
                   </p>
                 )}
@@ -182,7 +182,7 @@ function ProjectsPage() {
                   ].map(([label, value]) => (
                     <div key={label} className="min-w-0">
                       <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="mt-1 break-words">{value}</dd>
+                      <dd className="mt-1 wrap-break-words">{value}</dd>
                     </div>
                   ))}
                 </dl>
