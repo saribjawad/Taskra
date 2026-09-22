@@ -1,15 +1,8 @@
 import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import CreateTaskDialog from '#/components/tasks/CreateTaskDialog'
 import { Button } from '#/components/ui/button'
-import { Separator } from '#/components/ui/separator'
-import { SidebarTrigger } from '#/components/ui/sidebar'
-import { useIsMobile } from '#/hooks/use-mobile'
-import {
-  createFileRoute,
-  Link,
-  Outlet,
-  useLocation,
-} from '@tanstack/react-router'
+import { PageLayout, PageTabs, PageTab } from '#/components/layout/PageLayout'
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
@@ -27,64 +20,45 @@ const filterButtons = [
 
 function RouteComponent() {
   const { can } = useWorkspacePermissions()
-  const isMobile = useIsMobile()
   const { workspaceId } = Route.useParams()
-  const { pathname } = useLocation()
 
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false)
 
   return (
-    <main className="h-screen w-full p-3 flex flex-col gap-2">
-      {/* Header */}
-      <nav className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-3">
-          {isMobile && <SidebarTrigger />}
-          <h5 className="text-sm">My tasks</h5>
-        </div>
-        {can('task:create') && (
+    <PageLayout
+      title="My tasks"
+      actions={
+        can('task:create') && (
           <CreateTaskDialog
             isDialogOpen={isDialogOpen}
             setIsDialogOpen={setIsDialogOpen}
             trigger={
               <Button
                 aria-label="Create task"
-                variant="ghost"
+                variant="outline"
+                size="sm"
                 onClick={() => setIsDialogOpen(true)}
               >
-                <Plus />
+                <Plus className="size-4" />
+                New task
               </Button>
             }
           />
-        )}
-      </nav>
-      <Separator />
-
-      {/* Filter Buttons */}
-      <div className="flex items-center gap-1">
-        {filterButtons.map((btn) => {
-          const btnPathname = btn.to.split('/').pop()
-
-          return (
-            <Button
-              asChild
-              key={btn.name}
-              variant="secondary"
-              size="sm"
-              className={
-                pathname.split('/').pop() === btnPathname
-                  ? 'bg-accent text-foreground'
-                  : 'bg-transparent text-muted-foreground'
-              }
-            >
-              {/* {btn.name} */}
+        )
+      }
+      tabs={
+        <PageTabs aria-label="Task views">
+          {filterButtons.map((btn) => (
+            <PageTab key={btn.name}>
               <Link to={btn.to} params={{ workspaceId }}>
                 {btn.name}
               </Link>
-            </Button>
-          )
-        })}
-      </div>
+            </PageTab>
+          ))}
+        </PageTabs>
+      }
+    >
       <Outlet />
-    </main>
+    </PageLayout>
   )
 }

@@ -11,12 +11,6 @@ function ChatsPage() {
   return (
     <section className="min-h-0 flex-1 overflow-y-auto" aria-label="Chats">
       <div className="mx-auto max-w-3xl px-4 py-8 sm:px-8 sm:py-10">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Your conversations
-        </h2>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          A place to talk with your workspace.
-        </p>
         <div className="flex flex-col items-center px-4 py-20 text-center">
           <div className="mb-4 rounded-full bg-muted p-3">
             <MessageSquare

@@ -10,6 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '#/components/ui/popover'
 import { Skeleton } from '#/components/ui/skeleton'
 import { LABEL_ITEMS, PRIORITY_ITEMS, STATUS_ITEMS } from '#/constants'
 import { useGetTasks } from '#/hooks/task.hook'
@@ -20,7 +25,13 @@ import type {
   TaskPriorityType,
   TaskStatusType,
 } from '#/type'
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export type TaskListSearch = {
@@ -80,23 +91,18 @@ export function parseTaskListSearch(
 
 function TaskListSkeleton() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="rounded-lg border bg-card p-4">
-          <div className="flex items-start justify-between gap-4">
-            <Skeleton className="h-5 w-2/5" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-8 w-8" />
-            </div>
+    <div aria-label="Loading tasks" role="status">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-3 border-b border-border/60 px-3 py-4"
+        >
+          <Skeleton className="size-4 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-2/5" />
+            <Skeleton className="h-3 w-24" />
           </div>
-          <Skeleton className="my-3 h-px w-full" />
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-20" />
-            <Skeleton className="h-5 w-24" />
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="ml-auto h-4 w-24" />
-          </div>
+          <Skeleton className="h-3 w-16" />
         </div>
       ))}
     </div>
@@ -120,6 +126,7 @@ function FilterSelect({
     <Select value={value ?? ALL_VALUE} onValueChange={onChange}>
       <SelectTrigger
         size="sm"
+        aria-label={placeholder}
         className={cn(
           'h-7 w-auto min-w-24 rounded-md border-transparent bg-transparent px-2 text-xs text-muted-foreground shadow-none hover:bg-muted hover:text-foreground',
           value && 'bg-muted text-foreground',
@@ -151,7 +158,7 @@ export default function TaskListView({
   // Keep the input responsive while the URL/query update waits for typing to pause.
   const [searchInput, setSearchInput] = useState(search.search ?? '')
 
-  const { data, isLoading, isFetching } = useGetTasks({
+  const { data, isLoading, isFetching, isError, refetch } = useGetTasks({
     filter,
     page: search.page,
     limit: search.limit,
@@ -202,43 +209,70 @@ export default function TaskListView({
     Boolean(search.priority) ||
     Boolean(search.label)
 
+  const activeFilterCount = [
+    search.status,
+    search.priority,
+    search.label,
+  ].filter(Boolean).length
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex flex-col gap-2 border-b pb-2 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex items-center justify-between gap-3 pb-2">
         {/* Search input */}
-        <div className="relative min-w-0 lg:w-72">
+        <div className="relative min-w-0 flex-1 sm:max-w-72">
           <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchInput}
             onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search..."
-            className="h-7 border-transparent bg-transparent pl-7 text-sm shadow-none hover:bg-muted focus-visible:bg-background"
+            placeholder="Search tasks"
+            aria-label="Search tasks"
+            className="h-9 border-transparent bg-transparent pl-7 text-sm shadow-none hover:bg-muted focus-visible:bg-background"
           />
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-1">
-          <FilterSelect
-            value={search.status}
-            placeholder="Status"
-            allLabel="Any status"
-            items={STATUS_ITEMS}
-            onChange={(value) => setFilterValue('status', value)}
-          />
-          <FilterSelect
-            value={search.priority}
-            placeholder="Priority"
-            allLabel="Any priority"
-            items={PRIORITY_ITEMS}
-            onChange={(value) => setFilterValue('priority', value)}
-          />
-          <FilterSelect
-            value={search.label}
-            placeholder="Label"
-            allLabel="Any label"
-            items={LABEL_ITEMS}
-            onChange={(value) => setFilterValue('label', value)}
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+              >
+                <SlidersHorizontal className="size-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="rounded bg-muted px-1.5 text-xs text-foreground">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-64 gap-3 p-4">
+              <p className="text-sm font-medium">Filter tasks</p>
+              {(
+                [
+                  { key: 'status', label: 'Status', items: STATUS_ITEMS },
+                  { key: 'priority', label: 'Priority', items: PRIORITY_ITEMS },
+                  { key: 'label', label: 'Label', items: LABEL_ITEMS },
+                ] as const
+              ).map(({ key, label, items }) => (
+                <div
+                  key={key}
+                  className="flex items-center justify-between gap-3"
+                >
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                  <FilterSelect
+                    value={search[key]}
+                    placeholder={label}
+                    allLabel={`Any ${key}`}
+                    items={items}
+                    onChange={(value) => setFilterValue(key, value)}
+                  />
+                </div>
+              ))}
+            </PopoverContent>
+          </Popover>
 
           {hasActiveFilters && (
             <Button
@@ -263,11 +297,23 @@ export default function TaskListView({
         </div>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <div
+          role="alert"
+          className="flex min-h-64 flex-col items-center justify-center gap-3 text-sm"
+        >
+          <p className="text-muted-foreground">Unable to load tasks.</p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Try again
+          </Button>
+        </div>
+      ) : isLoading ? (
         <TaskListSkeleton />
       ) : !data?.tasks.length ? (
-        <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-center">
-          <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+        <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center">
+          <p className="text-sm text-muted-foreground">
+            {hasActiveFilters ? 'No tasks match your filters.' : emptyMessage}
+          </p>
           {showCreateButton && can('task:create') && (
             <CreateTaskDialog
               isDialogOpen={createOpen}
@@ -281,14 +327,14 @@ export default function TaskListView({
           )}
         </div>
       ) : (
-        <div className="border-t">
+        <div aria-label="Tasks">
           {data.tasks.map((task) => (
             <TaskCard key={task.id} {...task} />
           ))}
         </div>
       )}
 
-      <div className="flex flex-col gap-3 border-t py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 py-3">
         {/* Limit button */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Show</span>
@@ -303,6 +349,7 @@ export default function TaskListView({
           >
             <SelectTrigger
               size="sm"
+              aria-label="Tasks per page"
               className="h-7 w-16 rounded-md border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-muted"
             >
               <SelectValue />
