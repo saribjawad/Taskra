@@ -17,6 +17,25 @@ export const getProjectById = async (id: string): Promise<Project> => {
   return result.rows[0];
 };
 
+export const getProjectsByWorkspaceId = async (
+  workspaceId: string,
+  limit: number,
+  offset: number,
+): Promise<Project[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM projects
+    WHERE workspace_id = $1
+    ORDER BY created_at DESC
+    LIMIT $2
+    OFFSET $3
+    `,
+    [workspaceId, limit, offset],
+  );
+
+  return result.rows;
+};
+
 export const createProject = async (payload: {
   name: string;
   short_summary?: string;

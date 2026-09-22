@@ -11,6 +11,18 @@ export const ProjectStatus = z.enum(
 export const UpdateProjectParamsSchema = z.object({
   projectId: z.uuid('Invalid project UUID'),
 });
+export const GetProjectParamsSchema = z.object({
+  workspaceId: z.uuid('Invalid workspace UUID'),
+});
+
+export const GetProjectsQuerySchema = z.object({
+  page: z.coerce
+    .number('Invalid number')
+    .positive('Should be a positive number.'),
+  limit: z.coerce
+    .number('Invalid number')
+    .positive('Should be a positive number'),
+});
 
 export const CreateProjectSchema = z.object({
   name: z

@@ -2,17 +2,23 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   CreateProjectSchema,
+  GetProjectParamsSchema,
+  GetProjectsQuerySchema,
   UpdateProjectParamsSchema,
   UpdateProjectSchema,
 } from '../schemas/projects.schema';
 import {
   createProject,
   getProjectById,
+  getProjectsByWorkspaceId,
   updateProject,
 } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
 import { findUserById } from '../services/user.service';
-import { getWorkspaceMember } from '../services/workspace.service';
+import {
+  getWorkspaceById,
+  getWorkspaceMember,
+} from '../services/workspace.service';
 
 export const CreateProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -96,4 +102,45 @@ export const UpdateProject = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Project updated'));
+};
+
+export const GetProjects = async (req: Request, res: Response) => {
+  const user = req.user;
+
+  const { limit, page } = GetProjectsQuerySchema.parse(req.query);
+  const { workspaceId } = GetProjectParamsSchema.parse(req.params);
+
+  const workspace = await getWorkspaceById(workspaceId);
+
+  if (!workspace) {
+    throw ApiError.notFound('Workspace not found');
+  }
+
+  // Check if user is member of the workspace
+  const isWorkspaceMember = await getWorkspaceMember(user.id, workspace.id);
+
+  if (!isWorkspaceMember) {
+    throw ApiError.forbidden('You do not have access to this workspace');
+  }
+
+  const offset = (page - 1) * limit;
+  const projects = await getProjectsByWorkspaceId(
+    workspace.id,
+    limit + 1,
+    offset,
+  );
+
+  const hasNextPage = projects.length > limit;
+
+  res.status(200).json(
+    new ApiResponse(200, 'Projects fetched', {
+      metadata: {
+        hasNextPage,
+        page,
+        limit,
+        offset,
+      },
+      projects: projects.slice(0, limit),
+    }),
+  );
 };
