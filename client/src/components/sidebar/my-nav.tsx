@@ -1,9 +1,16 @@
 import { useMatchRoute, useNavigate, useParams } from '@tanstack/react-router'
-import { SidebarGroup, SidebarMenu, SidebarMenuButton } from '../ui/sidebar'
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+} from '../ui/sidebar'
 
 function MyNav({
   items,
+  label,
 }: {
+  label?: string
   items: {
     title: string
     url: string
@@ -18,6 +25,7 @@ function MyNav({
 
   return (
     <SidebarGroup>
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuButton

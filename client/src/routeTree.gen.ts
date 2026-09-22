@@ -25,6 +25,7 @@ import { Route as AuthenticatedWorkspaceIdSettingsRouteRouteImport } from './rou
 import { Route as AuthenticatedWorkspaceIdAppRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/route'
 import { Route as AuthenticatedWorkspaceIdSettingsIndexRouteImport } from './routes/_authenticated/$workspaceId/settings/index'
 import { Route as AuthenticatedWorkspaceIdSettingsMembersRouteImport } from './routes/_authenticated/$workspaceId/settings/members'
+import { Route as AuthenticatedWorkspaceIdAppProjectsRouteImport } from './routes/_authenticated/$workspaceId/_app/projects'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/route'
 import { Route as AuthenticatedWorkspaceIdAppInboxRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/inbox/route'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksIndexRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/index'
@@ -120,6 +121,12 @@ const AuthenticatedWorkspaceIdSettingsMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedWorkspaceIdSettingsRouteRoute,
   } as any)
+const AuthenticatedWorkspaceIdAppProjectsRoute =
+  AuthenticatedWorkspaceIdAppProjectsRouteImport.update({
+    id: '/projects',
+    path: '/projects',
+    getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
+  } as any)
 const AuthenticatedWorkspaceIdAppMyTasksRouteRoute =
   AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport.update({
     id: '/my-tasks',
@@ -195,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/$workspaceId/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  '/$workspaceId/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -216,6 +224,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof PublicSignUpRoute
   '/verify-email': typeof PublicVerifyEmailRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdIndexRoute
+  '/$workspaceId/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/_authenticated/$workspaceId/_app/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/_authenticated/$workspaceId/_app/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  '/_authenticated/$workspaceId/_app/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/_authenticated/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/_authenticated/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/_authenticated/$workspaceId/_app/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/$workspaceId/'
     | '/$workspaceId/inbox'
     | '/$workspaceId/my-tasks'
+    | '/$workspaceId/projects'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings/'
     | '/$workspaceId/inbox/chats'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/$workspaceId'
+    | '/$workspaceId/projects'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings'
     | '/$workspaceId/inbox/chats'
@@ -321,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$workspaceId/'
     | '/_authenticated/$workspaceId/_app/inbox'
     | '/_authenticated/$workspaceId/_app/my-tasks'
+    | '/_authenticated/$workspaceId/_app/projects'
     | '/_authenticated/$workspaceId/settings/members'
     | '/_authenticated/$workspaceId/settings/'
     | '/_authenticated/$workspaceId/_app/inbox/chats'
@@ -452,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceIdSettingsMembersRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdSettingsRouteRoute
     }
+    '/_authenticated/$workspaceId/_app/projects': {
+      id: '/_authenticated/$workspaceId/_app/projects'
+      path: '/projects'
+      fullPath: '/$workspaceId/projects'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIdAppProjectsRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
+    }
     '/_authenticated/$workspaceId/_app/my-tasks': {
       id: '/_authenticated/$workspaceId/_app/my-tasks'
       path: '/my-tasks'
@@ -573,6 +593,7 @@ const AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren =
 interface AuthenticatedWorkspaceIdAppRouteRouteChildren {
   AuthenticatedWorkspaceIdAppInboxRouteRoute: typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   AuthenticatedWorkspaceIdAppMyTasksRouteRoute: typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  AuthenticatedWorkspaceIdAppProjectsRoute: typeof AuthenticatedWorkspaceIdAppProjectsRoute
   AuthenticatedWorkspaceIdAppTasksTaskIdRoute: typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
 }
 
@@ -582,6 +603,8 @@ const AuthenticatedWorkspaceIdAppRouteRouteChildren: AuthenticatedWorkspaceIdApp
       AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren,
     AuthenticatedWorkspaceIdAppMyTasksRouteRoute:
       AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren,
+    AuthenticatedWorkspaceIdAppProjectsRoute:
+      AuthenticatedWorkspaceIdAppProjectsRoute,
     AuthenticatedWorkspaceIdAppTasksTaskIdRoute:
       AuthenticatedWorkspaceIdAppTasksTaskIdRoute,
   }

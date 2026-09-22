@@ -7,7 +7,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { Inbox, CircleDotDashed } from 'lucide-react'
+import { Inbox, CircleDotDashed, FolderOpen } from 'lucide-react'
 import MyNav from './my-nav'
 import { SidebarHeaderMenu } from './sidebar-header-menu'
 
@@ -30,6 +30,13 @@ const data = {
       icon: <CircleDotDashed />,
     },
   ],
+  workspaceNav: [
+    {
+      title: 'Projects',
+      url: '/$workspaceId/projects',
+      icon: <FolderOpen />,
+    },
+  ],
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -40,6 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <MyNav items={data.myNav} />
+        <MyNav label="Workspace" items={data.workspaceNav} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
