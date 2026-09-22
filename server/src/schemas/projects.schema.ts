@@ -11,12 +11,13 @@ export const ProjectStatus = z.enum(
 export const UpdateProjectParamsSchema = z.object({
   projectId: z.uuid('Invalid project UUID'),
 });
-export const GetProjectParamsSchema = z.object({
+export const GetProjectsParamsSchema = z.object({
   workspaceId: z.uuid('Invalid workspace UUID'),
 });
 export const AddProjectMembersParamsSchema = z.object({
   projectId: z.uuid('Invalid project UUID'),
 });
+export const GetProjectParamsSchema = AddProjectMembersParamsSchema;
 
 export const GetProjectsQuerySchema = z.object({
   page: z.coerce

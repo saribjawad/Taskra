@@ -3,6 +3,7 @@ import {
   Project,
   ProjectPriorityType,
   ProjectStatusType,
+  ProjectWithLead,
 } from '../models/projects.model';
 
 export const getProjectByIdAndWorkspaceId = async (
@@ -15,6 +16,38 @@ export const getProjectByIdAndWorkspaceId = async (
     WHERE id = $1 AND workspace_id = $2
     `,
     [id, workspaceId],
+  );
+
+  return result.rows[0];
+};
+
+export const getProjectWithLeadDetails = async (
+  projectId: string,
+  workspaceId: string,
+): Promise<ProjectWithLead> => {
+  const result = await dbPool.query(
+    `
+       SELECT
+          p.id,
+          p.name,
+          p.short_summary,
+          p.description,
+          p.priority,
+          p.status,
+          p.workspace_id,
+          p.start_date,
+          p.target_date,
+          p.updated_at,
+          p.created_at,
+          json_build_object('id', u.id, 'username', u.username, 'email', u.email) AS lead
+      FROM
+          projects AS p
+          LEFT JOIN users AS u ON p.lead_id = u.id
+      WHERE
+          p.id = $1
+          AND p.workspace_id = $2;
+    `,
+    [projectId, workspaceId],
   );
 
   return result.rows[0];

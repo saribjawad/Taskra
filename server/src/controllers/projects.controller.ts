@@ -5,6 +5,7 @@ import {
   AddProjectMembersParamsSchema,
   CreateProjectSchema,
   GetProjectParamsSchema,
+  GetProjectsParamsSchema,
   GetProjectsQuerySchema,
   UpdateProjectParamsSchema,
   UpdateProjectSchema,
@@ -13,6 +14,7 @@ import {
   createProject,
   getProjectByIdAndWorkspaceId,
   getProjectsByWorkspaceId,
+  getProjectWithLeadDetails,
   updateProject,
 } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
@@ -21,7 +23,37 @@ import {
   getWorkspaceById,
   getWorkspaceMember,
 } from '../services/workspace.service';
-import { createProjectMember } from '../services/projectMembers';
+import {
+  createProjectMember,
+  getProjectMembers,
+} from '../services/projectMembers';
+
+export const GetProject = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { projectId } = GetProjectParamsSchema.parse(req.params);
+
+  // Check if project exists and is part of workspace
+  const project = await getProjectWithLeadDetails(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  // Get project members
+  const members = await getProjectMembers(project.id);
+
+  const data = {
+    ...project,
+    members,
+  };
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Project fetched successfully', data));
+};
 
 export const CreateProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -110,7 +142,7 @@ export const GetProjects = async (req: Request, res: Response) => {
   const user = req.user;
 
   const { limit, page } = GetProjectsQuerySchema.parse(req.query);
-  const { workspaceId } = GetProjectParamsSchema.parse(req.params);
+  const { workspaceId } = GetProjectsParamsSchema.parse(req.params);
 
   const workspace = await getWorkspaceById(workspaceId);
 

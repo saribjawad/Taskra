@@ -5,6 +5,14 @@ import { ProjectStatus } from '../schemas/projects.schema';
 export type ProjectPriorityType = z.infer<typeof Priority>;
 export type ProjectStatusType = z.infer<typeof ProjectStatus>;
 
+export type ProjectWithLead = Omit<Project, 'lead_id'> & {
+  lead: {
+    id: string;
+    username: string;
+    email: string;
+  } | null;
+};
+
 export interface Project {
   id: string;
   name: string;

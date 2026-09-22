@@ -18,6 +18,7 @@ import {
   VerifyWorkspaceInvitation,
 } from '../controllers/workspace.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import { GetProjects } from '../controllers/projects.controller';
 
 const workspaceRouter = Router();
 
@@ -74,5 +75,6 @@ workspaceRouter.post(
   RequiredRoles(['owner', 'admin']),
   asyncHandler(ResendWorkspaceInvite),
 );
+workspaceRouter.route('/:workspaceId/projects').get(asyncHandler(GetProjects));
 
 export default workspaceRouter;

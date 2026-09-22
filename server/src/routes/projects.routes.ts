@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import {
   AddProjectMembers,
   CreateProject,
+  GetProject,
   GetProjects,
 } from '../controllers/projects.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
@@ -12,7 +13,7 @@ projectsRouter.use(AuthMiddleware);
 
 projectsRouter.route('/').post(asyncHandler(CreateProject));
 
-projectsRouter.route('/:workspaceId').get(asyncHandler(GetProjects));
+projectsRouter.route('/:projectId').get(asyncHandler(GetProject));
 
 projectsRouter
   .route('/:projectId/members')
