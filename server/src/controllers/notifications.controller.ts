@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
-import { getNotificationsByUserId } from '../services/notifications.service';
+import { getNotificationsByUserAndWorkspaceId } from '../services/notifications.service';
 import { NotificationIdParamsSchema } from '../schemas/notifications.schema';
 
 export const GetUserNotifications = async (req: Request, res: Response) => {
@@ -9,8 +9,9 @@ export const GetUserNotifications = async (req: Request, res: Response) => {
   const user = req.user;
   const { cursorTime, cursorId } = req.query;
 
-  const notifications = await getNotificationsByUserId(
+  const notifications = await getNotificationsByUserAndWorkspaceId(
     user.id,
+    user.activeWorkspace,
     cursorTime as string,
     cursorId as string,
     LIMIT + 1,

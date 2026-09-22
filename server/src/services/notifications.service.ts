@@ -37,10 +37,16 @@ export async function createNotification(
  * Get notifications by userId
  *
  * @param userId - User uuid
+ * @param workspace - Workspace uuid
+ * @param cursorTime - Created at of last fetched notification
+ * @param cursorId - Last fetched notification UUID
+ * @param limit - Number of limit to fetch
+ *
  * @returns Array of notifications
  */
-export async function getNotificationsByUserId(
+export async function getNotificationsByUserAndWorkspaceId(
   userId: string,
+  workspaceId: string,
   cursorTime: string | undefined,
   cursorId: string | undefined,
   limit: number,
@@ -48,15 +54,15 @@ export async function getNotificationsByUserId(
   const result = await dbPool.query(
     `
     SELECT * FROM notifications
-    WHERE user_id = $1
+    WHERE user_id = $1 AND workspace_id = $2
     AND (
-          $2::timestamptz IS NULL 
-          OR (created_at, id) < ($2::timestamptz, $3::uuid)
+          $3::timestamptz IS NULL 
+          OR (created_at, id) < ($3::timestamptz, $4::uuid)
         )
     ORDER BY created_at DESC, id DESC
-    LIMIT $4;
+    LIMIT $5;
     `,
-    [userId, cursorTime ?? null, cursorId ?? null, limit],
+    [userId, workspaceId, cursorTime ?? null, cursorId ?? null, limit],
   );
 
   return result.rows;
