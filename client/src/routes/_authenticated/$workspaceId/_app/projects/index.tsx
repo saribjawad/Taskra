@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { ChevronLeft, ChevronRight, FolderOpen, Plus } from 'lucide-react'
 import CreateProjectDialog from '#/components/projects/CreateProjectDialog'
 import { PageLayout } from '#/components/layout/PageLayout'
@@ -15,20 +15,16 @@ import {
 import { useGetProjects } from '#/hooks/project.hooks'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { PRIORITY_ITEMS } from '#/constants'
-import type { ProjectStatus } from '#/type/project'
+import {
+  projectStatuses as statuses,
+  formatProjectDate as formatDate,
+} from '#/components/projects/project-presentation'
 import { cn } from '#/lib/utils'
 
 const pageSizes = [10, 20, 50]
-const statuses: Record<ProjectStatus, { label: string; color: string }> = {
-  backlog: { label: 'Backlog', color: 'bg-muted-foreground/50' },
-  planned: { label: 'Planned', color: 'bg-blue-500' },
-  in_progress: { label: 'In progress', color: 'bg-amber-500' },
-  completed: { label: 'Completed', color: 'bg-emerald-500' },
-  cancelled: { label: 'Cancelled', color: 'bg-muted-foreground/50' },
-}
 
 export const Route = createFileRoute(
-  '/_authenticated/$workspaceId/_app/projects',
+  '/_authenticated/$workspaceId/_app/projects/',
 )({
   validateSearch: (search: Record<string, unknown>) => ({
     page:
@@ -39,18 +35,6 @@ export const Route = createFileRoute(
   }),
   component: ProjectsPage,
 })
-
-function formatDate(value: string | null) {
-  if (!value) return 'Not set'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? 'Not set'
-    : date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-}
 
 function ProjectsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -158,7 +142,14 @@ function ProjectsPage() {
               <li key={project.id} className="py-5 sm:px-2">
                 <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
                   <h2 className="min-w-0 wrap-break-word text-sm font-medium">
-                    {project.name}
+                    <Link
+                      to="/$workspaceId/projects/$projectId"
+                      search={{ view: 'overview' }}
+                      params={{ workspaceId, projectId: project.id }}
+                      className="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
+                    >
+                      {project.name}
+                    </Link>
                   </h2>
                   <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
                     <span

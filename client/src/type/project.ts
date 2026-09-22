@@ -21,3 +21,20 @@ export interface Project {
   created_at: string
   updated_at: string
 }
+
+export interface ProjectPerson {
+  id: string | null
+  username: string | null
+  email: string | null
+}
+
+export interface ProjectDetail extends Omit<Project, 'lead_id'> {
+  lead: ProjectPerson | null
+  members: {
+    id: string
+    project_id: string
+    user: ProjectPerson | null
+    created_at: string
+    updated_at: string
+  }[]
+}

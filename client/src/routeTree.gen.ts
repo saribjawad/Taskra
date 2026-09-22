@@ -25,12 +25,13 @@ import { Route as AuthenticatedWorkspaceIdSettingsRouteRouteImport } from './rou
 import { Route as AuthenticatedWorkspaceIdAppRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/route'
 import { Route as AuthenticatedWorkspaceIdSettingsIndexRouteImport } from './routes/_authenticated/$workspaceId/settings/index'
 import { Route as AuthenticatedWorkspaceIdSettingsMembersRouteImport } from './routes/_authenticated/$workspaceId/settings/members'
-import { Route as AuthenticatedWorkspaceIdAppProjectsRouteImport } from './routes/_authenticated/$workspaceId/_app/projects'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/route'
 import { Route as AuthenticatedWorkspaceIdAppInboxRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/inbox/route'
+import { Route as AuthenticatedWorkspaceIdAppProjectsIndexRouteImport } from './routes/_authenticated/$workspaceId/_app/projects/index'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksIndexRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/index'
 import { Route as AuthenticatedWorkspaceIdAppInboxIndexRouteImport } from './routes/_authenticated/$workspaceId/_app/inbox/index'
 import { Route as AuthenticatedWorkspaceIdAppTasksTaskIdRouteImport } from './routes/_authenticated/$workspaceId/_app/tasks/$taskId'
+import { Route as AuthenticatedWorkspaceIdAppProjectsProjectIdRouteImport } from './routes/_authenticated/$workspaceId/_app/projects/$projectId'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksCreatedRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/created'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksAssignedRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/assigned'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksAllRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/all'
@@ -121,12 +122,6 @@ const AuthenticatedWorkspaceIdSettingsMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedWorkspaceIdSettingsRouteRoute,
   } as any)
-const AuthenticatedWorkspaceIdAppProjectsRoute =
-  AuthenticatedWorkspaceIdAppProjectsRouteImport.update({
-    id: '/projects',
-    path: '/projects',
-    getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
-  } as any)
 const AuthenticatedWorkspaceIdAppMyTasksRouteRoute =
   AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport.update({
     id: '/my-tasks',
@@ -137,6 +132,12 @@ const AuthenticatedWorkspaceIdAppInboxRouteRoute =
   AuthenticatedWorkspaceIdAppInboxRouteRouteImport.update({
     id: '/inbox',
     path: '/inbox',
+    getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
+  } as any)
+const AuthenticatedWorkspaceIdAppProjectsIndexRoute =
+  AuthenticatedWorkspaceIdAppProjectsIndexRouteImport.update({
+    id: '/projects/',
+    path: '/projects/',
     getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
   } as any)
 const AuthenticatedWorkspaceIdAppMyTasksIndexRoute =
@@ -155,6 +156,12 @@ const AuthenticatedWorkspaceIdAppTasksTaskIdRoute =
   AuthenticatedWorkspaceIdAppTasksTaskIdRouteImport.update({
     id: '/tasks/$taskId',
     path: '/tasks/$taskId',
+    getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
+  } as any)
+const AuthenticatedWorkspaceIdAppProjectsProjectIdRoute =
+  AuthenticatedWorkspaceIdAppProjectsProjectIdRouteImport.update({
+    id: '/projects/$projectId',
+    path: '/projects/$projectId',
     getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
   } as any)
 const AuthenticatedWorkspaceIdAppMyTasksCreatedRoute =
@@ -202,7 +209,6 @@ export interface FileRoutesByFullPath {
   '/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/$workspaceId/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
-  '/$workspaceId/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -210,9 +216,11 @@ export interface FileRoutesByFullPath {
   '/$workspaceId/my-tasks/all': typeof AuthenticatedWorkspaceIdAppMyTasksAllRoute
   '/$workspaceId/my-tasks/assigned': typeof AuthenticatedWorkspaceIdAppMyTasksAssignedRoute
   '/$workspaceId/my-tasks/created': typeof AuthenticatedWorkspaceIdAppMyTasksCreatedRoute
+  '/$workspaceId/projects/$projectId': typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRoute
   '/$workspaceId/tasks/$taskId': typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
   '/$workspaceId/inbox/': typeof AuthenticatedWorkspaceIdAppInboxIndexRoute
   '/$workspaceId/my-tasks/': typeof AuthenticatedWorkspaceIdAppMyTasksIndexRoute
+  '/$workspaceId/projects/': typeof AuthenticatedWorkspaceIdAppProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
@@ -224,7 +232,6 @@ export interface FileRoutesByTo {
   '/sign-up': typeof PublicSignUpRoute
   '/verify-email': typeof PublicVerifyEmailRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdIndexRoute
-  '/$workspaceId/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -232,9 +239,11 @@ export interface FileRoutesByTo {
   '/$workspaceId/my-tasks/all': typeof AuthenticatedWorkspaceIdAppMyTasksAllRoute
   '/$workspaceId/my-tasks/assigned': typeof AuthenticatedWorkspaceIdAppMyTasksAssignedRoute
   '/$workspaceId/my-tasks/created': typeof AuthenticatedWorkspaceIdAppMyTasksCreatedRoute
+  '/$workspaceId/projects/$projectId': typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRoute
   '/$workspaceId/tasks/$taskId': typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
   '/$workspaceId/inbox': typeof AuthenticatedWorkspaceIdAppInboxIndexRoute
   '/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksIndexRoute
+  '/$workspaceId/projects': typeof AuthenticatedWorkspaceIdAppProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -254,7 +263,6 @@ export interface FileRoutesById {
   '/_authenticated/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/_authenticated/$workspaceId/_app/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/_authenticated/$workspaceId/_app/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
-  '/_authenticated/$workspaceId/_app/projects': typeof AuthenticatedWorkspaceIdAppProjectsRoute
   '/_authenticated/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/_authenticated/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/_authenticated/$workspaceId/_app/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -262,9 +270,11 @@ export interface FileRoutesById {
   '/_authenticated/$workspaceId/_app/my-tasks/all': typeof AuthenticatedWorkspaceIdAppMyTasksAllRoute
   '/_authenticated/$workspaceId/_app/my-tasks/assigned': typeof AuthenticatedWorkspaceIdAppMyTasksAssignedRoute
   '/_authenticated/$workspaceId/_app/my-tasks/created': typeof AuthenticatedWorkspaceIdAppMyTasksCreatedRoute
+  '/_authenticated/$workspaceId/_app/projects/$projectId': typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRoute
   '/_authenticated/$workspaceId/_app/tasks/$taskId': typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
   '/_authenticated/$workspaceId/_app/inbox/': typeof AuthenticatedWorkspaceIdAppInboxIndexRoute
   '/_authenticated/$workspaceId/_app/my-tasks/': typeof AuthenticatedWorkspaceIdAppMyTasksIndexRoute
+  '/_authenticated/$workspaceId/_app/projects/': typeof AuthenticatedWorkspaceIdAppProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -282,7 +292,6 @@ export interface FileRouteTypes {
     | '/$workspaceId/'
     | '/$workspaceId/inbox'
     | '/$workspaceId/my-tasks'
-    | '/$workspaceId/projects'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings/'
     | '/$workspaceId/inbox/chats'
@@ -290,9 +299,11 @@ export interface FileRouteTypes {
     | '/$workspaceId/my-tasks/all'
     | '/$workspaceId/my-tasks/assigned'
     | '/$workspaceId/my-tasks/created'
+    | '/$workspaceId/projects/$projectId'
     | '/$workspaceId/tasks/$taskId'
     | '/$workspaceId/inbox/'
     | '/$workspaceId/my-tasks/'
+    | '/$workspaceId/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -304,7 +315,6 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/$workspaceId'
-    | '/$workspaceId/projects'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings'
     | '/$workspaceId/inbox/chats'
@@ -312,9 +322,11 @@ export interface FileRouteTypes {
     | '/$workspaceId/my-tasks/all'
     | '/$workspaceId/my-tasks/assigned'
     | '/$workspaceId/my-tasks/created'
+    | '/$workspaceId/projects/$projectId'
     | '/$workspaceId/tasks/$taskId'
     | '/$workspaceId/inbox'
     | '/$workspaceId/my-tasks'
+    | '/$workspaceId/projects'
   id:
     | '__root__'
     | '/_authenticated'
@@ -333,7 +345,6 @@ export interface FileRouteTypes {
     | '/_authenticated/$workspaceId/'
     | '/_authenticated/$workspaceId/_app/inbox'
     | '/_authenticated/$workspaceId/_app/my-tasks'
-    | '/_authenticated/$workspaceId/_app/projects'
     | '/_authenticated/$workspaceId/settings/members'
     | '/_authenticated/$workspaceId/settings/'
     | '/_authenticated/$workspaceId/_app/inbox/chats'
@@ -341,9 +352,11 @@ export interface FileRouteTypes {
     | '/_authenticated/$workspaceId/_app/my-tasks/all'
     | '/_authenticated/$workspaceId/_app/my-tasks/assigned'
     | '/_authenticated/$workspaceId/_app/my-tasks/created'
+    | '/_authenticated/$workspaceId/_app/projects/$projectId'
     | '/_authenticated/$workspaceId/_app/tasks/$taskId'
     | '/_authenticated/$workspaceId/_app/inbox/'
     | '/_authenticated/$workspaceId/_app/my-tasks/'
+    | '/_authenticated/$workspaceId/_app/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -465,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceIdSettingsMembersRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdSettingsRouteRoute
     }
-    '/_authenticated/$workspaceId/_app/projects': {
-      id: '/_authenticated/$workspaceId/_app/projects'
-      path: '/projects'
-      fullPath: '/$workspaceId/projects'
-      preLoaderRoute: typeof AuthenticatedWorkspaceIdAppProjectsRouteImport
-      parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
-    }
     '/_authenticated/$workspaceId/_app/my-tasks': {
       id: '/_authenticated/$workspaceId/_app/my-tasks'
       path: '/my-tasks'
@@ -484,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/$workspaceId/inbox'
       preLoaderRoute: typeof AuthenticatedWorkspaceIdAppInboxRouteRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
+    }
+    '/_authenticated/$workspaceId/_app/projects/': {
+      id: '/_authenticated/$workspaceId/_app/projects/'
+      path: '/projects'
+      fullPath: '/$workspaceId/projects/'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIdAppProjectsIndexRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
     }
     '/_authenticated/$workspaceId/_app/my-tasks/': {
@@ -505,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks/$taskId'
       fullPath: '/$workspaceId/tasks/$taskId'
       preLoaderRoute: typeof AuthenticatedWorkspaceIdAppTasksTaskIdRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
+    }
+    '/_authenticated/$workspaceId/_app/projects/$projectId': {
+      id: '/_authenticated/$workspaceId/_app/projects/$projectId'
+      path: '/projects/$projectId'
+      fullPath: '/$workspaceId/projects/$projectId'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
     }
     '/_authenticated/$workspaceId/_app/my-tasks/created': {
@@ -593,8 +613,9 @@ const AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren =
 interface AuthenticatedWorkspaceIdAppRouteRouteChildren {
   AuthenticatedWorkspaceIdAppInboxRouteRoute: typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   AuthenticatedWorkspaceIdAppMyTasksRouteRoute: typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
-  AuthenticatedWorkspaceIdAppProjectsRoute: typeof AuthenticatedWorkspaceIdAppProjectsRoute
+  AuthenticatedWorkspaceIdAppProjectsProjectIdRoute: typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRoute
   AuthenticatedWorkspaceIdAppTasksTaskIdRoute: typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
+  AuthenticatedWorkspaceIdAppProjectsIndexRoute: typeof AuthenticatedWorkspaceIdAppProjectsIndexRoute
 }
 
 const AuthenticatedWorkspaceIdAppRouteRouteChildren: AuthenticatedWorkspaceIdAppRouteRouteChildren =
@@ -603,10 +624,12 @@ const AuthenticatedWorkspaceIdAppRouteRouteChildren: AuthenticatedWorkspaceIdApp
       AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren,
     AuthenticatedWorkspaceIdAppMyTasksRouteRoute:
       AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren,
-    AuthenticatedWorkspaceIdAppProjectsRoute:
-      AuthenticatedWorkspaceIdAppProjectsRoute,
+    AuthenticatedWorkspaceIdAppProjectsProjectIdRoute:
+      AuthenticatedWorkspaceIdAppProjectsProjectIdRoute,
     AuthenticatedWorkspaceIdAppTasksTaskIdRoute:
       AuthenticatedWorkspaceIdAppTasksTaskIdRoute,
+    AuthenticatedWorkspaceIdAppProjectsIndexRoute:
+      AuthenticatedWorkspaceIdAppProjectsIndexRoute,
   }
 
 const AuthenticatedWorkspaceIdAppRouteRouteWithChildren =

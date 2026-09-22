@@ -1,5 +1,10 @@
+import { useAuth } from '#/context/auth/auth-hook'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createProject, getProjects } from '#/service/project.service'
+import {
+  createProject,
+  getProject,
+  getProjects,
+} from '#/service/project.service'
 
 export function useGetProjects(
   workspaceId: string,
@@ -22,5 +27,15 @@ export function useCreateProject(workspaceId: string) {
         queryKey: ['projects', workspaceId],
       })
     },
+  })
+}
+
+export function useGetProject(workspaceId: string, projectId: string) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['project', workspaceId, projectId],
+    queryFn: () => getProject(projectId),
+    // The detail endpoint selects its workspace from the session.
+    enabled: Boolean(projectId) && workspaceId === user?.activeWorkspace,
   })
 }
