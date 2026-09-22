@@ -11,7 +11,7 @@ export default function ProjectOverview({
     <div className="space-y-10">
       {/* Summary and description */}
       {project.short_summary && (
-        <p className="max-w-prose break-words text-sm leading-7 text-muted-foreground">
+        <p className="max-w-prose wrap-break-word text-sm leading-7 text-muted-foreground">
           {project.short_summary}
         </p>
       )}
