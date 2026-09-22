@@ -5,13 +5,16 @@ import {
   ProjectStatusType,
 } from '../models/projects.model';
 
-export const getProjectById = async (id: string): Promise<Project> => {
+export const getProjectByIdAndWorkspaceId = async (
+  id: string,
+  workspaceId: string,
+): Promise<Project> => {
   const result = await dbPool.query(
     `
     SELECT * FROM projects
-    WHERE id = $1
+    WHERE id = $1 AND workspace_id = $2
     `,
-    [id],
+    [id, workspaceId],
   );
 
   return result.rows[0];

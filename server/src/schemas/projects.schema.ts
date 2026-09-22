@@ -14,6 +14,9 @@ export const UpdateProjectParamsSchema = z.object({
 export const GetProjectParamsSchema = z.object({
   workspaceId: z.uuid('Invalid workspace UUID'),
 });
+export const AddProjectMembersParamsSchema = z.object({
+  projectId: z.uuid('Invalid project UUID'),
+});
 
 export const GetProjectsQuerySchema = z.object({
   page: z.coerce
@@ -57,4 +60,10 @@ export const UpdateProjectSchema = z.object({
   leadId: z.uuid('Invalid lead UUID').optional(),
   startDate: z.coerce.date().optional(),
   targetDate: z.coerce.date().optional(),
+});
+
+export const AddProjectMembersBodySchema = z.object({
+  memberIds: z
+    .array(z.uuid('Invalid member UUID'))
+    .min(1, 'At least one member is required'),
 });

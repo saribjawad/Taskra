@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
+  AddProjectMembersBodySchema,
+  AddProjectMembersParamsSchema,
   CreateProjectSchema,
   GetProjectParamsSchema,
   GetProjectsQuerySchema,
@@ -9,7 +11,7 @@ import {
 } from '../schemas/projects.schema';
 import {
   createProject,
-  getProjectById,
+  getProjectByIdAndWorkspaceId,
   getProjectsByWorkspaceId,
   updateProject,
 } from '../services/projects.service';
@@ -19,6 +21,7 @@ import {
   getWorkspaceById,
   getWorkspaceMember,
 } from '../services/workspace.service';
+import { createProjectMember } from '../services/projectMembers';
 
 export const CreateProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -67,14 +70,13 @@ export const UpdateProject = async (req: Request, res: Response) => {
   const { projectId } = UpdateProjectParamsSchema.parse(req.params);
   const parsedBody = UpdateProjectSchema.parse(req.body);
 
-  const project = await getProjectById(projectId);
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
 
   if (!project) {
     throw ApiError.notFound('Project not found');
-  }
-
-  if (project.workspace_id !== user.activeWorkspace) {
-    throw ApiError.forbidden('You do not have access to this project');
   }
 
   let leadUser;
@@ -143,4 +145,50 @@ export const GetProjects = async (req: Request, res: Response) => {
       projects: projects.slice(0, limit),
     }),
   );
+};
+
+export const AddProjectMembers = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { projectId } = AddProjectMembersParamsSchema.parse(req.params);
+
+  const { memberIds } = AddProjectMembersBodySchema.parse(req.body);
+
+  // Check if project exists
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const result = {
+    added: [] as string[],
+    failed: [] as string[],
+  };
+
+  // Check if members belong the workspace
+  for (const memberId of memberIds) {
+    const workspaceMember = await getWorkspaceMember(
+      memberId,
+      user.activeWorkspace,
+    );
+
+    if (!workspaceMember) {
+      result.failed.push(memberId);
+      continue;
+    }
+
+    const projectMember = await createProjectMember(memberId, project.id);
+
+    if (!projectMember) {
+      throw ApiError.internal(
+        'Something went wrong while creating project member',
+      );
+    }
+    result.added.push(memberId);
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Members added', result));
 };
