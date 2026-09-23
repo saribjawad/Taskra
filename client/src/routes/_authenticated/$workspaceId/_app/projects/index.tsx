@@ -139,44 +139,42 @@ function ProjectsPage() {
               (item) => item.value === project.priority,
             )?.label
             return (
-              <li key={project.id} className="py-5 sm:px-2">
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-                  <h2 className="min-w-0 wrap-break-word text-sm font-medium">
-                    <Link
-                      to="/$workspaceId/projects/$projectId"
-                      search={{ view: 'overview' }}
-                      params={{ workspaceId, projectId: project.id }}
-                      className="rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-ring"
-                    >
+              <li key={project.id}>
+                <Link
+                  to="/$workspaceId/projects/$projectId"
+                  search={{ view: 'overview' }}
+                  params={{ workspaceId, projectId: project.id }}
+                  className="block rounded-sm px-2 py-3 transition-colors hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-ring sm:px-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+                    <h2 className="min-w-0 wrap-break-word text-sm font-medium">
                       {project.name}
-                    </Link>
-                  </h2>
-                  <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                    <span
-                      aria-hidden="true"
-                      className={cn('size-1.5 rounded-full', status.color)}
-                    />
-                    {status.label}
-                  </span>
-                </div>
-                {project.short_summary && (
-                  <p className="mt-1.5 max-w-prose wrap-break-word text-sm leading-6 text-muted-foreground">
-                    {project.short_summary}
-                  </p>
-                )}
-                <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 text-xs sm:grid-cols-4">
-                  {[
-                    ['Lead', lead],
-                    ['Priority', priority],
-                    ['Start date', formatDate(project.start_date)],
-                    ['Target date', formatDate(project.target_date)],
-                  ].map(([label, value]) => (
-                    <div key={label} className="min-w-0">
-                      <dt className="text-muted-foreground">{label}</dt>
-                      <dd className="mt-1 wrap-break-words">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
+                    </h2>
+                    <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                      <span
+                        aria-hidden="true"
+                        className={cn('size-1.5 rounded-full', status.color)}
+                      />
+                      {status.label}
+                    </span>
+                  </div>
+                  <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-4">
+                    {[
+                      ['Lead', lead],
+                      ['Priority', priority],
+                      ['Start date', formatDate(project.start_date)],
+                      ['Target date', formatDate(project.target_date)],
+                    ].map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="flex min-w-0 flex-wrap gap-x-1.5"
+                      >
+                        <dt className="text-muted-foreground">{label}</dt>
+                        <dd className="wrap-break-words">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Link>
               </li>
             )
           })}
