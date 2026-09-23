@@ -17,6 +17,7 @@ export const GetProjectsParamsSchema = z.object({
 export const AddProjectMembersParamsSchema = z.object({
   projectId: z.uuid('Invalid project UUID'),
 });
+export const RemoveProjectMembersParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectParamsSchema = AddProjectMembersParamsSchema;
 
 export const GetProjectsQuerySchema = z.object({
@@ -66,5 +67,11 @@ export const UpdateProjectSchema = z.object({
 export const AddProjectMembersBodySchema = z.object({
   memberIds: z
     .array(z.uuid('Invalid member UUID'))
-    .min(1, 'At least one member is required'),
+    .min(1, 'At least one member UUID is required'),
+});
+
+export const RemoveProjectMembersBodySchema = z.object({
+  memberIds: z
+    .array(z.uuid('Invalid member UUID'))
+    .min(1, 'At least one member UUID is required'),
 });

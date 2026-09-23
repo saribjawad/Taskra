@@ -43,3 +43,37 @@ export async function getProject(projectId: string): Promise<ProjectDetail> {
   const response = await api.get(`/projects/${projectId}`)
   return response.data.data
 }
+
+export async function addProjectMembers(projectId: string, userIds: string[]) {
+  const response = await api.post(`/projects/${projectId}/members`, {
+    memberIds: userIds,
+  })
+  const result = response.data.data as { added: string[]; failed: string[] }
+  if (
+    !userIds.every((id) => result.added.includes(id)) ||
+    result.failed.length
+  ) {
+    throw new Error(
+      'Some members could not be added. Refresh the list and try again.',
+    )
+  }
+}
+
+export async function removeProjectMembers(
+  projectId: string,
+  membershipIds: string[],
+) {
+  // Removal expects the project_members row ID, not the user's ID.
+  const response = await api.delete(`/projects/${projectId}/members`, {
+    data: { memberIds: membershipIds },
+  })
+  const result = response.data.data as { removed: string[]; failed: string[] }
+  if (
+    !membershipIds.every((id) => result.removed.includes(id)) ||
+    result.failed.length
+  ) {
+    throw new Error(
+      'Some members could not be removed. Refresh the list and try again.',
+    )
+  }
+}

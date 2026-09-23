@@ -7,6 +7,8 @@ import {
   GetProjectParamsSchema,
   GetProjectsParamsSchema,
   GetProjectsQuerySchema,
+  RemoveProjectMembersBodySchema,
+  RemoveProjectMembersParamsSchema,
   UpdateProjectParamsSchema,
   UpdateProjectSchema,
 } from '../schemas/projects.schema';
@@ -25,7 +27,9 @@ import {
 } from '../services/workspace.service';
 import {
   createProjectMember,
-  getProjectMembers,
+  deleteProjectMember,
+  getProjectMemberByIdAndProjectId,
+  getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
 
 export const GetProject = async (req: Request, res: Response) => {
@@ -43,7 +47,7 @@ export const GetProject = async (req: Request, res: Response) => {
   }
 
   // Get project members
-  const members = await getProjectMembers(project.id);
+  const members = await getProjectMembersWithUserDetail(project.id);
 
   const data = {
     ...project,
@@ -223,4 +227,49 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Members added', result));
+};
+
+export const RemoveProjectMembers = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { projectId } = RemoveProjectMembersParamsSchema.parse(req.params);
+  const { memberIds } = RemoveProjectMembersBodySchema.parse(req.body);
+
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const result = {
+    removed: [] as string[],
+    failed: [] as string[],
+  };
+
+  for (const memberId of memberIds) {
+    // Check if project member exists
+    const projectMember = await getProjectMemberByIdAndProjectId(
+      memberId,
+      project.id,
+    );
+
+    if (!projectMember) {
+      result.failed.push(memberId);
+      continue;
+    }
+    console.log(memberId);
+
+    const rowsCount = await deleteProjectMember(memberId, project.id);
+
+    if (!rowsCount || rowsCount <= 0) {
+      throw ApiError.internal(
+        'Something went wrong while deleting project member',
+      );
+    }
+    result.removed.push(memberId);
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Members removed', result));
 };

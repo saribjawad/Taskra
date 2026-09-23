@@ -21,7 +21,34 @@ export const createProjectMember = async (
   return results.rows[0];
 };
 
-export const getProjectMembers = async (
+export const deleteProjectMember = async (id: string, projectId: string) => {
+  const results = await dbPool.query(
+    `
+    DELETE FROM project_members 
+    WHERE id = $1 AND project_id = $2
+    `,
+    [id, projectId],
+  );
+
+  return results.rowCount;
+};
+
+export const getProjectMemberByIdAndProjectId = async (
+  id: string,
+  projectId: string,
+): Promise<ProjectMember> => {
+  const results = await dbPool.query(
+    `
+    SELECT * FROM project_members
+    WHERE id = $1 AND project_id = $2
+    `,
+    [id, projectId],
+  );
+
+  return results.rows[0];
+};
+
+export const getProjectMembersWithUserDetail = async (
   projectId: string,
 ): Promise<ProjectMemberWithUser[]> => {
   const results = await dbPool.query(

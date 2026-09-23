@@ -4,7 +4,7 @@ import {
   AddProjectMembers,
   CreateProject,
   GetProject,
-  GetProjects,
+  RemoveProjectMembers,
 } from '../controllers/projects.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 
@@ -17,6 +17,7 @@ projectsRouter.route('/:projectId').get(asyncHandler(GetProject));
 
 projectsRouter
   .route('/:projectId/members')
-  .post(asyncHandler(AddProjectMembers));
+  .post(asyncHandler(AddProjectMembers))
+  .delete(asyncHandler(RemoveProjectMembers));
 
 export default projectsRouter;

@@ -1,4 +1,5 @@
-import { CalendarDays, Flag, UserRound, Users } from 'lucide-react'
+import ProjectMemberPicker from './ProjectMemberPicker'
+import { CalendarDays, Flag, UserRound } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { ProjectDetail } from '#/type/project'
 import { PRIORITY_ITEMS } from '#/constants'
@@ -54,26 +55,7 @@ export default function ProjectProperties({
           </span>
         </Property>
         <Property label="Members">
-          {project.members.length ? (
-            <ul className="space-y-2">
-              {project.members.map((member) => (
-                <li key={member.id} className="flex items-start gap-2">
-                  <span
-                    aria-hidden="true"
-                    className="flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px]"
-                  >
-                    {member.user?.username?.slice(0, 1).toUpperCase() || '?'}
-                  </span>
-                  {member.user?.username || 'Unknown member'}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <span className="flex items-center gap-2 text-muted-foreground">
-              <Users className="size-3.5" />
-              No members
-            </span>
-          )}
+          <ProjectMemberPicker project={project} />
         </Property>
         {/* Project timeline */}
         <Property label="Start date">
