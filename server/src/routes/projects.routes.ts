@@ -5,6 +5,7 @@ import {
   CreateProject,
   GetProject,
   RemoveProjectMembers,
+  UpdateProject,
 } from '../controllers/projects.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 
@@ -13,7 +14,10 @@ projectsRouter.use(AuthMiddleware);
 
 projectsRouter.route('/').post(asyncHandler(CreateProject));
 
-projectsRouter.route('/:projectId').get(asyncHandler(GetProject));
+projectsRouter
+  .route('/:projectId')
+  .get(asyncHandler(GetProject))
+  .patch(asyncHandler(UpdateProject));
 
 projectsRouter
   .route('/:projectId/members')

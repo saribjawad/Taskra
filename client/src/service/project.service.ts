@@ -44,6 +44,21 @@ export async function getProject(projectId: string): Promise<ProjectDetail> {
   return response.data.data
 }
 
+export type UpdateProjectPayload = Partial<
+  Pick<Project, 'status' | 'priority'> & {
+    leadId: string
+    startDate: string
+    targetDate: string
+  }
+>
+
+export async function updateProject(
+  projectId: string,
+  payload: UpdateProjectPayload,
+): Promise<void> {
+  await api.patch(`/projects/${projectId}`, payload)
+}
+
 export async function addProjectMembers(projectId: string, userIds: string[]) {
   const response = await api.post(`/projects/${projectId}/members`, {
     memberIds: userIds,

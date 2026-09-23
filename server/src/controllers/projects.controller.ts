@@ -118,22 +118,37 @@ export const UpdateProject = async (req: Request, res: Response) => {
   let leadUser;
   if (parsedBody.leadId) {
     leadUser = await findUserById(parsedBody.leadId);
+
+    if (!leadUser) {
+      throw ApiError.notFound('Lead user not found');
+    }
+
+    const isLeadUserMember = await getWorkspaceMember(
+      leadUser.id,
+      user.activeWorkspace,
+    );
+
+    if (!isLeadUserMember) {
+      throw ApiError.forbidden('Lead is not member of this workspace');
+    }
   }
 
-  if (!leadUser) {
-    throw ApiError.notFound('Lead user not found');
-  }
-
-  const isLeadUserMember = await getWorkspaceMember(
-    leadUser.id,
-    user.activeWorkspace,
+  // Translate API field names to the database column names used by the service.
+  const updatedRowsCount = await updateProject(
+    projectId,
+    Object.fromEntries(
+      Object.entries({
+        name: parsedBody.name,
+        short_summary: parsedBody.shortSummary,
+        description: parsedBody.description,
+        priority: parsedBody.priority,
+        status: parsedBody.status,
+        lead_id: parsedBody.leadId,
+        start_date: parsedBody.startDate,
+        target_date: parsedBody.targetDate,
+      }).filter(([, value]) => value !== undefined),
+    ),
   );
-
-  if (!isLeadUserMember) {
-    throw ApiError.forbidden('Lead is not member of this workspace');
-  }
-
-  const updatedRowsCount = await updateProject(projectId, parsedBody);
 
   if (!updatedRowsCount || updatedRowsCount <= 0) {
     throw ApiError.internal('Something went wrong while updating the project');

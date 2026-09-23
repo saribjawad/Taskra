@@ -2,6 +2,7 @@ import { useAuth } from '#/context/auth/auth-hook'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createProject,
+  updateProject,
   addProjectMembers,
   removeProjectMembers,
   getProject,
@@ -25,6 +26,22 @@ export function useCreateProject(workspaceId: string) {
   return useMutation({
     mutationFn: createProject,
     onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', workspaceId],
+      })
+    },
+  })
+}
+
+export function useUpdateProject(workspaceId: string, projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof updateProject>[1]) =>
+      updateProject(projectId, payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['project', workspaceId, projectId],
+      })
       void queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       })
