@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '#/components/ui/popover'
-import { Avatar, AvatarFallback } from '#/components/ui/avatar'
+import ProjectPersonAvatar from './ProjectPersonAvatar'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
@@ -118,22 +118,12 @@ export default function ProjectMemberPicker({
         >
           {project.members.length ? (
             <span className="flex -space-x-2" aria-hidden="true">
-              {project.members.slice(0, 4).map((member, index) => (
-                <Avatar
+              {project.members.slice(0, 4).map((member) => (
+                <ProjectPersonAvatar
                   key={member.id}
+                  name={member.user?.username}
                   className="size-5 ring-2 ring-background"
-                >
-                  <AvatarFallback
-                    className={`text-[8px] text-white ${['bg-cyan-700', 'bg-violet-700', 'bg-pink-700', 'bg-amber-700'][index]}`}
-                  >
-                    {(member.user?.username || '?')
-                      .split(/\s+/)
-                      .map((part) => part[0])
-                      .slice(0, 2)
-                      .join('')
-                      .toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                />
               ))}
             </span>
           ) : (
@@ -206,12 +196,7 @@ export default function ProjectMemberPicker({
                       }))
                     }
                   >
-                    <span
-                      aria-hidden="true"
-                      className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs"
-                    >
-                      {option.name.slice(0, 1).toUpperCase()}
-                    </span>
+                    <ProjectPersonAvatar name={option.name} />
                     <span className="min-w-0 flex-1 text-left">
                       <span className="block truncate text-xs">
                         {option.name}

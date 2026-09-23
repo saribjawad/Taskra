@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Check, Search, UserRound } from 'lucide-react'
-import { Avatar, AvatarFallback } from '#/components/ui/avatar'
+import { Check, Search } from 'lucide-react'
+import ProjectPersonAvatar from './ProjectPersonAvatar'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Spinner } from '#/components/ui/spinner'
@@ -62,7 +62,10 @@ export default function ProjectLeadPicker({
           aria-label="Change project lead"
           className="-ml-2 h-auto max-w-full justify-start gap-2 px-2 py-0.5 text-xs font-normal"
         >
-          <UserRound className="size-3.5 shrink-0 text-muted-foreground" />
+          <ProjectPersonAvatar
+            name={project.lead?.username}
+            className="size-5"
+          />
           {project.lead?.username || 'Add lead'}
         </Button>
       </PopoverTrigger>
@@ -116,11 +119,7 @@ export default function ProjectLeadPicker({
                   className="h-auto w-full justify-start gap-2.5 px-2 py-2 font-normal"
                   onClick={() => void selectLead(user.id)}
                 >
-                  <Avatar className="size-6">
-                    <AvatarFallback className="text-xs">
-                      {user.username.slice(0, 1).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <ProjectPersonAvatar name={user.username} />
                   <span className="min-w-0 flex-1 text-left">
                     <span className="block truncate text-xs">
                       {user.username}
