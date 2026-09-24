@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  ConnectTaskToProject,
   CreateTask,
   DeleteTask,
   GetTask,
@@ -81,6 +82,13 @@ taskRouter
   .patch(
     RequiredRoles(['owner', 'admin', 'member']),
     asyncHandler(MarkTaskAsCompleted),
+  );
+
+taskRouter
+  .route('/:taskId/project')
+  .post(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(ConnectTaskToProject),
   );
 
 export default taskRouter;

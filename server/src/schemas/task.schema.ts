@@ -19,6 +19,7 @@ export const TaskParamsSchema = z.object({
 });
 export const MarkTaskAsCompletedParamsSchema = TaskParamsSchema;
 export const GetTaskActivityParamsSchema = TaskParamsSchema;
+export const ConnectTaskToProjectParamsSchema = TaskParamsSchema;
 
 export const GetTaskQuerySchema = z.object({
   page: z.coerce
@@ -214,3 +215,13 @@ export const UpdateTaskSchema = z
   });
 
 export type UpdateSchema = z.infer<typeof UpdateTaskSchema>;
+
+export const ConnectTaskToProjectBodySchema = z
+  .object({
+    projectId: z.uuid('Invalid project UUID').nullable(),
+    milestoneId: z.uuid('Invalid milestone UUID').optional(),
+  })
+  .refine((data) => data.projectId !== null || !data.milestoneId, {
+    message: 'A milestone requires a project',
+    path: ['milestoneId'],
+  });

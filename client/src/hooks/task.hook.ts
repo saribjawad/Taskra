@@ -2,17 +2,33 @@ import { useAuth } from '#/context/auth/auth-hook'
 import { useParams } from '@tanstack/react-router'
 import {
   createTask,
+  connectTaskToProject,
   deleteTask,
   getTaskActivities,
   getTaskById,
   getTasks,
   markTaskAsCompleted,
   updateTask,
-  type CreateTaskParams,
-  type GetTasksParams,
-  type UpdateTaskPayload,
+} from '#/service/task.service'
+import type {
+  CreateTaskParams,
+  GetTasksParams,
+  UpdateTaskPayload,
 } from '#/service/task.service'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+export function useConnectTaskToProject(taskId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: Parameters<typeof connectTaskToProject>[1]) =>
+      connectTaskToProject(taskId, payload),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
+        queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+      ]),
+  })
+}
 
 export const useGetTasks = ({
   page = 1,

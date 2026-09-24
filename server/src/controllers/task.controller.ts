@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import {
+  ConnectTaskToProjectBodySchema,
+  ConnectTaskToProjectParamsSchema,
   CreateTaskSchema,
   GetTaskActivityParamsSchema,
   GetTaskQuerySchema,
@@ -37,6 +39,9 @@ import { notifyMemberInWorkspace } from '../websockets/init';
 import { getWorkspaceMember } from '../services/workspace.service';
 import { createNotification } from '../services/notifications.service';
 import { isObjectEmpty } from '../utils/isObjectEmpty';
+import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
+import { getProjectMilestonesWithIdAndProjectId } from '../services/projectMilestones.service';
+import { kMaxLength } from 'node:buffer';
 
 // ==================================================================================
 // Task Controllers
@@ -640,4 +645,50 @@ export const GetTaskActivity = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Task activity', taskActivities));
+};
+
+export const ConnectTaskToProject = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { taskId } = ConnectTaskToProjectParamsSchema.parse(req.params);
+  const { projectId, milestoneId } = ConnectTaskToProjectBodySchema.parse(
+    req.body,
+  );
+
+  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  if (projectId !== null) {
+    const project = await getProjectByIdAndWorkspaceId(
+      projectId,
+      user.activeWorkspace,
+    );
+    if (!project) {
+      throw ApiError.notFound('Project not found');
+    }
+
+    if (milestoneId) {
+      const milestone = await getProjectMilestonesWithIdAndProjectId(
+        milestoneId,
+        project.id,
+      );
+      if (!milestone) {
+        throw ApiError.notFound('Project milestone not found');
+      }
+    }
+  }
+
+  // Clear both associations together when the user selects "No project".
+  const updatedRowsCount = await updateTask(task.id, {
+    project_id: projectId,
+    project_milestone_id: projectId === null ? null : (milestoneId ?? null),
+  });
+
+  if (!updatedRowsCount || updatedRowsCount <= 0) {
+    throw ApiError.internal('Something went wrong while updating tasks');
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Task project updated'));
 };

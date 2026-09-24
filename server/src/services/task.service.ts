@@ -87,17 +87,19 @@ export const createTask = async (
  * Update task in database
  *
  * @param id - Task ID
- * @param data - Object containing the fields to upgrade
- * @param data.title - Task title (optional)
- * @param description - Task description (optional)
- * @param status - Task status (optional)
- * @param priority - Task priority (optional)
- * @param label - Task label (optional)
- * @param assignee - Task assignee (optional)
- * @param reporter - Task reporter (optional)
- * @param startDate - Task start date (optional)
- * @param dueDate - Task due date (optional)
- * @returns Count of updated row
+ * @param data - Object containing fields to update
+ * @param data.title - Task title
+ * @param data.description - Task description
+ * @param data.status - Task status
+ * @param data.priority - Task priority
+ * @param data.label - Task label
+ * @param data.assignee - Task assignee
+ * @param data.reporter - Task reporter
+ * @param data.start_date - Task start date
+ * @param data.due_date - Task due date
+ * @param data.project_id - Project ID
+ * @param data.project_milestone_id - Project milestone ID
+ * @returns Count of updated rows
  */
 export const updateTask = async (
   id: string,
@@ -111,6 +113,8 @@ export const updateTask = async (
     status?: TaskStatus;
     start_date?: Date;
     due_date?: Date;
+    project_id?: string | null;
+    project_milestone_id?: string | null;
   },
 ) => {
   const keys = Object.keys(data);

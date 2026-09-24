@@ -11,7 +11,7 @@ import type {
 
 export interface GetTasksResponse {
   metadata: {
-    hasNextPage: Boolean
+    hasNextPage: boolean
     page: number
     limit: number
     offset: number
@@ -65,6 +65,8 @@ type Attachments = {
 
 interface GetTaskResponse {
   id: string
+  project_id: string | null
+  project_milestone_id: string | null
   title: string
   description: string
   status: TaskStatusType
@@ -100,6 +102,13 @@ interface GetTaskResponse {
     },
   ]
   attachments: Attachments[]
+}
+
+export async function connectTaskToProject(
+  taskId: string,
+  payload: { projectId: string | null; milestoneId?: string },
+) {
+  await api.post(`/tasks/${taskId}/project`, payload)
 }
 
 export async function getTaskById(taskId: string): Promise<GetTaskResponse> {

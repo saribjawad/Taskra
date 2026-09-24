@@ -3,6 +3,7 @@ import DeleteCommentDialog from '#/components/comments/DeleteCommentDialog'
 import UpdateCommentDialog from '#/components/comments/UpdateCommentDialog'
 import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
 import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
+import TaskProjectPicker from '#/components/tasks/TaskProjectPicker'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
 import { Badge } from '#/components/ui/badge'
 import {
@@ -111,9 +112,9 @@ function DetailRow({
   value: React.ReactNode
 }) {
   return (
-    <div className="grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 py-2 text-sm">
-      <p className="text-muted-foreground">{label}</p>
-      <div className="min-w-0 text-foreground">{value ?? '-'}</div>
+    <div className="grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-3 py-2 text-xs leading-5">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-foreground">{value ?? '-'}</dd>
     </div>
   )
 }
@@ -130,16 +131,13 @@ function PersonValue({
   return (
     <div className="flex min-w-0 items-center gap-2">
       <div
-        className={`flex size-6 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ${avatarColor(name)}`}
+        className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ${avatarColor(name)}`}
       >
         {getInitials(name)}
       </div>
-      <div className="min-w-0">
-        <p className="truncate font-medium">{name}</p>
-        {email && (
-          <p className="truncate text-xs text-muted-foreground">{email}</p>
-        )}
-      </div>
+      <span className="min-w-0 truncate" title={email ?? undefined}>
+        {name}
+      </span>
     </div>
   )
 }
@@ -366,16 +364,31 @@ function RouteComponent() {
     { label: 'Updated', value: formatDate(task.updated_at) },
   ]
 
-  // Share the same property rows between the desktop sidebar and mobile sheet.
-  const propertyRows = (
-    <div className="divide-y px-4 py-2">
-      {properties.map((property) => (
-        <DetailRow
-          key={property.label}
-          label={property.label}
-          value={property.value}
-        />
-      ))}
+  // The desktop sidebar and mobile sheet share the same property sections.
+  const taskInformation = (
+    <div className="space-y-4">
+      <section
+        className="rounded-xl border bg-muted/20 p-4"
+        aria-label="Task properties"
+      >
+        <h2 className="mb-3 text-sm font-medium">Properties</h2>
+        <dl>
+          {properties.map((property) => (
+            <DetailRow
+              key={property.label}
+              label={property.label}
+              value={property.value}
+            />
+          ))}
+        </dl>
+      </section>
+      <TaskProjectPicker
+        taskId={task.id}
+        workspaceId={task.workspace_id}
+        projectId={task.project_id}
+        milestoneId={task.project_milestone_id}
+        disabled={!can('task:update')}
+      />
     </div>
   )
 
@@ -459,7 +472,7 @@ function RouteComponent() {
                     </SheetDescription>
                   </SheetHeader>
                   <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
-                    {propertyRows}
+                    {taskInformation}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -467,261 +480,261 @@ function RouteComponent() {
           </nav>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto grid max-w-6xl gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:py-8">
-            <section className="min-w-0 space-y-8">
-              <div className="space-y-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className="gap-1.5 rounded-md">
-                        <Tag className="size-3" />
-                        {formatLabel(task.label)}
-                      </Badge>
-                      <span className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium text-muted-foreground">
-                        <Dot
-                          className={
-                            STATUS_STYLES[task.status] ?? 'bg-zinc-400'
-                          }
-                        />
-                        {formatLabel(task.status)}
-                      </span>
-                      <span className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium text-muted-foreground">
-                        <Dot
-                          className={
-                            PRIORITY_STYLES[task.priority] ?? 'bg-zinc-400'
-                          }
-                        />
-                        {formatLabel(task.priority)}
-                      </span>
+        <div className="min-h-0 flex-1">
+          <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <section className="min-h-0 min-w-0 overflow-y-auto overscroll-contain">
+              <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+                <div className="space-y-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline" className="gap-1.5 rounded-md">
+                          <Tag className="size-3" />
+                          {formatLabel(task.label)}
+                        </Badge>
+                        <span className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium text-muted-foreground">
+                          <Dot
+                            className={
+                              STATUS_STYLES[task.status] ?? 'bg-zinc-400'
+                            }
+                          />
+                          {formatLabel(task.status)}
+                        </span>
+                        <span className="inline-flex h-6 items-center gap-1.5 rounded-md border px-2 text-xs font-medium text-muted-foreground">
+                          <Dot
+                            className={
+                              PRIORITY_STYLES[task.priority] ?? 'bg-zinc-400'
+                            }
+                          />
+                          {formatLabel(task.priority)}
+                        </span>
+                      </div>
+                      <h1 className="text-balance text-2xl font-semibold tracking-normal text-foreground wrap-anywhere sm:text-3xl">
+                        {task.title}
+                      </h1>
                     </div>
-                    <h1 className="text-balance text-2xl font-semibold tracking-normal text-foreground wrap-anywhere sm:text-3xl">
-                      {task.title}
-                    </h1>
-                  </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
-                    {can('task:update') && (
-                      <EditTaskDialog
-                        task={{
-                          id: task.id,
-                          description: task.description,
-                          label: task.label,
-                          priority: task.priority,
-                          status: task.status,
-                          title: task.title,
-                          assignee: task.assignee ?? undefined,
-                          reporter: task.reporter ?? undefined,
-                          completed_date: task.completed_date,
-                          due_date: task.due_date,
-                          start_date: task.start_date,
-                          attachments: task.attachments ?? [],
-                        }}
-                        isDialogOpen={isEditDialogOpen}
-                        setIsDialogOpen={setEditIsDialogOpen}
-                        trigger={
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditIsDialogOpen(true)}
-                          >
-                            <Pencil />
-                            Edit
-                          </Button>
-                        }
-                      />
-                    )}
-                    {can('task:delete') && (
-                      <Button
-                        aria-label="Delete task"
-                        onClick={() => setTaskDeleteOpen(true)}
-                        variant="ghost"
-                        size="icon-sm"
-                        className="text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 />
-                      </Button>
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      {can('task:update') && (
+                        <EditTaskDialog
+                          task={{
+                            id: task.id,
+                            description: task.description,
+                            label: task.label,
+                            priority: task.priority,
+                            status: task.status,
+                            title: task.title,
+                            assignee: task.assignee ?? undefined,
+                            reporter: task.reporter ?? undefined,
+                            completed_date: task.completed_date,
+                            due_date: task.due_date,
+                            start_date: task.start_date,
+                            attachments: task.attachments ?? [],
+                          }}
+                          isDialogOpen={isEditDialogOpen}
+                          setIsDialogOpen={setEditIsDialogOpen}
+                          trigger={
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditIsDialogOpen(true)}
+                            >
+                              <Pencil />
+                              Edit
+                            </Button>
+                          }
+                        />
+                      )}
+                      {can('task:delete') && (
+                        <Button
+                          aria-label="Delete task"
+                          onClick={() => setTaskDeleteOpen(true)}
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <section className="space-y-4">
-                <h2 className="text-xs font-medium uppercase text-muted-foreground">
-                  Description
-                </h2>
-                <div className="min-w-0 overflow-x-auto ">
-                  <TaskDescriptionViewer
-                    key={task.id}
-                    value={task.description}
-                  />
-                </div>
-              </section>
-
-              {task.attachments?.length > 0 && (
-                <section className="space-y-3">
-                  <h2 className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
-                    <Paperclip className="size-3.5" />
-                    Attachments ({task.attachments.length})
+                <section className="space-y-4">
+                  <h2 className="text-xs font-medium uppercase text-muted-foreground">
+                    Description
                   </h2>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {task.attachments.map((file) => (
-                      <button
-                        type="button"
-                        disabled={isGettingPresignedUrl}
-                        onClick={() => {
-                          onClickingAttachment(file.id)
-                        }}
-                        key={file.id}
-                        className="flex min-w-0 items-center gap-3 rounded-md border bg-background p-3 text-left transition-colors hover:bg-muted/50 disabled:cursor-wait disabled:opacity-70"
-                      >
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                          <AttachmentTypeIcon mimeType={file.mime_type} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatBytes(file.size)}
-                          </p>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="min-w-0 overflow-x-auto ">
+                    <TaskDescriptionViewer
+                      key={task.id}
+                      value={task.description}
+                    />
                   </div>
                 </section>
-              )}
 
-              <section className="space-y-5">
-                <div className="flex items-center justify-between border-b pb-3">
-                  <h2 className="text-xs font-medium uppercase text-muted-foreground">
-                    Activity
-                  </h2>
-                </div>
+                {task.attachments?.length > 0 && (
+                  <section className="space-y-3">
+                    <h2 className="flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+                      <Paperclip className="size-3.5" />
+                      Attachments ({task.attachments.length})
+                    </h2>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {task.attachments.map((file) => (
+                        <button
+                          type="button"
+                          disabled={isGettingPresignedUrl}
+                          onClick={() => {
+                            onClickingAttachment(file.id)
+                          }}
+                          key={file.id}
+                          className="flex min-w-0 items-center gap-3 rounded-md border bg-background p-3 text-left transition-colors hover:bg-muted/50 disabled:cursor-wait disabled:opacity-70"
+                        >
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                            <AttachmentTypeIcon mimeType={file.mime_type} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatBytes(file.size)}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
-                <div className="space-y-3">
-                  {isTaskActivityLoading ? (
-                    <ActivitySkeleton />
-                  ) : activities.length <= 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No activity yet.
-                    </p>
-                  ) : (
-                    activities.map((entry) => {
-                      if (entry.kind === 'event') {
+                <section className="space-y-5">
+                  <div className="flex items-center justify-between border-b pb-3">
+                    <h2 className="text-xs font-medium uppercase text-muted-foreground">
+                      Activity
+                    </h2>
+                  </div>
+
+                  <div className="space-y-3">
+                    {isTaskActivityLoading ? (
+                      <ActivitySkeleton />
+                    ) : activities.length <= 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        No activity yet.
+                      </p>
+                    ) : (
+                      activities.map((entry) => {
+                        if (entry.kind === 'event') {
+                          return (
+                            <div
+                              key={`event-${entry.id}`}
+                              className="flex gap-3 items-center"
+                            >
+                              <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground">
+                                <ActivityIcon type={entry.type} />
+                              </div>
+                              <div className="min-w-0 flex-1 flex items-center gap-2">
+                                <p className="text-xs leading-6 text-muted-foreground wrap-anywhere">
+                                  {entry.description}
+                                </p>
+                                ·
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {formatDateTime(entry.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          )
+                        }
+                        const comment = entry
+                        const isUsersComment = comment.user.id === user?.id
+
                         return (
                           <div
-                            key={`event-${entry.id}`}
-                            className="flex gap-3 items-center"
+                            key={`comment-${comment.id}`}
+                            className="group flex items-start justify-between gap-2"
                           >
-                            <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground">
-                              <ActivityIcon type={entry.type} />
+                            <div className="flex min-w-0 flex-1 gap-3">
+                              <div
+                                className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white ${avatarColor(comment.user.username)}`}
+                              >
+                                {getInitials(comment.user.username)}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="mb-1 flex flex-wrap items-baseline gap-2">
+                                  <span className="text-sm font-medium wrap-anywhere">
+                                    {comment.user.username}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDateTime(comment.created_at)}
+                                  </span>
+                                </div>
+                                <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground wrap-anywhere">
+                                  {comment.content}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1 flex items-center gap-2">
-                              <p className="text-xs leading-6 text-muted-foreground wrap-anywhere">
-                                {entry.description}
-                              </p>
-                              ·
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {formatDateTime(entry.created_at)}
-                              </p>
-                            </div>
+
+                            {(can('comment:update') || can('comment:delete')) &&
+                              isUsersComment && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon-sm"
+                                      aria-label="Comment actions"
+                                      className="shrink-0 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
+                                    >
+                                      <Ellipsis />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    side="bottom"
+                                    className="mr-3"
+                                  >
+                                    {can('comment:delete') && (
+                                      <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          setSelectedComment(comment)
+                                        }}
+                                        onSelect={() => {
+                                          setCommentDeleteOpen(true)
+                                        }}
+                                      >
+                                        <Trash2 />
+                                        Delete
+                                      </DropdownMenuItem>
+                                    )}
+                                    {can('comment:update') && (
+                                      <DropdownMenuItem
+                                        onClick={(event) => {
+                                          event.stopPropagation()
+                                          setSelectedComment(comment)
+                                        }}
+                                        onSelect={() => {
+                                          setCommentUpdateOpen(true)
+                                        }}
+                                      >
+                                        <Pencil />
+                                        Edit
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
                           </div>
                         )
-                      }
-                      const comment = entry
-                      const isUsersComment = comment.user.id === user?.id
-
-                      return (
-                        <div
-                          key={`comment-${comment.id}`}
-                          className="group flex items-start justify-between gap-2"
-                        >
-                          <div className="flex min-w-0 flex-1 gap-3">
-                            <div
-                              className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white ${avatarColor(comment.user.username)}`}
-                            >
-                              {getInitials(comment.user.username)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="mb-1 flex flex-wrap items-baseline gap-2">
-                                <span className="text-sm font-medium wrap-anywhere">
-                                  {comment.user.username}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {formatDateTime(comment.created_at)}
-                                </span>
-                              </div>
-                              <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground wrap-anywhere">
-                                {comment.content}
-                              </p>
-                            </div>
-                          </div>
-
-                          {(can('comment:update') || can('comment:delete')) &&
-                            isUsersComment && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    aria-label="Comment actions"
-                                    className="shrink-0 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100"
-                                  >
-                                    <Ellipsis />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent
-                                  side="bottom"
-                                  className="mr-3"
-                                >
-                                  {can('comment:delete') && (
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        setSelectedComment(comment)
-                                      }}
-                                      onSelect={() => {
-                                        setCommentDeleteOpen(true)
-                                      }}
-                                    >
-                                      <Trash2 />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  )}
-                                  {can('comment:update') && (
-                                    <DropdownMenuItem
-                                      onClick={(event) => {
-                                        event.stopPropagation()
-                                        setSelectedComment(comment)
-                                      }}
-                                      onSelect={() => {
-                                        setCommentUpdateOpen(true)
-                                      }}
-                                    >
-                                      <Pencil />
-                                      Edit
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                        </div>
-                      )
-                    })
-                  )}
-                </div>
-              </section>
+                      })
+                    )}
+                  </div>
+                </section>
+              </div>
             </section>
 
-            <aside className="hidden min-w-0 lg:sticky lg:top-6 lg:block lg:self-start">
-              <section className="space-y-3">
-                <h2 className="text-xs font-medium uppercase text-muted-foreground">
-                  Properties
-                </h2>
-                {propertyRows}
-              </section>
+            <aside
+              aria-label="Task information"
+              className="hidden min-h-0 min-w-0 overflow-y-auto overscroll-contain border-l p-4 lg:block"
+            >
+              {taskInformation}
             </aside>
           </div>
         </div>

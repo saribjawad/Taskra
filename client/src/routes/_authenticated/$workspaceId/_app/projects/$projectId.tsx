@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '#/components/ui/tabs'
+import { PageTabs, PageTab } from '#/components/layout/PageLayout'
 import { Box, ChevronRight, CircleDot, Link2, PanelRight } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
@@ -158,35 +158,31 @@ function ProjectDetailPage() {
           </Link>
         </div>
       ) : (
-        <Tabs
-          value={view}
-          className="grid min-h-0 flex-1 gap-0 grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)]"
-          onValueChange={(value) =>
-            void navigate({ search: { view: value as ProjectView } })
-          }
-        >
+        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)]">
           <div className="flex min-h-0 min-w-0 flex-col">
-            {/* URL-backed tabs support keyboard navigation and browser history. */}
             <div className="flex shrink-0 items-center justify-between border-b pr-4">
-              <TabsList
-                variant="default"
+              {/* Keep project views in the URL, styled like the other page tabs. */}
+              <PageTabs
                 aria-label="Project sections"
-                className="flex h-auto gap-1 rounded-none bg-transparent px-4 py-3 group-data-horizontal/tabs:h-auto sm:px-6"
+                className="mb-0 flex-1 border-b-0 px-4 sm:px-6"
               >
                 {projectViews.map((tab) => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="h-auto flex-none rounded-full px-3 py-1.5 text-xs font-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring data-[state=active]:bg-muted data-[state=active]:font-medium data-[state=active]:text-foreground"
-                  >
-                    {tab === 'overview'
-                      ? 'Overview'
-                      : tab === 'activity'
-                        ? 'Activity'
-                        : 'Issues'}
-                  </TabsTrigger>
+                  <PageTab key={tab}>
+                    <Link
+                      to="/$workspaceId/projects/$projectId"
+                      params={{ workspaceId, projectId }}
+                      search={{ view: tab }}
+                      aria-current={view === tab ? 'page' : undefined}
+                    >
+                      {tab === 'overview'
+                        ? 'Overview'
+                        : tab === 'activity'
+                          ? 'Activity'
+                          : 'Issues'}
+                    </Link>
+                  </PageTab>
                 ))}
-              </TabsList>
+              </PageTabs>
               <Sheet open={propertiesOpen} onOpenChange={setPropertiesOpen}>
                 <SheetTrigger asChild>
                   <Button
@@ -232,22 +228,9 @@ function ProjectDetailPage() {
                     {project.name}
                   </h1>
                 </div>
-                <TabsContent
-                  value="overview"
-                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <ProjectOverview project={project} />
-                </TabsContent>
-                <TabsContent
-                  value="activity"
-                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <ProjectActivity project={project} />
-                </TabsContent>
-                <TabsContent
-                  value="issues"
-                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
+                {view === 'overview' && <ProjectOverview project={project} />}
+                {view === 'activity' && <ProjectActivity project={project} />}
+                {view === 'issues' && (
                   <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
                     <CircleDot className="mb-4 size-6 text-muted-foreground" />
                     <h2 className="text-sm font-medium">Project issues</h2>
@@ -256,7 +239,7 @@ function ProjectDetailPage() {
                       feature is coming soon.
                     </p>
                   </section>
-                </TabsContent>
+                )}
               </div>
             </div>
           </div>
@@ -270,7 +253,7 @@ function ProjectDetailPage() {
               onSeeAll={() => void navigate({ search: { view: 'activity' } })}
             />
           </aside>
-        </Tabs>
+        </div>
       )}
     </main>
   )
