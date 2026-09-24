@@ -1,6 +1,17 @@
 import { dbPool } from '../db';
 import { ProjectMilestone } from '../models/projectMilestones.model';
 
+export const getProjectMilestones = async (
+  projectId: string,
+): Promise<ProjectMilestone[]> => {
+  const result = await dbPool.query(
+    `SELECT * FROM project_milestones WHERE project_id = $1 ORDER BY created_at ASC, id ASC`,
+    [projectId],
+  );
+
+  return result.rows;
+};
+
 export const getProjectMilestonesWithIdAndProjectId = async (
   id: string,
   projectId: string,
@@ -40,8 +51,8 @@ export const updateProjectMilestones = async (
   id: string,
   payload: {
     name?: string;
-    description?: string;
-    target_date?: string;
+    description?: string | null;
+    target_date?: string | null;
   },
 ) => {
   const keys = Object.keys(payload);
@@ -50,7 +61,7 @@ export const updateProjectMilestones = async (
   const results = await dbPool.query(
     `
     UPDATE project_milestones
-    SET ${keys.map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)}
+    SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')}, updated_at = current_timestamp
     WHERE id = $${keys.length + 1}
     `,
     [...values, id],

@@ -26,8 +26,7 @@ export default function ProjectOverview({
           />
         </div>
       </section>
-      {/* Future milestone feature */}
-      <ProjectMilestones />
+      <ProjectMilestones project={project} />
     </div>
   )
 }

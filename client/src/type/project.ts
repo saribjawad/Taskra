@@ -28,6 +28,16 @@ export interface ProjectPerson {
   email: string | null
 }
 
+export interface ProjectMilestone {
+  id: string
+  project_id: string
+  name: string
+  description: string | null
+  target_date: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface ProjectDetail extends Omit<Project, 'lead_id'> {
   lead: ProjectPerson | null
   members: {
@@ -37,4 +47,5 @@ export interface ProjectDetail extends Omit<Project, 'lead_id'> {
     created_at: string
     updated_at: string
   }[]
+  milestones: ProjectMilestone[]
 }

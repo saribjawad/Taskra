@@ -7,6 +7,13 @@ import {
   removeProjectMembers,
   getProject,
   getProjects,
+  createProjectMilestone,
+  updateProjectMilestone,
+  deleteProjectMilestone,
+} from '#/service/project.service'
+import type {
+  MilestonePayload,
+  MilestoneUpdatePayload,
 } from '#/service/project.service'
 
 export function useGetProjects(
@@ -57,6 +64,40 @@ export function useGetProject(workspaceId: string, projectId: string) {
     // The detail endpoint selects its workspace from the session.
     enabled: Boolean(projectId) && workspaceId === user?.activeWorkspace,
   })
+}
+
+export function useProjectMilestoneActions(
+  workspaceId: string,
+  projectId: string,
+) {
+  const queryClient = useQueryClient()
+  const onSuccess = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['project', workspaceId, projectId],
+    })
+
+  return {
+    create: useMutation({
+      mutationFn: (payload: MilestonePayload) =>
+        createProjectMilestone(projectId, payload),
+      onSuccess,
+    }),
+    update: useMutation({
+      mutationFn: ({
+        milestoneId,
+        payload,
+      }: {
+        milestoneId: string
+        payload: MilestoneUpdatePayload
+      }) => updateProjectMilestone(projectId, milestoneId, payload),
+      onSuccess,
+    }),
+    remove: useMutation({
+      mutationFn: (milestoneId: string) =>
+        deleteProjectMilestone(projectId, milestoneId),
+      onSuccess,
+    }),
+  }
 }
 
 export function useChangeProjectMembers(

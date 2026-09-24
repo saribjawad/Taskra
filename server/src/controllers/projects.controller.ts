@@ -20,6 +20,7 @@ import {
   updateProject,
 } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
+import { getProjectMilestones } from '../services/projectMilestones.service';
 import { findUserById } from '../services/user.service';
 import {
   getWorkspaceById,
@@ -47,11 +48,15 @@ export const GetProject = async (req: Request, res: Response) => {
   }
 
   // Get project members
-  const members = await getProjectMembersWithUserDetail(project.id);
+  const [members, milestones] = await Promise.all([
+    getProjectMembersWithUserDetail(project.id),
+    getProjectMilestones(project.id),
+  ]);
 
   const data = {
     ...project,
     members,
+    milestones,
   };
 
   res

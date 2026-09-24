@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from 'lucide-react'
+import { CalendarDays, ChevronDownIcon } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Calendar } from '../ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -8,6 +8,7 @@ interface DateFieldProps {
   onChange: (date: Date | undefined) => void
   disabled?: boolean
   placeholder?: string
+  iconOnly?: boolean
   id?: string
   'aria-invalid'?: boolean
 }
@@ -17,6 +18,7 @@ function DateField({
   onChange,
   disabled,
   placeholder = 'Pick a date',
+  iconOnly = false,
   id,
   ...rest
 }: DateFieldProps) {
@@ -26,18 +28,43 @@ function DateField({
         <Button
           id={id}
           type="button"
-          variant="outline"
+          variant={iconOnly ? 'ghost' : 'outline'}
+          size={iconOnly ? 'icon-sm' : 'default'}
+          aria-label={
+            iconOnly
+              ? value
+                ? `Change date: ${value.toLocaleDateString()}`
+                : placeholder
+              : undefined
+          }
+          title={
+            iconOnly
+              ? value
+                ? value.toLocaleDateString()
+                : placeholder
+              : undefined
+          }
           disabled={disabled}
           data-empty={!value}
-          className="w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground"
+          className={
+            iconOnly
+              ? 'shrink-0 data-[empty=true]:text-muted-foreground'
+              : 'w-full justify-between text-left font-normal data-[empty=true]:text-muted-foreground'
+          }
           {...rest}
         >
-          {value ? (
-            value.toLocaleDateString(undefined, { dateStyle: 'long' })
+          {iconOnly ? (
+            <CalendarDays className="size-4" />
           ) : (
-            <span>{placeholder}</span>
+            <>
+              {value ? (
+                value.toLocaleDateString(undefined, { dateStyle: 'long' })
+              ) : (
+                <span>{placeholder}</span>
+              )}
+              <ChevronDownIcon className="size-4 opacity-50" />
+            </>
           )}
-          <ChevronDownIcon className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

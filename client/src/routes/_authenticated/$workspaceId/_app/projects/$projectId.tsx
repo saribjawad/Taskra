@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Tabs } from 'radix-ui'
-import { Box, ChevronRight, CircleDot, Link2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '#/components/ui/tabs'
+import { Box, ChevronRight, CircleDot, Link2, PanelRight } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
@@ -9,10 +10,16 @@ import { SidebarTrigger } from '#/components/ui/sidebar'
 import { useAuth } from '#/context/auth/auth-hook'
 import { useGetProject } from '#/hooks/project.hooks'
 import ProjectOverview from '#/components/projects/ProjectOverview'
-import ProjectProperties from '#/components/projects/ProjectProperties'
-import ProjectMilestones from '#/components/projects/ProjectMilestones'
 import ProjectActivity from '#/components/projects/ProjectActivity'
-import { formatProjectDate } from '#/components/projects/project-presentation'
+import ProjectInformation from '#/components/projects/ProjectInformation'
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '#/components/ui/sheet'
 
 const projectViews = ['overview', 'activity', 'issues'] as const
 type ProjectView = (typeof projectViews)[number]
@@ -29,10 +36,25 @@ export const Route = createFileRoute(
 })
 
 function ProjectDetailPage() {
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
+
+  // A panel opened on mobile must close when the fixed desktop sidebar appears.
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const closeOnDesktop = () => {
+      if (desktop.matches) setPropertiesOpen(false)
+    }
+
+    desktop.addEventListener('change', closeOnDesktop)
+
+    return () => desktop.removeEventListener('change', closeOnDesktop)
+  }, [])
+
   const { workspaceId, projectId } = Route.useParams()
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
   const { user } = useAuth()
+
   const {
     data: project,
     isPending,
@@ -40,6 +62,7 @@ function ProjectDetailPage() {
     error,
     refetch,
   } = useGetProject(workspaceId, projectId)
+
   const wrongWorkspace = user?.activeWorkspace !== workspaceId
   const notFound = isAxiosError(error) && error.response?.status === 404
 
@@ -53,9 +76,9 @@ function ProjectDetailPage() {
   }
 
   return (
-    <main className="min-h-dvh min-w-0 flex-1">
+    <main className="flex h-dvh min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       {/* Breadcrumbs and project link */}
-      <header className="flex min-h-14 items-center justify-between gap-4 border-b px-4 sm:px-6">
+      <header className="flex min-h-14 shrink-0 items-center justify-between gap-4 border-b px-4 sm:px-6">
         <nav
           aria-label="Breadcrumb"
           className="flex min-w-0 items-center gap-2 text-sm"
@@ -135,115 +158,119 @@ function ProjectDetailPage() {
           </Link>
         </div>
       ) : (
-        <Tabs.Root
+        <Tabs
           value={view}
+          className="grid min-h-0 flex-1 gap-0 grid-rows-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[minmax(0,1fr)]"
           onValueChange={(value) =>
             void navigate({ search: { view: value as ProjectView } })
           }
         >
-          {/* URL-backed tabs support keyboard navigation and browser history. */}
-          <Tabs.List
-            aria-label="Project sections"
-            className="flex gap-1 px-4 py-3 sm:px-6"
-          >
-            {projectViews.map((tab) => (
-              <Tabs.Trigger
-                key={tab}
-                value={tab}
-                className="rounded-full px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring data-[state=active]:bg-muted data-[state=active]:font-medium data-[state=active]:text-foreground"
+          <div className="flex min-h-0 min-w-0 flex-col">
+            {/* URL-backed tabs support keyboard navigation and browser history. */}
+            <div className="flex shrink-0 items-center justify-between border-b pr-4">
+              <TabsList
+                variant="default"
+                aria-label="Project sections"
+                className="flex h-auto gap-1 rounded-none bg-transparent px-4 py-3 group-data-horizontal/tabs:h-auto sm:px-6"
               >
-                {tab === 'overview'
-                  ? 'Overview'
-                  : tab === 'activity'
-                    ? 'Activity'
-                    : 'Issues'}
-              </Tabs.Trigger>
-            ))}
-          </Tabs.List>
-
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 pb-12 pt-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12 lg:px-10">
-            <div className="min-w-0 lg:pt-8">
-              {/* Project identity remains visible when switching sections. */}
-              <div className="mb-8">
-                <span className="mb-4 inline-flex rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400">
-                  <Box className="size-6" />
-                </span>
-                <h1 className="break-words text-2xl font-semibold tracking-tight">
-                  {project.name}
-                </h1>
-              </div>
-              <Tabs.Content
-                value="overview"
-                className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <ProjectOverview project={project} />
-              </Tabs.Content>
-              <Tabs.Content
-                value="activity"
-                className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <ProjectActivity project={project} />
-              </Tabs.Content>
-              <Tabs.Content
-                value="issues"
-                className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
-                  <CircleDot className="mb-4 size-6 text-muted-foreground" />
-                  <h2 className="text-sm font-medium">Project issues</h2>
-                  <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">
-                    Issues linked to this project will appear here. This feature
-                    is coming soon.
-                  </p>
-                </section>
-              </Tabs.Content>
+                {projectViews.map((tab) => (
+                  <TabsTrigger
+                    key={tab}
+                    value={tab}
+                    className="h-auto flex-none rounded-full px-3 py-1.5 text-xs font-normal text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring data-[state=active]:bg-muted data-[state=active]:font-medium data-[state=active]:text-foreground"
+                  >
+                    {tab === 'overview'
+                      ? 'Overview'
+                      : tab === 'activity'
+                        ? 'Activity'
+                        : 'Issues'}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <Sheet open={propertiesOpen} onOpenChange={setPropertiesOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="lg:hidden"
+                    aria-label="Open project properties"
+                  >
+                    <PanelRight className="size-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="gap-0 data-[side=right]:w-[min(24rem,100vw)]"
+                >
+                  <SheetHeader className="shrink-0 border-b pr-12">
+                    <SheetTitle>Project properties</SheetTitle>
+                    <SheetDescription className="sr-only">
+                      Project properties, milestones, progress, and activity.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+                    <ProjectInformation
+                      project={project}
+                      onSeeAll={() => {
+                        setPropertiesOpen(false)
+                        void navigate({ search: { view: 'activity' } })
+                      }}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
 
-            {/* Project properties use live data; progress is a future feature. */}
-            <aside
-              aria-label="Project information"
-              className="min-w-0 space-y-4 lg:sticky lg:top-6 lg:self-start"
-            >
-              <ProjectProperties project={project} />
-              {/* Milestone preview uses the same data as the overview. */}
-              <ProjectMilestones compact />
-              <section className="rounded-xl border bg-muted/20 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-sm font-medium">Progress</h2>
-                  <span className="text-xs text-muted-foreground">
-                    Coming soon
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="mx-auto max-w-4xl min-w-0 px-4 pb-14 pt-8 sm:px-8 lg:px-10 lg:pt-12">
+                {/* Project identity remains visible when switching sections. */}
+                <div className="mb-8">
+                  <span className="mb-4 inline-flex rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400">
+                    <Box className="size-6" />
                   </span>
+                  <h1 className="wrap-break-words text-2xl font-semibold tracking-tight">
+                    {project.name}
+                  </h1>
                 </div>
-                <p className="mt-3 text-xs leading-5 text-muted-foreground">
-                  Track completion here once project issues are available.
-                </p>
-                <dl className="mt-4 grid grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <dt className="text-muted-foreground">Scope</dt>
-                    <dd className="mt-1" aria-label="Not available">
-                      —
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted-foreground">Completed</dt>
-                    <dd className="mt-1" aria-label="Not available">
-                      —
-                    </dd>
-                  </div>
-                </dl>
-              </section>
-              {/* Open the full activity tab from the sidebar summary. */}
-              <ProjectActivity
-                project={project}
-                compact
-                onSeeAll={() => void navigate({ search: { view: 'activity' } })}
-              />
-              <p className="px-1 text-xs text-muted-foreground">
-                Last updated {formatProjectDate(project.updated_at)}
-              </p>
-            </aside>
+                <TabsContent
+                  value="overview"
+                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ProjectOverview project={project} />
+                </TabsContent>
+                <TabsContent
+                  value="activity"
+                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <ProjectActivity project={project} />
+                </TabsContent>
+                <TabsContent
+                  value="issues"
+                  className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
+                    <CircleDot className="mb-4 size-6 text-muted-foreground" />
+                    <h2 className="text-sm font-medium">Project issues</h2>
+                    <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">
+                      Issues linked to this project will appear here. This
+                      feature is coming soon.
+                    </p>
+                  </section>
+                </TabsContent>
+              </div>
+            </div>
           </div>
-        </Tabs.Root>
+
+          <aside
+            aria-label="Project information"
+            className="hidden min-h-0 min-w-0 overflow-y-auto overscroll-contain border-l lg:block"
+          >
+            <ProjectInformation
+              project={project}
+              onSeeAll={() => void navigate({ search: { view: 'activity' } })}
+            />
+          </aside>
+        </Tabs>
       )}
     </main>
   )

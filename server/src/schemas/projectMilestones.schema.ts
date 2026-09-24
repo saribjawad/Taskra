@@ -28,8 +28,8 @@ export const UpdateProjectMilestonesBodySchema = z
       .min(1, 'Name is required')
       .max(80, 'Name can not be longer than 80 characters')
       .optional(),
-    description: z.string('Invalid description').optional(),
-    targetDate: z.iso.date().optional(),
+    description: z.string('Invalid description').nullable().optional(),
+    targetDate: z.iso.date().nullable().optional(),
   })
   .refine((data) => Object.values(data).length > 0, {
     error: 'At least one field is required to update',

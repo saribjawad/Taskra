@@ -59,6 +59,40 @@ export async function updateProject(
   await api.patch(`/projects/${projectId}`, payload)
 }
 
+export interface MilestonePayload {
+  name: string
+  description?: string
+  targetDate?: string
+}
+
+export interface MilestoneUpdatePayload {
+  name?: string
+  description?: string | null
+  targetDate?: string | null
+}
+
+export async function createProjectMilestone(
+  projectId: string,
+  payload: MilestonePayload,
+): Promise<void> {
+  await api.post(`/projects/${projectId}/milestone`, payload)
+}
+
+export async function updateProjectMilestone(
+  projectId: string,
+  milestoneId: string,
+  payload: MilestoneUpdatePayload,
+): Promise<void> {
+  await api.patch(`/projects/${projectId}/milestone/${milestoneId}`, payload)
+}
+
+export async function deleteProjectMilestone(
+  projectId: string,
+  milestoneId: string,
+): Promise<void> {
+  await api.delete(`/projects/${projectId}/milestone/${milestoneId}`)
+}
+
 export async function addProjectMembers(projectId: string, userIds: string[]) {
   const response = await api.post(`/projects/${projectId}/members`, {
     memberIds: userIds,

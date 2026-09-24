@@ -21,6 +21,14 @@ import {
 } from '#/components/ui/dropdown-menu'
 import { Field } from '#/components/ui/field'
 import { SidebarTrigger } from '#/components/ui/sidebar'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '#/components/ui/sheet'
 import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
@@ -62,6 +70,7 @@ import {
   Loader2,
   MessageSquare,
   Paperclip,
+  PanelRight,
   Pencil,
   RefreshCw,
   Tag,
@@ -70,7 +79,7 @@ import {
   Type,
   UserRound,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 
@@ -207,6 +216,16 @@ function RouteComponent() {
   const isMobile = useIsMobile()
 
   // States
+  const [propertiesOpen, setPropertiesOpen] = useState(false)
+  // Close the mobile panel when the desktop properties sidebar becomes visible.
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    const closeOnDesktop = () => {
+      if (desktop.matches) setPropertiesOpen(false)
+    }
+    desktop.addEventListener('change', closeOnDesktop)
+    return () => desktop.removeEventListener('change', closeOnDesktop)
+  }, [])
   const [taskDeleteOpen, setTaskDeleteOpen] = useState(false)
   const [commentDeleteOpen, setCommentDeleteOpen] = useState(false)
   const [commentUpdateOpen, setCommentUpdateOpen] = useState(false)
@@ -347,6 +366,19 @@ function RouteComponent() {
     { label: 'Updated', value: formatDate(task.updated_at) },
   ]
 
+  // Share the same property rows between the desktop sidebar and mobile sheet.
+  const propertyRows = (
+    <div className="divide-y px-4 py-2">
+      {properties.map((property) => (
+        <DetailRow
+          key={property.label}
+          label={property.label}
+          value={property.value}
+        />
+      ))}
+    </div>
+  )
+
   // Comments carry their own content and actions, so omit generic comment events.
   const activities = [
     ...(taskActivity ?? [])
@@ -390,20 +422,48 @@ function RouteComponent() {
               </Breadcrumb>
             </div>
 
-            {can('task:complete') && task.status !== 'done' ? (
-              <Button
-                onClick={onMarkAsComplete}
-                size="sm"
-                variant="green"
-                className="shrink-0"
-                disabled={isMarkingTaskAsComplete}
-              >
-                {isMarkingTaskAsComplete && <Spinner />}
-                Mark as done
-              </Button>
-            ) : (
-              ''
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {can('task:complete') && task.status !== 'done' ? (
+                <Button
+                  onClick={onMarkAsComplete}
+                  size="sm"
+                  variant="green"
+                  className="shrink-0"
+                  disabled={isMarkingTaskAsComplete}
+                >
+                  {isMarkingTaskAsComplete && <Spinner />}
+                  Mark as done
+                </Button>
+              ) : (
+                ''
+              )}
+              <Sheet open={propertiesOpen} onOpenChange={setPropertiesOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="lg:hidden"
+                    aria-label="Open task properties"
+                  >
+                    <PanelRight className="size-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="gap-0 data-[side=right]:w-[min(24rem,100vw)]"
+                >
+                  <SheetHeader className="shrink-0 border-b pr-12">
+                    <SheetTitle>Task properties</SheetTitle>
+                    <SheetDescription className="sr-only">
+                      Status, priority, people, and dates for this task.
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+                    {propertyRows}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
           </nav>
         </div>
 
@@ -482,18 +542,6 @@ function RouteComponent() {
                         <Trash2 />
                       </Button>
                     )}
-                  </div>
-                </div>
-
-                <div className="rounded-md border lg:hidden">
-                  <div className="divide-y px-4 py-2">
-                    {properties.map((property) => (
-                      <DetailRow
-                        key={property.label}
-                        label={property.label}
-                        value={property.value}
-                      />
-                    ))}
                   </div>
                 </div>
               </div>
@@ -672,15 +720,7 @@ function RouteComponent() {
                 <h2 className="text-xs font-medium uppercase text-muted-foreground">
                   Properties
                 </h2>
-                <div className="divide-y  px-4 py-2">
-                  {properties.map((property) => (
-                    <DetailRow
-                      key={property.label}
-                      label={property.label}
-                      value={property.value}
-                    />
-                  ))}
-                </div>
+                {propertyRows}
               </section>
             </aside>
           </div>
