@@ -8,6 +8,7 @@ import workspaceRouter from './workspace.routes';
 import attachmentRouter from './attachment.routes';
 import notificationRouter from './notification.routes';
 import projectsRouter from './projects.routes';
+import projectMilestonesRouter from './projectMilestones.routes';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.get('/health', (_req: Request, res: Response) => {
 router.use(authRouter);
 router.use('/users', userRouter);
 router.use('/projects', projectsRouter);
+router.use('/projects', projectMilestonesRouter);
 router.use('/tasks', taskRouter);
 router.use('/tasks', commentRouter);
 router.use('/workspace', workspaceRouter);
