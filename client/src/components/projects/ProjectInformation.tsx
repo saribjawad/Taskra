@@ -22,7 +22,7 @@ export default function ProjectInformation({
           <span className="text-xs text-muted-foreground">Coming soon</span>
         </div>
         <p className="mt-3 text-xs leading-5 text-muted-foreground">
-          Track completion here once project issues are available.
+          Project task completion tracking is coming soon.
         </p>
         <dl className="mt-4 grid grid-cols-2 gap-4 text-xs">
           <div>

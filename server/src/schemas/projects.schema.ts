@@ -1,5 +1,6 @@
 import z from 'zod';
 import { Priority } from './common.schema';
+import { TaskLabel, TaskStatus } from './task.schema';
 
 // Reusable field schemas
 export const ProjectStatus = z.enum(
@@ -19,6 +20,16 @@ export const AddProjectMembersParamsSchema = z.object({
 });
 export const RemoveProjectMembersParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectParamsSchema = AddProjectMembersParamsSchema;
+export const GetProjectTasksParamsSchema = AddProjectMembersParamsSchema;
+
+export const GetProjectTasksQuerySchema = z.object({
+  cursorId: z.uuid('Invalid cursor UUID').optional(),
+  cursorTime: z.string().optional(),
+  milestoneId: z.uuid('Invalid milestone UUID').optional(),
+  status: TaskStatus.optional(),
+  priority: Priority.optional(),
+  label: TaskLabel.optional(),
+});
 
 export const GetProjectsQuerySchema = z.object({
   page: z.coerce

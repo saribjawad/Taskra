@@ -4,6 +4,8 @@ import {
   AddProjectMembersBodySchema,
   AddProjectMembersParamsSchema,
   CreateProjectSchema,
+  GetProjectTasksParamsSchema,
+  GetProjectTasksQuerySchema,
   GetProjectParamsSchema,
   GetProjectsParamsSchema,
   GetProjectsQuerySchema,
@@ -32,6 +34,7 @@ import {
   getProjectMemberByIdAndProjectId,
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
+import { getTasksByProjectId } from '../services/task.service';
 
 export const GetProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -292,4 +295,65 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Members removed', result));
+};
+
+export const GetProjectTasks = async (req: Request, res: Response) => {
+  const user = req.user;
+  const LIMIT = 15;
+
+  const { cursorId, cursorTime, milestoneId, status, priority, label } =
+    GetProjectTasksQuerySchema.parse(req.query);
+  const { projectId } = GetProjectTasksParamsSchema.parse(req.params);
+
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const tasks = await getTasksByProjectId(
+    project.id,
+    LIMIT + 1,
+    milestoneId,
+    cursorTime,
+    cursorId,
+    status,
+    priority,
+    label,
+  );
+
+  const hasMore = tasks.length > LIMIT;
+  const projectTasks = hasMore ? tasks.slice(0, LIMIT) : tasks;
+
+  // Keep the exact database timestamp; converting it to Date loses microseconds.
+  const cursor = hasMore
+    ? {
+        time: projectTasks[projectTasks.length - 1].cursor_time,
+        id: projectTasks[projectTasks.length - 1].id,
+      }
+    : null;
+
+  const formattedTasks = projectTasks.map((n) => ({
+    id: n.id,
+    title: n.title,
+    status: n.status,
+    priority: n.priority,
+    label: n.label,
+    workspaceId: n.workspace_id,
+    projectId: n.project_id,
+    milestoneId: n.project_milestone_id,
+    updatedAt: n.updated_at,
+    createdAt: n.created_at,
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, 'Project tasks', {
+      tasks: formattedTasks,
+      hasMore,
+      cursor,
+    }),
+  );
 };

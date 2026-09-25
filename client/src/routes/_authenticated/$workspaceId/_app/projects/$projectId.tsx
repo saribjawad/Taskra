@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PageTabs, PageTab } from '#/components/layout/PageLayout'
-import { Box, ChevronRight, CircleDot, Link2, PanelRight } from 'lucide-react'
+import { Box, ChevronRight, Link2, PanelRight } from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
@@ -11,6 +11,7 @@ import { useAuth } from '#/context/auth/auth-hook'
 import { useGetProject } from '#/hooks/project.hooks'
 import ProjectOverview from '#/components/projects/ProjectOverview'
 import ProjectActivity from '#/components/projects/ProjectActivity'
+import ProjectTasks from '#/components/projects/ProjectTasks'
 import ProjectInformation from '#/components/projects/ProjectInformation'
 import {
   Sheet,
@@ -21,7 +22,7 @@ import {
   SheetDescription,
 } from '#/components/ui/sheet'
 
-const projectViews = ['overview', 'activity', 'issues'] as const
+const projectViews = ['overview', 'activity', 'tasks'] as const
 type ProjectView = (typeof projectViews)[number]
 
 export const Route = createFileRoute(
@@ -37,6 +38,7 @@ export const Route = createFileRoute(
 
 function ProjectDetailPage() {
   const [propertiesOpen, setPropertiesOpen] = useState(false)
+  const projectContentRef = useRef<HTMLDivElement>(null)
 
   // A panel opened on mobile must close when the fixed desktop sidebar appears.
   useEffect(() => {
@@ -178,7 +180,7 @@ function ProjectDetailPage() {
                         ? 'Overview'
                         : tab === 'activity'
                           ? 'Activity'
-                          : 'Issues'}
+                          : 'Tasks'}
                     </Link>
                   </PageTab>
                 ))}
@@ -217,7 +219,10 @@ function ProjectDetailPage() {
               </Sheet>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div
+              ref={projectContentRef}
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            >
               <div className="mx-auto max-w-4xl min-w-0 px-4 pb-14 pt-8 sm:px-8 lg:px-10 lg:pt-12">
                 {/* Project identity remains visible when switching sections. */}
                 <div className="mb-8">
@@ -230,15 +235,11 @@ function ProjectDetailPage() {
                 </div>
                 {view === 'overview' && <ProjectOverview project={project} />}
                 {view === 'activity' && <ProjectActivity project={project} />}
-                {view === 'issues' && (
-                  <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 text-center">
-                    <CircleDot className="mb-4 size-6 text-muted-foreground" />
-                    <h2 className="text-sm font-medium">Project issues</h2>
-                    <p className="mt-2 max-w-xs text-sm leading-6 text-muted-foreground">
-                      Issues linked to this project will appear here. This
-                      feature is coming soon.
-                    </p>
-                  </section>
+                {view === 'tasks' && (
+                  <ProjectTasks
+                    project={project}
+                    scrollRootRef={projectContentRef}
+                  />
                 )}
               </div>
             </div>

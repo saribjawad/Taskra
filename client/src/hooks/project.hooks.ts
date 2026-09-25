@@ -1,5 +1,10 @@
 import { useAuth } from '#/context/auth/auth-hook'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   createProject,
   updateProject,
@@ -10,7 +15,9 @@ import {
   createProjectMilestone,
   updateProjectMilestone,
   deleteProjectMilestone,
+  getProjectTasks,
 } from '#/service/project.service'
+import type { ProjectTaskFilters } from '#/service/project.service'
 import type {
   MilestonePayload,
   MilestoneUpdatePayload,
@@ -63,6 +70,23 @@ export function useGetProject(workspaceId: string, projectId: string) {
     queryFn: () => getProject(projectId),
     // The detail endpoint selects its workspace from the session.
     enabled: Boolean(projectId) && workspaceId === user?.activeWorkspace,
+  })
+}
+
+export function useGetProjectTasks(
+  projectId: string,
+  filters: ProjectTaskFilters = {},
+) {
+  return useInfiniteQuery({
+    queryKey: ['project-tasks', projectId, filters],
+    initialPageParam: undefined as { time: string; id: string } | undefined,
+    queryFn: ({ pageParam }) =>
+      getProjectTasks(projectId, pageParam, filters),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore && lastPage.cursor
+        ? { time: lastPage.cursor.time, id: lastPage.cursor.id }
+        : undefined,
+    enabled: Boolean(projectId),
   })
 }
 

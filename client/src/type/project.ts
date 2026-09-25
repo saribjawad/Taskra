@@ -1,4 +1,4 @@
-import type { TaskPriorityType } from './task'
+import type { TaskLabelType, TaskPriorityType, TaskStatusType } from './task'
 
 export type ProjectStatus =
   | 'backlog'
@@ -36,6 +36,19 @@ export interface ProjectMilestone {
   target_date: string | null
   created_at: string
   updated_at: string
+}
+
+export interface ProjectTask {
+  id: string
+  title: string
+  status: TaskStatusType
+  priority: TaskPriorityType
+  label: TaskLabelType
+  workspaceId: string
+  projectId: string | null
+  milestoneId: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ProjectDetail extends Omit<Project, 'lead_id'> {

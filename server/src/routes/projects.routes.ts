@@ -4,6 +4,7 @@ import {
   AddProjectMembers,
   CreateProject,
   GetProject,
+  GetProjectTasks,
   RemoveProjectMembers,
   UpdateProject,
 } from '../controllers/projects.controller';
@@ -23,5 +24,7 @@ projectsRouter
   .route('/:projectId/members')
   .post(asyncHandler(AddProjectMembers))
   .delete(asyncHandler(RemoveProjectMembers));
+
+projectsRouter.route('/:projectId/tasks').get(asyncHandler(GetProjectTasks));
 
 export default projectsRouter;

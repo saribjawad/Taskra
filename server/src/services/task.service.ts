@@ -256,3 +256,50 @@ export const deleteTask = async (id: string) => {
 
   return result.rowCount;
 };
+
+/**
+ * Get all the tasks which belongs to a project
+ *
+ * @param project - Project ID
+ * @returns Tasks
+ */
+export const getTasksByProjectId = async (
+  projectId: string,
+  limit: number,
+  milestoneId?: string,
+  cursorTime?: string,
+  cursorId?: string,
+  status?: string,
+  priority?: string,
+  label?: string,
+): Promise<(Task & { cursor_time: string })[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT tasks.*, tasks.created_at::text AS cursor_time
+    FROM tasks
+    WHERE project_id = $1
+    AND ($2::uuid IS NULL OR project_milestone_id = $2)
+    AND ($3::text IS NULL OR status::text = $3)
+    AND ($4::text IS NULL OR priority::text = $4)
+    AND ($5::text IS NULL OR label::text = $5)
+    AND (
+        $6::timestamptz IS NULL
+        OR (created_at, id) < ($6::timestamptz, $7::uuid)
+      )
+    ORDER BY created_at DESC, id DESC
+    LIMIT $8
+    `,
+    [
+      projectId,
+      milestoneId ?? null,
+      status ?? null,
+      priority ?? null,
+      label ?? null,
+      cursorTime ?? null,
+      cursorId ?? null,
+      limit,
+    ],
+  );
+
+  return result.rows;
+};

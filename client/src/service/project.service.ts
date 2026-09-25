@@ -1,5 +1,6 @@
 import { api } from '#/lib/api'
-import type { Project, ProjectDetail } from '#/type/project'
+import type { Project, ProjectDetail, ProjectTask } from '#/type/project'
+import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
 
 export interface GetProjectsResponse {
   metadata: {
@@ -41,6 +42,33 @@ export async function createProject(
 
 export async function getProject(projectId: string): Promise<ProjectDetail> {
   const response = await api.get(`/projects/${projectId}`)
+  return response.data.data
+}
+
+export interface GetProjectTasksResponse {
+  tasks: ProjectTask[]
+  hasMore: boolean
+  cursor: { time: string; id: string } | null
+}
+
+export interface ProjectTaskFilters {
+  milestoneId?: string
+  status?: TaskStatusType
+  priority?: TaskPriorityType
+  label?: TaskLabelType
+}
+
+export async function getProjectTasks(
+  projectId: string,
+  cursor?: { time: string; id: string },
+  filters: ProjectTaskFilters = {},
+): Promise<GetProjectTasksResponse> {
+  const response = await api.get(`/projects/${projectId}/tasks`, {
+    params: {
+      ...(cursor && { cursorTime: cursor.time, cursorId: cursor.id }),
+      ...filters,
+    },
+  })
   return response.data.data
 }
 
