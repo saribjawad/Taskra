@@ -39,12 +39,17 @@ export default function TaskProjectPicker({
     enabled: projectOpen,
   })
 
+  // Get project if already connected
   const project = useGetProject(workspaceId, projectId ?? '')
+
+  // Connect to project mutation
   const { mutateAsync: connect, isPending } = useConnectTaskToProject(taskId)
 
+  // Get the milestone if already connected
   const milestone = project.data?.milestones.find(
     (item) => item.id === milestoneId,
   )
+
   const visibleProjects =
     projects.data?.pages
       .flatMap((page) => page.projects)
@@ -54,6 +59,7 @@ export default function TaskProjectPicker({
 
   async function save(nextProjectId: string | null, nextMilestoneId?: string) {
     if (isPending) return
+    // If the selection hasn't changed, close the popovers without sending a request.
     if (
       nextProjectId === projectId &&
       (nextMilestoneId ?? null) === milestoneId
