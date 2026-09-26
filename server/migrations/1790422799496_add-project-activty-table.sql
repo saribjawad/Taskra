@@ -1,21 +1,23 @@
 -- Up Migration
-CREATE TABLE project_activty (
+CREATE TABLE project_activity (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE SET NULL,
+  description TEXT NOT NULL,
   type TEXT NOT NULL CHECK (
     type IN (
       'project_created',
-      'lead_updated',
+      'project_updated',
+      'lead_changed',
       'member_added',
       'member_removed',
-      'priority_updated',
-      'status_updated',
-      'start_date_updated',
-      'end_date_updated',
+      'priority_changed',
+      'status_changed',
+      'start_date_changed',
+      'end_date_changed',
       'milestone_added',
       'milestone_removed',
-      'milestone_updated'
+      'milestone_changed'
     )
   ),
   metadata JSONB,

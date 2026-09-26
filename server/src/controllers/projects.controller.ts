@@ -37,6 +37,9 @@ import {
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
 import { getTasksByProjectId } from '../services/task.service';
+import { createProjectActivity } from '../services/projectActivity.service';
+import { Project, ProjectPriorityType } from '../models/projects.model';
+import { ProjectActivityType } from '../models/projectActivity.model';
 
 export const GetProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -107,6 +110,20 @@ export const CreateProject = async (req: Request, res: Response) => {
     throw ApiError.internal('Something went wrong while creating the project');
   }
 
+  // Create project activity
+  const createdProjectActivity = await createProjectActivity(
+    createdProject.id,
+    user.id,
+    `${user.email} created the project.`,
+    'project_created',
+  );
+
+  if (!createdProjectActivity) {
+    throw ApiError.internal(
+      'Something went wrong while creating project activity',
+    );
+  }
+
   res.status(201).json(new ApiResponse(201, 'Project created'));
 };
 
@@ -144,24 +161,67 @@ export const UpdateProject = async (req: Request, res: Response) => {
   }
 
   // Translate API field names to the database column names used by the service.
-  const updatedRowsCount = await updateProject(
-    projectId,
-    Object.fromEntries(
-      Object.entries({
-        name: parsedBody.name,
-        short_summary: parsedBody.shortSummary,
-        description: parsedBody.description,
-        priority: parsedBody.priority,
-        status: parsedBody.status,
-        lead_id: parsedBody.leadId,
-        start_date: parsedBody.startDate,
-        target_date: parsedBody.targetDate,
-      }).filter(([, value]) => value !== undefined),
-    ),
+  const payload = Object.fromEntries(
+    Object.entries({
+      name: parsedBody.name,
+      short_summary: parsedBody.shortSummary,
+      description: parsedBody.description,
+      priority: parsedBody.priority,
+      status: parsedBody.status,
+      lead_id: parsedBody.leadId,
+      start_date: parsedBody.startDate,
+      target_date: parsedBody.targetDate,
+    }).filter(([, value]) => value !== undefined),
   );
+
+  const updatedRowsCount = await updateProject(projectId, payload);
 
   if (!updatedRowsCount || updatedRowsCount <= 0) {
     throw ApiError.internal('Something went wrong while updating the project');
+  }
+
+  const activityMap = {
+    name: 'project_updated',
+    short_summary: 'project_updated',
+    description: 'project_updated',
+    lead_id: 'lead_changed',
+    priority: 'priority_changed',
+    status: 'status_changed',
+    start_date: 'start_date_changed',
+    target_date: 'end_date_changed',
+  };
+
+  // Create project activities
+  for (const [field, activityType] of Object.entries(activityMap)) {
+    if (
+      payload[field] !== undefined &&
+      payload[field] !== project[field as keyof Project]
+    ) {
+      let description = `${user.email} changed ${field} to ${payload[field]}`;
+
+      // Manually add lead email
+      if (field === 'lead_id') {
+        description = `${user.email} changed lead to ${leadUser?.email}`;
+      }
+
+      const createdProjectActivity = await createProjectActivity(
+        project.id,
+        user.id,
+        description,
+        activityType as ProjectActivityType,
+        {
+          field,
+          from: String(project[field as keyof Project] ?? ''),
+          to: String(payload[field] ?? ''),
+        },
+      );
+
+      if (!createdProjectActivity) {
+        throw ApiError.internal(
+          'Something went wrong while creating project activity',
+        );
+      }
+    }
   }
 
   res.status(200).json(new ApiResponse(200, 'Project updated'));
@@ -229,6 +289,7 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
     failed: [] as string[],
   };
 
+  // TODO: instead of looping fetching all the members in single query
   // Check if members belong the workspace
   for (const memberId of memberIds) {
     const workspaceMember = await getWorkspaceMember(
@@ -247,7 +308,24 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
       throw ApiError.internal(
         'Something went wrong while creating project member',
       );
+    } else {
+      // Create project activity
+      const createdProjectActivity = await createProjectActivity(
+        project.id,
+        user.id,
+        // TEMP:
+        // TODO: return user detail from workspace member and use it
+        `${user.email} added ${memberId} as member`,
+        'member_added',
+      );
+
+      if (!createdProjectActivity) {
+        throw ApiError.internal(
+          'Something went wrong while creating project activity',
+        );
+      }
     }
+
     result.added.push(memberId);
   }
 
@@ -273,6 +351,7 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
     failed: [] as string[],
   };
 
+  // TODO: instead of looping fetching all the members in single query
   for (const memberId of memberIds) {
     // Check if project member exists
     const projectMember = await getProjectMemberByIdAndProjectId(
@@ -284,7 +363,6 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
       result.failed.push(memberId);
       continue;
     }
-    console.log(memberId);
 
     const rowsCount = await deleteProjectMember(memberId, project.id);
 
@@ -292,7 +370,24 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
       throw ApiError.internal(
         'Something went wrong while deleting project member',
       );
+    } else {
+      // Create project activity
+      const createdProjectActivity = await createProjectActivity(
+        project.id,
+        user.id,
+        // TEMP:
+        // TODO: return user detail from workspace member and use it
+        `${user.email} removed ${memberId} from member`,
+        'member_removed',
+      );
+
+      if (!createdProjectActivity) {
+        throw ApiError.internal(
+          'Something went wrong while creating project activity',
+        );
+      }
     }
+
     result.removed.push(memberId);
   }
 

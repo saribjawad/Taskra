@@ -15,6 +15,9 @@ import {
   getProjectMilestonesWithIdAndProjectId,
   updateProjectMilestones,
 } from '../services/projectMilestones.service';
+import { createProjectActivity } from '../services/projectActivity.service';
+import { ProjectMilestone } from '../models/projectMilestones.model';
+import { ProjectActivityType } from '../models/projectActivity.model';
 
 export const CreateMilestone = async (req: Request, res: Response) => {
   const user = req.user;
@@ -42,6 +45,20 @@ export const CreateMilestone = async (req: Request, res: Response) => {
   if (!createdProjectMilestone) {
     throw ApiError.notFound(
       'Something went wrong while creating project milestone',
+    );
+  }
+
+  // Create project activity
+  const createdProjectActivity = await createProjectActivity(
+    project.id,
+    user.id,
+    `${user.email} added ${createdProjectMilestone.name} milestone`,
+    'milestone_added',
+  );
+
+  if (!createdProjectActivity) {
+    throw ApiError.internal(
+      'Something went wrong while creating project activity',
     );
   }
 
@@ -75,21 +92,50 @@ export const UpdateMilestones = async (req: Request, res: Response) => {
     throw ApiError.notFound('Project milestone not found');
   }
 
-  const updatedRowsCount = await updateProjectMilestones(
-    milestoneId,
-    Object.fromEntries(
-      Object.entries({
-        name,
-        description,
-        target_date: targetDate,
-      }).filter(([, value]) => value !== undefined),
-    ),
+  const payload = Object.fromEntries(
+    Object.entries({
+      name,
+      description,
+      target_date: targetDate,
+    }).filter(([, value]) => value !== undefined),
   );
+  const updatedRowsCount = await updateProjectMilestones(milestoneId, payload);
 
   if (!updatedRowsCount || updatedRowsCount <= 0) {
     throw ApiError.notFound(
       'Something went wrong while updating project milestone',
     );
+  }
+
+  const activityMap = {
+    name: 'milestone_changed',
+    description: 'milestone_changed',
+    target_date: 'milestone_changed',
+  };
+  for (const [field, activityType] of Object.entries(activityMap)) {
+    if (
+      payload[field] !== undefined &&
+      payload[field] !== projectMilestone[field as keyof ProjectMilestone]
+    ) {
+      let description = `${user.email} updated ${field} to ${payload[field]}`;
+
+      if (payload[field] === 'target_date') {
+        description = `${user.email} updated target date to ${payload[field]}`;
+      }
+
+      const createdProjectActivity = await createProjectActivity(
+        project.id,
+        user.id,
+        description,
+        activityType as ProjectActivityType,
+      );
+
+      if (!createdProjectActivity) {
+        throw ApiError.internal(
+          'Something went wrong while creating project activity',
+        );
+      }
+    }
   }
 
   res.status(200).json(new ApiResponse(200, 'Milestone updated'));
@@ -123,6 +169,20 @@ export const DeleteMilestones = async (req: Request, res: Response) => {
 
   if (!deleteRowCount || deleteRowCount <= 0) {
     throw ApiError.internal('Something went wrong while deleting milestone');
+  }
+
+  // Create project activity
+  const createdProjectActivity = await createProjectActivity(
+    project.id,
+    user.id,
+    `${user.email} removed ${projectMilestone.name} milestone`,
+    'milestone_removed',
+  );
+
+  if (!createdProjectActivity) {
+    throw ApiError.internal(
+      'Something went wrong while creating project activity',
+    );
   }
 
   res.status(200).json(new ApiResponse(200, 'Deleted milestones'));
