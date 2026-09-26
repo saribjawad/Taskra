@@ -223,7 +223,7 @@ function EditTaskDialog({
       <DialogTrigger asChild>{dialogTrigger}</DialogTrigger>
       <DialogContent
         showCloseButton={false}
-        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col "
+        className=" min-w-[70vw] lg:min-w-[50vw] max-h-[85vh] flex flex-col"
       >
         {/* Header */}
         <DialogHeader>
@@ -256,8 +256,11 @@ function EditTaskDialog({
         </DialogHeader>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 "
+        >
+          <FieldGroup className="overflow-y-auto">
             <Controller
               name="title"
               control={control}
@@ -601,7 +604,6 @@ function EditTaskDialog({
               />
             </div>
           </FieldGroup>
-
           <DialogFooter className="mt-6">
             <DialogClose asChild>
               <Button disabled={isPending} type="button" variant="outline">
