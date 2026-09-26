@@ -5,6 +5,7 @@ import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
 import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
 import TaskProjectPicker from '#/components/tasks/TaskProjectPicker'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
+import TaskProperties from '#/components/tasks/TaskProperties'
 import { Badge } from '#/components/ui/badge'
 import {
   Breadcrumb,
@@ -51,7 +52,6 @@ import { useIsMobile } from '#/hooks/use-mobile'
 import {
   avatarColor,
   formatBytes,
-  formatDate,
   formatDateTime,
   formatLabel,
   getInitials,
@@ -101,59 +101,6 @@ export const Route = createFileRoute(
 function Dot({ className }: { className: string }) {
   return (
     <span className={`inline-block h-1.5 w-1.5 rounded-full ${className}`} />
-  )
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
-  return (
-    <div className="grid grid-cols-[5rem_minmax(0,1fr)] items-center gap-3 py-2 text-xs leading-5">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 text-foreground">{value ?? '-'}</dd>
-    </div>
-  )
-}
-
-function PersonValue({
-  name,
-  email,
-}: {
-  name?: string | null
-  email?: string | null
-}) {
-  if (!name) return <span className="text-muted-foreground">Unassigned</span>
-
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <div
-        className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-medium text-white ${avatarColor(name)}`}
-      >
-        {getInitials(name)}
-      </div>
-      <span className="min-w-0 truncate" title={email ?? undefined}>
-        {name}
-      </span>
-    </div>
-  )
-}
-
-function StatusValue({
-  value,
-  styles,
-}: {
-  value: string
-  styles: Record<string, string>
-}) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <Dot className={styles[value] ?? 'bg-zinc-400'} />
-      <span>{formatLabel(value)}</span>
-    </span>
   )
 }
 
@@ -329,59 +276,14 @@ function RouteComponent() {
     if (task && task.id) markTaskAsComplete(task.id)
   }
 
-  const properties = [
-    {
-      label: 'Assignee',
-      value: (
-        <PersonValue
-          name={task.assignee?.username}
-          email={task.assignee?.email}
-        />
-      ),
-    },
-    {
-      label: 'Reporter',
-      value: (
-        <PersonValue
-          name={task.reporter?.username}
-          email={task.reporter?.email}
-        />
-      ),
-    },
-    {
-      label: 'Status',
-      value: <StatusValue value={task.status} styles={STATUS_STYLES} />,
-    },
-    {
-      label: 'Priority',
-      value: <StatusValue value={task.priority} styles={PRIORITY_STYLES} />,
-    },
-    { label: 'Label', value: formatLabel(task.label) },
-    { label: 'Start Date', value: formatDate(task.start_date) },
-    { label: 'Due Date', value: formatDate(task.due_date) },
-    { label: 'Completed', value: formatDate(task.completed_date) },
-    { label: 'Created', value: formatDate(task.created_at) },
-    { label: 'Updated', value: formatDate(task.updated_at) },
-  ]
-
   // The desktop sidebar and mobile sheet share the same property sections.
   const taskInformation = (
     <div className="space-y-4">
-      <section
-        className="rounded-xl border bg-muted/20 p-4"
-        aria-label="Task properties"
-      >
-        <h2 className="mb-3 text-sm font-medium">Properties</h2>
-        <dl>
-          {properties.map((property) => (
-            <DetailRow
-              key={property.label}
-              label={property.label}
-              value={property.value}
-            />
-          ))}
-        </dl>
-      </section>
+      <TaskProperties
+        task={task}
+        workspaceId={task.workspace_id}
+        disabled={!can('task:update')}
+      />
       <TaskProjectPicker
         taskId={task.id}
         workspaceId={task.workspace_id}

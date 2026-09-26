@@ -63,7 +63,7 @@ type Attachments = {
   created_at: Date
 }
 
-interface GetTaskResponse {
+export interface GetTaskResponse {
   id: string
   project_id: string | null
   project_milestone_id: string | null
@@ -82,9 +82,9 @@ interface GetTaskResponse {
     username: string
     email: string
   } | null
-  start_date: string
-  due_date: string
-  completed_date: string
+  start_date: string | null
+  due_date: string | null
+  completed_date: string | null
   updated_at: string
   created_at: string
   workspace_id: string

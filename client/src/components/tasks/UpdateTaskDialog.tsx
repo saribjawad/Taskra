@@ -1,4 +1,4 @@
-import { type Dispatch, type ReactElement, type SetStateAction } from 'react'
+import type { Dispatch, ReactElement, SetStateAction } from 'react'
 import {
   Dialog,
   DialogClose,
@@ -30,8 +30,8 @@ import TaskDescriptionEditor from './TaskDescriptionEditor'
 import AttachmentField, {
   ACCEPTED_DOCUMENT_TYPES,
   ACCEPTED_IMAGE_TYPES,
-  type ExistingAttachment,
 } from '../fields/AttachmentField'
+import type { ExistingAttachment } from '../fields/AttachmentField'
 import { createAttachmentsSchema } from '#/schema/attachment.schema'
 import { useMemo } from 'react'
 import { useParams } from '@tanstack/react-router'
@@ -50,9 +50,9 @@ interface EditTaskDialogProps {
     label: string
     assignee?: { id: string; username: string; email: string }
     reporter?: { id: string; username: string; email: string }
-    start_date: string
-    due_date: string
-    completed_date: string
+    start_date: string | null
+    due_date: string | null
+    completed_date: string | null
     attachments?: ExistingAttachment[]
   }
   isDialogOpen: boolean
@@ -258,7 +258,7 @@ function EditTaskDialog({
         {/* Form */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col flex-1 "
+          className="flex flex-col flex-1 min-h-0"
         >
           <FieldGroup className="overflow-y-auto">
             <Controller
