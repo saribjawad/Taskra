@@ -87,6 +87,10 @@ export async function updateProject(
   await api.patch(`/projects/${projectId}`, payload)
 }
 
+export async function deleteProject(projectId: string): Promise<void> {
+  await api.delete(`/projects/${projectId}`)
+}
+
 export interface MilestonePayload {
   name: string
   description?: string

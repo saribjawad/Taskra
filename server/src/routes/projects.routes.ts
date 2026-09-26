@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import {
   AddProjectMembers,
   CreateProject,
+  DeleteProject,
   GetProject,
   GetProjectTasks,
   RemoveProjectMembers,
@@ -18,7 +19,8 @@ projectsRouter.route('/').post(asyncHandler(CreateProject));
 projectsRouter
   .route('/:projectId')
   .get(asyncHandler(GetProject))
-  .patch(asyncHandler(UpdateProject));
+  .patch(asyncHandler(UpdateProject))
+  .delete(asyncHandler(DeleteProject));
 
 projectsRouter
   .route('/:projectId/members')

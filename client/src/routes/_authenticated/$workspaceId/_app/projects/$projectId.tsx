@@ -1,18 +1,39 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { PageTabs, PageTab } from '#/components/layout/PageLayout'
-import { Box, ChevronRight, Link2, PanelRight } from 'lucide-react'
+import {
+  Box,
+  ChevronRight,
+  Link2,
+  MoreHorizontal,
+  PanelRight,
+  Trash2,
+} from 'lucide-react'
 import { isAxiosError } from 'axios'
 import { toast } from 'sonner'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { useAuth } from '#/context/auth/auth-hook'
-import { useGetProject } from '#/hooks/project.hooks'
+import { useDeleteProject, useGetProject } from '#/hooks/project.hooks'
 import ProjectOverview from '#/components/projects/ProjectOverview'
 import ProjectActivity from '#/components/projects/ProjectActivity'
 import ProjectTasks from '#/components/projects/ProjectTasks'
 import ProjectInformation from '#/components/projects/ProjectInformation'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '#/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 import {
   Sheet,
   SheetTrigger,
@@ -38,6 +59,7 @@ export const Route = createFileRoute(
 
 function ProjectDetailPage() {
   const [propertiesOpen, setPropertiesOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const projectContentRef = useRef<HTMLDivElement>(null)
 
   // A panel opened on mobile must close when the fixed desktop sidebar appears.
@@ -56,6 +78,7 @@ function ProjectDetailPage() {
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
   const { user } = useAuth()
+  const deleteProject = useDeleteProject(workspaceId, projectId)
 
   const {
     data: project,
@@ -74,6 +97,20 @@ function ProjectDetailPage() {
       toast.success('Project link copied')
     } catch {
       toast.error('Unable to copy the link')
+    }
+  }
+
+  async function confirmDeleteProject() {
+    try {
+      await deleteProject.mutateAsync()
+      toast.success('Project deleted')
+      await navigate({
+        to: '/$workspaceId/projects',
+        params: { workspaceId },
+        search: { page: 1, limit: 10 },
+      })
+    } catch {
+      toast.error('Unable to delete project. Please try again.')
     }
   }
 
@@ -100,15 +137,73 @@ function ProjectDetailPage() {
             {project?.name ?? 'Project details'}
           </span>
         </nav>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Copy project link"
-          onClick={() => void copyLink()}
-        >
-          <Link2 className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Copy project link"
+            onClick={() => void copyLink()}
+          >
+            <Link2 className="size-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Project actions"
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => setDeleteDialogOpen(true)}
+              >
+                <Trash2 className="size-4" />
+                Delete project
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !deleteProject.isPending) setDeleteDialogOpen(false)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {project?.name ?? 'project'}?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes the project, its milestones, and its
+              members. Tasks will remain in the workspace but will no longer be
+              connected to this project.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleteProject.isPending}
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteProject.isPending || !project}
+              onClick={() => void confirmDeleteProject()}
+            >
+              {deleteProject.isPending ? 'Deleting…' : 'Delete project'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Loading and access errors */}
       {wrongWorkspace ? (

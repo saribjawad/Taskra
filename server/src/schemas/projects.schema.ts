@@ -18,6 +18,7 @@ export const GetProjectsParamsSchema = z.object({
 export const AddProjectMembersParamsSchema = z.object({
   projectId: z.uuid('Invalid project UUID'),
 });
+export const DeleteProjectParamsSchema = AddProjectMembersParamsSchema;
 export const RemoveProjectMembersParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectTasksParamsSchema = AddProjectMembersParamsSchema;

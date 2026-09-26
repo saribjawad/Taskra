@@ -127,3 +127,9 @@ export const updateProject = async (
 
   return result.rowCount;
 };
+
+export const deleteProject = async (id: string) => {
+  const result = await dbPool.query(`DELETE FROM projects WHERE id = $1`, [id]);
+
+  return result.rowCount;
+};

@@ -13,9 +13,11 @@ import {
   RemoveProjectMembersParamsSchema,
   UpdateProjectParamsSchema,
   UpdateProjectSchema,
+  DeleteProjectParamsSchema,
 } from '../schemas/projects.schema';
 import {
   createProject,
+  deleteProject,
   getProjectByIdAndWorkspaceId,
   getProjectsByWorkspaceId,
   getProjectWithLeadDetails,
@@ -356,4 +358,26 @@ export const GetProjectTasks = async (req: Request, res: Response) => {
       cursor,
     }),
   );
+};
+
+export const DeleteProject = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { projectId } = DeleteProjectParamsSchema.parse(req.params);
+
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const deleteProjectRowCount = await deleteProject(project.id);
+
+  if (!deleteProjectRowCount || deleteProjectRowCount <= 0) {
+    throw ApiError.internal('Something went wrong while deleting the project');
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Project deleted'));
 };

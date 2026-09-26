@@ -16,12 +16,12 @@ import {
   updateProjectMilestone,
   deleteProjectMilestone,
   getProjectTasks,
+  deleteProject,
 } from '#/service/project.service'
-import type { ProjectTaskFilters } from '#/service/project.service'
-import type {
-  MilestonePayload,
-  MilestoneUpdatePayload,
-} from '#/service/project.service'
+
+type ProjectTaskFilters = Parameters<typeof getProjectTasks>[2]
+type MilestonePayload = Parameters<typeof createProjectMilestone>[1]
+type MilestoneUpdatePayload = Parameters<typeof updateProjectMilestone>[2]
 
 export function useGetProjects(
   workspaceId: string,
@@ -63,6 +63,21 @@ export function useUpdateProject(workspaceId: string, projectId: string) {
   })
 }
 
+export function useDeleteProject(workspaceId: string, projectId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => deleteProject(projectId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', workspaceId],
+      })
+      queryClient.removeQueries({
+        queryKey: ['project', workspaceId, projectId],
+      })
+    },
+  })
+}
+
 export function useGetProject(workspaceId: string, projectId: string) {
   const { user } = useAuth()
   return useQuery({
@@ -80,8 +95,7 @@ export function useGetProjectTasks(
   return useInfiniteQuery({
     queryKey: ['project-tasks', projectId, filters],
     initialPageParam: undefined as { time: string; id: string } | undefined,
-    queryFn: ({ pageParam }) =>
-      getProjectTasks(projectId, pageParam, filters),
+    queryFn: ({ pageParam }) => getProjectTasks(projectId, pageParam, filters),
     getNextPageParam: (lastPage) =>
       lastPage.hasMore && lastPage.cursor
         ? { time: lastPage.cursor.time, id: lastPage.cursor.id }
