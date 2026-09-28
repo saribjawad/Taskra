@@ -484,7 +484,7 @@ export const DeleteProject = async (req: Request, res: Response) => {
 
 export const GetProjectActivity = async (req: Request, res: Response) => {
   const user = req.user;
-  const LIMIT = 4;
+  const LIMIT = 20;
 
   const { cursorId, cursorTime } = GetProjectActivityQuery.parse(req.query);
   const { projectId } = GetProjectActivityParamsSchema.parse(req.params);
@@ -512,24 +512,26 @@ export const GetProjectActivity = async (req: Request, res: Response) => {
 
   const cursor = hasMore
     ? {
-        time: pageProjectActivities[pageProjectActivities.length - 1].created_at,
+        time: pageProjectActivities[pageProjectActivities.length - 1]
+          .created_at,
         id: pageProjectActivities[pageProjectActivities.length - 1].id,
       }
     : null;
 
-  const formatedPageProjectActivties = pageProjectActivities.map((p) => ({
+  const formattedPageProjectActivities = pageProjectActivities.map((p) => ({
     id: p.id,
     projectId: p.project_id,
     userId: p.user_id,
     type: p.type,
-    metadate: p.metadata,
+    description: p.description,
+    metadata: p.metadata,
     updatedAt: p.updated_at,
     createdAt: p.created_at,
   }));
 
   res.status(200).json(
     new ApiResponse(200, 'Project activty', {
-      data: formatedPageProjectActivties,
+      projectActivities: formattedPageProjectActivities,
       hasMore,
       cursor,
     }),

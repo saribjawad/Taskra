@@ -15,6 +15,7 @@ export interface ProjectActivty {
   id: string;
   project_id: string;
   user_id: string;
+  description: string;
   type: ProjectActivityType;
   metadata: {
     field: string;

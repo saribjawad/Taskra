@@ -17,6 +17,7 @@ import {
   deleteProjectMilestone,
   getProjectTasks,
   deleteProject,
+  getProjectActivities,
 } from '#/service/project.service'
 
 type ProjectTaskFilters = Parameters<typeof getProjectTasks>[2]
@@ -100,6 +101,23 @@ export function useGetProjectTasks(
       lastPage.hasMore && lastPage.cursor
         ? { time: lastPage.cursor.time, id: lastPage.cursor.id }
         : undefined,
+    enabled: Boolean(projectId),
+  })
+}
+
+export function useGetProjectActivity(projectId: string) {
+  return useInfiniteQuery({
+    queryKey: ['projectActivity', projectId],
+    initialPageParam: undefined as { time: string; id: string } | undefined,
+    queryFn: ({ pageParam }) => getProjectActivities(projectId, pageParam),
+    getNextPageParam: (lastPage) => {
+      return lastPage.hasMore && lastPage.cursor
+        ? {
+            id: lastPage.cursor.id,
+            time: lastPage.cursor.time,
+          }
+        : undefined
+    },
     enabled: Boolean(projectId),
   })
 }

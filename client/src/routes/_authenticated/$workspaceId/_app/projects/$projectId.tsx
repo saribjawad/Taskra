@@ -329,7 +329,12 @@ function ProjectDetailPage() {
                   </h1>
                 </div>
                 {view === 'overview' && <ProjectOverview project={project} />}
-                {view === 'activity' && <ProjectActivity project={project} />}
+                {view === 'activity' && (
+                  <ProjectActivity
+                    project={project}
+                    scrollRootRef={projectContentRef}
+                  />
+                )}
                 {view === 'tasks' && (
                   <ProjectTasks
                     project={project}

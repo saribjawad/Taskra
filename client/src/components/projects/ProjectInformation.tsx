@@ -3,6 +3,7 @@ import ProjectProperties from './ProjectProperties'
 import ProjectMilestones from './ProjectMilestones'
 import ProjectActivity from './ProjectActivity'
 import { formatProjectDate } from './project-presentation'
+import { useLocation } from '@tanstack/react-router'
 
 // Shared content for the desktop sidebar and mobile sheet.
 export default function ProjectInformation({
@@ -12,6 +13,7 @@ export default function ProjectInformation({
   project: ProjectDetail
   onSeeAll: () => void
 }) {
+  const view = useLocation().search.view
   return (
     <div className="space-y-4 p-4">
       <ProjectProperties project={project} />
@@ -40,7 +42,9 @@ export default function ProjectInformation({
         </dl>
       </section>
       {/* Open the full activity tab from the sidebar summary. */}
-      <ProjectActivity project={project} compact onSeeAll={onSeeAll} />
+      {view !== 'activity' && (
+        <ProjectActivity project={project} compact onSeeAll={onSeeAll} />
+      )}
       <p className="px-1 text-xs text-muted-foreground">
         Last updated {formatProjectDate(project.updated_at)}
       </p>

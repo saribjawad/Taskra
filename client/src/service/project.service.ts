@@ -1,6 +1,7 @@
 import { api } from '#/lib/api'
 import type { Project, ProjectDetail, ProjectTask } from '#/type/project'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
+import type { ProjectActivity } from '#/type/projectActivity'
 
 export interface GetProjectsResponse {
   metadata: {
@@ -157,4 +158,22 @@ export async function removeProjectMembers(
       'Some members could not be removed. Refresh the list and try again.',
     )
   }
+}
+
+export interface GetProjectActivitiesResponse {
+  projectActivities: ProjectActivity[]
+  hasMore: boolean
+  cursor: { time: string; id: string } | null
+}
+
+export async function getProjectActivities(
+  projectId: string,
+  cursor?: { time: string; id: string },
+): Promise<GetProjectActivitiesResponse> {
+  const resp = await api.get(`/projects/${projectId}/activity`, {
+    params: {
+      ...(cursor && { cursorTime: cursor.time, cursorId: cursor.id }),
+    },
+  })
+  return resp.data.data
 }

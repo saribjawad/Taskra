@@ -6,6 +6,10 @@ import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
 import TaskProjectPicker from '#/components/tasks/TaskProjectPicker'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
 import TaskProperties from '#/components/tasks/TaskProperties'
+import {
+  ActivityEventRow,
+  ActivityEventSkeleton,
+} from '#/components/activity/ActivityEventRow'
 import { Badge } from '#/components/ui/badge'
 import {
   Breadcrumb,
@@ -31,7 +35,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '#/components/ui/sheet'
-import { Skeleton } from '#/components/ui/skeleton'
 import { Spinner } from '#/components/ui/spinner'
 import { Textarea } from '#/components/ui/textarea'
 import { PRIORITY_STYLES, STATUS_STYLES } from '#/constants'
@@ -129,22 +132,6 @@ function ActivityIcon({ type }: { type: TaskActivity['type'] }) {
   if (type === 'task_created') return <Circle className={className} />
 
   return <RefreshCw className={className} />
-}
-
-function ActivitySkeleton() {
-  return (
-    <div className="space-y-5">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="flex gap-3">
-          <Skeleton className="size-7 rounded-full" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-3 w-28" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 const CreateCommentSchema = z.object({
@@ -517,7 +504,7 @@ function RouteComponent() {
 
                   <div className="space-y-3">
                     {isTaskActivityLoading ? (
-                      <ActivitySkeleton />
+                      <ActivityEventSkeleton />
                     ) : activities.length <= 0 ? (
                       <p className="text-sm text-muted-foreground">
                         No activity yet.
@@ -526,23 +513,12 @@ function RouteComponent() {
                       activities.map((entry) => {
                         if (entry.kind === 'event') {
                           return (
-                            <div
+                            <ActivityEventRow
                               key={`event-${entry.id}`}
-                              className="flex gap-3 items-center"
-                            >
-                              <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border bg-background text-muted-foreground">
-                                <ActivityIcon type={entry.type} />
-                              </div>
-                              <div className="min-w-0 flex-1 flex items-center gap-2">
-                                <p className="text-xs leading-6 text-muted-foreground wrap-anywhere">
-                                  {entry.description}
-                                </p>
-                                ·
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {formatDateTime(entry.created_at)}
-                                </p>
-                              </div>
-                            </div>
+                              icon={<ActivityIcon type={entry.type} />}
+                              description={entry.description}
+                              createdAt={entry.created_at}
+                            />
                           )
                         }
                         const comment = entry
