@@ -27,3 +27,31 @@ export const createProjectActivity = async (
 
   return results.rows[0];
 };
+
+export const getProjectActivity = async (
+  projectId: string,
+  limit: number,
+  cursorId: string | undefined,
+  cursorTime: Date | undefined,
+): Promise<ProjectActivty[]> => {
+  console.log('Projectid', projectId);
+  console.log('limit', limit);
+  console.log('cursorId', cursorId);
+  console.log('cursorTime', cursorTime);
+
+  const results = await dbPool.query(
+    `
+    SELECT * FROM project_activity
+    WHERE project_id = $1
+    AND (
+         $2::timestamptz IS NULL 
+         OR (created_at, id) < ($2::timestamptz, $3::uuid)
+        )
+    ORDER BY created_at DESC, id DESC
+    LIMIT $4
+    `,
+    [projectId, cursorTime ?? null, cursorId ?? null, limit],
+  );
+
+  return results.rows;
+};

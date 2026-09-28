@@ -5,6 +5,7 @@ import {
   CreateProject,
   DeleteProject,
   GetProject,
+  GetProjectActivity,
   GetProjectTasks,
   RemoveProjectMembers,
   UpdateProject,
@@ -21,6 +22,10 @@ projectsRouter
   .get(asyncHandler(GetProject))
   .patch(asyncHandler(UpdateProject))
   .delete(asyncHandler(DeleteProject));
+
+projectsRouter
+  .route('/:projectId/activity')
+  .get(asyncHandler(GetProjectActivity));
 
 projectsRouter
   .route('/:projectId/members')

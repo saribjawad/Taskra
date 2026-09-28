@@ -22,6 +22,12 @@ export const DeleteProjectParamsSchema = AddProjectMembersParamsSchema;
 export const RemoveProjectMembersParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectParamsSchema = AddProjectMembersParamsSchema;
 export const GetProjectTasksParamsSchema = AddProjectMembersParamsSchema;
+export const GetProjectActivityParamsSchema = AddProjectMembersParamsSchema;
+
+export const GetProjectActivityQuery = z.object({
+  cursorId: z.uuid('Invalid cursor UUID').optional(),
+  cursorTime: z.coerce.date().optional(),
+});
 
 export const GetProjectTasksQuerySchema = z.object({
   cursorId: z.uuid('Invalid cursor UUID').optional(),

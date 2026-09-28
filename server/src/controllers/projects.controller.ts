@@ -14,6 +14,8 @@ import {
   UpdateProjectParamsSchema,
   UpdateProjectSchema,
   DeleteProjectParamsSchema,
+  GetProjectActivityParamsSchema,
+  GetProjectActivityQuery,
 } from '../schemas/projects.schema';
 import {
   createProject,
@@ -37,7 +39,10 @@ import {
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
 import { getTasksByProjectId } from '../services/task.service';
-import { createProjectActivity } from '../services/projectActivity.service';
+import {
+  createProjectActivity,
+  getProjectActivity,
+} from '../services/projectActivity.service';
 import { Project, ProjectPriorityType } from '../models/projects.model';
 import { ProjectActivityType } from '../models/projectActivity.model';
 
@@ -475,4 +480,58 @@ export const DeleteProject = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Project deleted'));
+};
+
+export const GetProjectActivity = async (req: Request, res: Response) => {
+  const user = req.user;
+  const LIMIT = 4;
+
+  const { cursorId, cursorTime } = GetProjectActivityQuery.parse(req.query);
+  const { projectId } = GetProjectActivityParamsSchema.parse(req.params);
+
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const projectActivities = await getProjectActivity(
+    project.id,
+    LIMIT + 1,
+    cursorId,
+    cursorTime,
+  );
+
+  const hasMore = projectActivities.length > LIMIT;
+  const pageProjectActivities = hasMore
+    ? projectActivities.slice(0, LIMIT)
+    : projectActivities;
+
+  const cursor = hasMore
+    ? {
+        time: pageProjectActivities[pageProjectActivities.length - 1].created_at,
+        id: pageProjectActivities[pageProjectActivities.length - 1].id,
+      }
+    : null;
+
+  const formatedPageProjectActivties = pageProjectActivities.map((p) => ({
+    id: p.id,
+    projectId: p.project_id,
+    userId: p.user_id,
+    type: p.type,
+    metadate: p.metadata,
+    updatedAt: p.updated_at,
+    createdAt: p.created_at,
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, 'Project activty', {
+      data: formatedPageProjectActivties,
+      hasMore,
+      cursor,
+    }),
+  );
 };
