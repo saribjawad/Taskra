@@ -53,6 +53,47 @@ export const getProjectWithLeadDetails = async (
   return result.rows[0];
 };
 
+export const getProjectTaskProgress = async (projectId: string) => {
+  const [totals, assignees] = await Promise.all([
+    dbPool.query(
+      `
+      SELECT
+        COUNT(*)::int AS scope,
+        COUNT(*) FILTER (WHERE status = 'done')::int AS completed
+      FROM tasks
+      WHERE project_id = $1
+      `,
+      [projectId],
+    ),
+    dbPool.query(
+      `
+      SELECT
+        users.id,
+        users.username,
+        users.email,
+        COUNT(*)::int AS task_count
+      FROM tasks
+      JOIN users ON users.id = tasks.assignee
+      WHERE tasks.project_id = $1
+      GROUP BY users.id, users.username, users.email
+      ORDER BY task_count DESC, users.username ASC
+      `,
+      [projectId],
+    ),
+  ]);
+
+  return {
+    scope: totals.rows[0].scope as number,
+    completed: totals.rows[0].completed as number,
+    assignees: assignees.rows.map((assignee) => ({
+      id: assignee.id as string,
+      username: assignee.username as string,
+      email: assignee.email as string,
+      taskCount: assignee.task_count as number,
+    })),
+  };
+};
+
 export const getProjectsByWorkspaceId = async (
   workspaceId: string,
   limit: number,

@@ -18,6 +18,7 @@ import {
   getProjectTasks,
   deleteProject,
   getProjectActivities,
+  getProjectTaskProgress,
 } from '#/service/project.service'
 
 type ProjectTaskFilters = Parameters<typeof getProjectTasks>[2]
@@ -101,6 +102,14 @@ export function useGetProjectTasks(
       lastPage.hasMore && lastPage.cursor
         ? { time: lastPage.cursor.time, id: lastPage.cursor.id }
         : undefined,
+    enabled: Boolean(projectId),
+  })
+}
+
+export function useGetProjectTaskProgress(projectId: string) {
+  return useQuery({
+    queryKey: ['project-task-progress', projectId],
+    queryFn: () => getProjectTaskProgress(projectId),
     enabled: Boolean(projectId),
   })
 }

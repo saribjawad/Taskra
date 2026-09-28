@@ -34,11 +34,6 @@ export const getProjectActivity = async (
   cursorId: string | undefined,
   cursorTime: Date | undefined,
 ): Promise<ProjectActivty[]> => {
-  console.log('Projectid', projectId);
-  console.log('limit', limit);
-  console.log('cursorId', cursorId);
-  console.log('cursorTime', cursorTime);
-
   const results = await dbPool.query(
     `
     SELECT * FROM project_activity

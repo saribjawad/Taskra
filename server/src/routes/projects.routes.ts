@@ -6,6 +6,7 @@ import {
   DeleteProject,
   GetProject,
   GetProjectActivity,
+  GetProjectProgress,
   GetProjectTasks,
   RemoveProjectMembers,
   UpdateProject,
@@ -26,6 +27,10 @@ projectsRouter
 projectsRouter
   .route('/:projectId/activity')
   .get(asyncHandler(GetProjectActivity));
+
+projectsRouter
+  .route('/:projectId/progress')
+  .get(asyncHandler(GetProjectProgress));
 
 projectsRouter
   .route('/:projectId/members')

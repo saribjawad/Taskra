@@ -27,6 +27,7 @@ export function useConnectTaskToProject(taskId: string) {
         queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
         queryClient.invalidateQueries({ queryKey: ['tasks'] }),
         queryClient.invalidateQueries({ queryKey: ['project-tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['project-task-progress'] }),
       ]),
   })
 }
@@ -86,6 +87,7 @@ export const useCreateTask = () => {
           }
         },
       })
+      queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
 
       // TODO: show the toast
       console.log('Successfully created the task')
@@ -105,6 +107,7 @@ export const useMarkTaskAsComplete = () => {
       queryClient.invalidateQueries({
         queryKey: [`task-activity-${taskId}`],
       })
+      queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
 
       // TODO: show the toast
       console.log('Successfully marked task as completed')
@@ -129,6 +132,7 @@ export const useDeleteTask = () => {
           }
         },
       })
+      queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
 
       // TODO: show the toast
       console.log('Successfully deleted the task')
@@ -157,6 +161,7 @@ export const useUpdateTask = () => {
       queryClient.invalidateQueries({
         queryKey: ['tasks'],
       })
+      queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
 
       // TODO: show the toast
       console.log('Successfully updated the task')

@@ -1,5 +1,10 @@
 import { api } from '#/lib/api'
-import type { Project, ProjectDetail, ProjectTask } from '#/type/project'
+import type {
+  Project,
+  ProjectDetail,
+  ProjectTask,
+  ProjectTaskProgress,
+} from '#/type/project'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
 import type { ProjectActivity } from '#/type/projectActivity'
 
@@ -43,6 +48,13 @@ export async function createProject(
 
 export async function getProject(projectId: string): Promise<ProjectDetail> {
   const response = await api.get(`/projects/${projectId}`)
+  return response.data.data
+}
+
+export async function getProjectTaskProgress(
+  projectId: string,
+): Promise<ProjectTaskProgress> {
+  const response = await api.get(`/projects/${projectId}/progress`)
   return response.data.data
 }
 

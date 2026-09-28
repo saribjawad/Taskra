@@ -51,6 +51,17 @@ export interface ProjectTask {
   updatedAt: string
 }
 
+export interface ProjectTaskProgress {
+  scope: number
+  completed: number
+  assignees: {
+    id: string
+    username: string
+    email: string
+    taskCount: number
+  }[]
+}
+
 export interface ProjectDetail extends Omit<Project, 'lead_id'> {
   lead: ProjectPerson | null
   members: {

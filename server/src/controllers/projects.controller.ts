@@ -23,6 +23,7 @@ import {
   getProjectByIdAndWorkspaceId,
   getProjectsByWorkspaceId,
   getProjectWithLeadDetails,
+  getProjectTaskProgress,
   updateProject,
 } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
@@ -458,6 +459,22 @@ export const GetProjectTasks = async (req: Request, res: Response) => {
       cursor,
     }),
   );
+};
+
+export const GetProjectProgress = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { projectId } = GetProjectParamsSchema.parse(req.params);
+  const project = await getProjectByIdAndWorkspaceId(
+    projectId,
+    user.activeWorkspace,
+  );
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  const progress = await getProjectTaskProgress(project.id);
+  res.status(200).json(new ApiResponse(200, 'Project progress', progress));
 };
 
 export const DeleteProject = async (req: Request, res: Response) => {
