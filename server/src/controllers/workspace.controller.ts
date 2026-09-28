@@ -519,7 +519,9 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
       invitation.workspace_id,
       'invite:accepted',
       `The invite you sent to ${user.email} has been accepted`,
-      user.id,
+      {
+        actorId: user.id,
+      },
     );
 
     if (!createdNotification) {
@@ -586,7 +588,9 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
       invitation.workspace_id,
       'invite:declined',
       `The invite you sent to ${user.email} has been declined`,
-      user.id,
+      {
+        actorId: user.id,
+      },
     );
 
     if (!createdNotification) {

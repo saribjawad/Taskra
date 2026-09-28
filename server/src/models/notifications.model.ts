@@ -5,13 +5,20 @@ export type NotificationType =
   | 'task:commented'
   | 'task:due_soon'
   | 'invite:accepted'
-  | 'invite:declined';
+  | 'invite:declined'
+  | 'project:completed'
+  | 'project:lead_assigned'
+  | 'project:member_assigned'
+  | 'project:task_added'
+  | 'project:commented'
+  | 'project:target_date_soon';
 
 export interface Notification {
   id: string;
   user_id: string;
   actor_id?: string;
   task_id?: string;
+  project_id?: string;
   workspace_id: string;
   seen: boolean;
   type: NotificationType;

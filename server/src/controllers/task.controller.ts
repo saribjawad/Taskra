@@ -41,7 +41,6 @@ import { createNotification } from '../services/notifications.service';
 import { isObjectEmpty } from '../utils/isObjectEmpty';
 import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
 import { getProjectMilestonesWithIdAndProjectId } from '../services/projectMilestones.service';
-import { kMaxLength } from 'node:buffer';
 
 // ==================================================================================
 // Task Controllers
@@ -149,8 +148,10 @@ export const CreateTask = async (req: Request, res: Response) => {
       task.workspace_id,
       'task:assigned',
       'A task has been assigned to you',
-      user.id,
-      task.id,
+      {
+        actorId: user.id,
+        taskId: task.id,
+      },
     );
 
     if (!createdNotification) {
@@ -179,8 +180,10 @@ export const CreateTask = async (req: Request, res: Response) => {
       task.workspace_id,
       'task:reporter_assigned',
       'You were assigned as the reporter of a task',
-      user.id,
-      task.id,
+      {
+        actorId: user.id,
+        taskId: task.id,
+      },
     );
 
     if (!createdNotification) {
@@ -378,8 +381,10 @@ export const UpdateTask = async (req: Request, res: Response) => {
       task.workspace_id,
       'task:assigned',
       'A task has been assigned to you',
-      user.id,
-      task.id,
+      {
+        actorId: user.id,
+        taskId: task.id,
+      },
     );
 
     if (!createdNotification) {
@@ -408,8 +413,10 @@ export const UpdateTask = async (req: Request, res: Response) => {
       task.workspace_id,
       'task:reporter_assigned',
       'You were assigned as the reporter of a task',
-      user.id,
-      task.id,
+      {
+        actorId: user.id,
+        taskId: task.id,
+      },
     );
 
     if (!createdNotification) {
@@ -473,8 +480,10 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
         task.workspace_id,
         'task:completed',
         'Task has been marked as completed',
-        user.id,
-        task.id,
+        {
+          actorId: user.id,
+          taskId: task.id,
+        },
       );
 
       if (!createdNotification) {
@@ -665,6 +674,7 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       projectId,
       user.activeWorkspace,
     );
+
     if (!project) {
       throw ApiError.notFound('Project not found');
     }
@@ -674,9 +684,35 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
         milestoneId,
         project.id,
       );
+
       if (!milestone) {
         throw ApiError.notFound('Project milestone not found');
       }
+    }
+
+    if (project.lead_id && project.lead_id !== user.id) {
+      const createdNotification = await createNotification(
+        project.lead_id,
+        project.workspace_id,
+        'project:task_added',
+        `${user.email} added '${task.title}' to '${project.name}'`,
+        { actorId: user.id, projectId: project.id },
+      );
+
+      if (!createdNotification) {
+        throw ApiError.internal(
+          'Something went wrong while creating notification',
+        );
+      }
+
+      notifyMemberInWorkspace(project.lead_id, project.workspace_id, {
+        type: 'project:task_added',
+        message: `${user.email} added '${task.title}' to '${project.name}'`,
+        metaData: {
+          actorId: user.id,
+          projectId: project.id,
+        },
+      });
     }
   }
 

@@ -8,8 +8,9 @@ import { Notification, NotificationType } from '../models/notifications.model';
  * @param workspaceId - Workspace uuid
  * @param type - Type of notifications
  * @param message - Notification message
- * @param actorId - Actor uuid (optional)
- * @param taskId - Task uuid (optional)
+ * @param metaData.actorId - Actor uuid (optional)
+ * @param metaData.taskId - Task uuid (optional)
+ * @param metaData.projectId - Project uuid (optional)
  * @returns The created notifications
  */
 export async function createNotification(
@@ -17,17 +18,28 @@ export async function createNotification(
   workspaceId: string,
   type: NotificationType,
   message: string,
-  actorId?: string,
-  taskId?: string,
+  metaData?: {
+    actorId?: string;
+    taskId?: string;
+    projectId?: string;
+  },
 ): Promise<Notification> {
   const result = await dbPool.query(
     `
     INSERT INTO notifications
-    (user_id, actor_id, task_id, workspace_id, type, message)
-    VALUES ($1, $2, $3, $4, $5, $6)
+    (user_id, actor_id, task_id, project_id, workspace_id, type, message)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
     `,
-    [userId, actorId ?? null, taskId ?? null, workspaceId, type, message],
+    [
+      userId,
+      metaData?.actorId ?? null,
+      metaData?.taskId ?? null,
+      metaData?.projectId ?? null,
+      workspaceId,
+      type,
+      message,
+    ],
   );
 
   return result.rows[0];

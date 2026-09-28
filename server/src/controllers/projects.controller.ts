@@ -37,6 +37,7 @@ import {
   createProjectMember,
   deleteProjectMember,
   getProjectMemberByIdAndProjectId,
+  getProjectMembersByProjectId,
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
 import { getTasksByProjectId } from '../services/task.service';
@@ -44,8 +45,10 @@ import {
   createProjectActivity,
   getProjectActivity,
 } from '../services/projectActivity.service';
-import { Project, ProjectPriorityType } from '../models/projects.model';
+import { Project } from '../models/projects.model';
 import { ProjectActivityType } from '../models/projectActivity.model';
+import { createNotification } from '../services/notifications.service';
+import { notifyMemberInWorkspace } from '../websockets/init';
 
 export const GetProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -128,6 +131,32 @@ export const CreateProject = async (req: Request, res: Response) => {
     throw ApiError.internal(
       'Something went wrong while creating project activity',
     );
+  }
+
+  // Notifiy the lead user
+  if (leadUser && leadUser.id !== user.id) {
+    const createdNotification = await createNotification(
+      leadUser.id,
+      createdProject.workspace_id,
+      'project:lead_assigned',
+      `You have been assigne as a lead to "${createdProject.name}" project`,
+      { actorId: user.id, projectId: createdProject.id },
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
+    notifyMemberInWorkspace(leadUser.id, createdProject.workspace_id, {
+      type: 'project:lead_assigned',
+      message: `You have been assigne as a lead to "${createdProject.name}" project`,
+      metaData: {
+        actorId: user.id,
+        projectId: createdProject.id,
+      },
+    });
   }
 
   res.status(201).json(new ApiResponse(201, 'Project created'));
@@ -230,6 +259,74 @@ export const UpdateProject = async (req: Request, res: Response) => {
     }
   }
 
+  // Notifiy the lead user if its not the same lead who was assigned to project
+  if (leadUser && leadUser.id !== user.id && leadUser.id !== project.lead_id) {
+    const createdNotification = await createNotification(
+      leadUser.id,
+      project.workspace_id,
+      'project:lead_assigned',
+      `You have been assigne as a lead to '${payload.name ?? project.name}' project`,
+      { actorId: user.id, projectId: project.id },
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
+    notifyMemberInWorkspace(leadUser.id, project.workspace_id, {
+      type: 'project:lead_assigned',
+      message: `You have been assigne as a lead to '${payload.name ?? project.name}' project`,
+      metaData: {
+        actorId: user.id,
+        projectId: project.id,
+      },
+    });
+  }
+
+  // Notify lead user and the members if completed
+  if (
+    payload.status &&
+    payload.status === 'completed' &&
+    project.status !== payload.status
+  ) {
+    const members = (await getProjectMembersByProjectId(projectId)).map(
+      (m) => m.user_id,
+    );
+
+    const currentLeadId =
+      (payload.lead_id as string | undefined) ?? project.lead_id;
+    const notificationRecipients = new Set([currentLeadId, ...members]);
+
+    notificationRecipients.forEach(async (m) => {
+      if (!m || m === user.id) return;
+
+      const createdNotification = await createNotification(
+        m,
+        project.workspace_id,
+        'project:completed',
+        `${user.email} marked the '${payload.name ?? project.name}' project as done.`,
+        { actorId: user.id, projectId: project.id },
+      );
+
+      if (!createdNotification) {
+        throw ApiError.internal(
+          'Something went wrong while creating notification',
+        );
+      }
+
+      notifyMemberInWorkspace(m, project.workspace_id, {
+        type: 'project:completed',
+        message: `${user.email} marked the '${payload.name ?? project.name}' project as done.`,
+        metaData: {
+          actorId: user.id,
+          projectId: project.id,
+        },
+      });
+    });
+  }
+
   res.status(200).json(new ApiResponse(200, 'Project updated'));
 };
 
@@ -329,6 +426,32 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
         throw ApiError.internal(
           'Something went wrong while creating project activity',
         );
+      }
+
+      // Notify the members
+      if (projectMember.id) {
+        const createdNotification = await createNotification(
+          projectMember.user_id,
+          project.workspace_id,
+          'project:member_assigned',
+          `You have been added as a member to '${project.name}' project`,
+          { actorId: user.id, projectId: project.id },
+        );
+
+        if (!createdNotification) {
+          throw ApiError.internal(
+            'Something went wrong while creating notification',
+          );
+        }
+
+        notifyMemberInWorkspace(projectMember.user_id, project.workspace_id, {
+          type: 'project:member_assigned',
+          message: `You have been added as a member to '${project.name}' project`,
+          metaData: {
+            actorId: user.id,
+            projectId: project.id,
+          },
+        });
       }
     }
 

@@ -6,5 +6,6 @@ export interface NotificationPayloadType {
   metaData?: {
     taskId?: string;
     actorId?: string;
+    projectId?: string;
   };
 }

@@ -7,7 +7,7 @@ import {
 export const createProjectMember = async (
   userId: string,
   projectId: string,
-) => {
+): Promise<ProjectMember> => {
   const results = await dbPool.query(
     `
     INSERT INTO project_members 
@@ -64,6 +64,20 @@ export const getProjectMembersWithUserDetail = async (
           LEFT JOIN users as u ON pm.user_id = u."id"
       WHERE
           project_id = $1
+    `,
+    [projectId],
+  );
+
+  return results.rows;
+};
+
+export const getProjectMembersByProjectId = async (
+  projectId: string,
+): Promise<ProjectMember[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT * FROM project_members
+    WHERE project_id = $1
     `,
     [projectId],
   );
