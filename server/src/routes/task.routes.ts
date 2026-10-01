@@ -14,6 +14,11 @@ import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 import { upload } from '../middlewares/multer.middleware';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import {
+  CreateComment,
+  DeleteComment,
+  UpdateComment,
+} from '../controllers/comment.controller';
 
 const taskRouter = Router();
 taskRouter.use(AuthMiddleware);
@@ -89,6 +94,24 @@ taskRouter
   .post(
     RequiredRoles(['owner', 'admin', 'member']),
     asyncHandler(ConnectTaskToProject),
+  );
+
+taskRouter
+  .route('/:taskId/comments')
+  .post(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(CreateComment),
+  );
+
+taskRouter
+  .route('/:taskId/comments/:commentId')
+  .patch(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(UpdateComment),
+  )
+  .delete(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(DeleteComment),
   );
 
 export default taskRouter;
