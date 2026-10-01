@@ -61,6 +61,9 @@ export function useUpdateProject(workspaceId: string, projectId: string) {
       void queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       })
+      void queryClient.invalidateQueries({
+        queryKey: ['projectActivity', projectId],
+      })
     },
   })
 }
