@@ -662,16 +662,18 @@ export const GetProjectActivity = async (req: Request, res: Response) => {
     id: p.id,
     projectId: p.project_id,
     userId: p.user_id,
+    content: p.context,
+    activityType: p.activity_type,
     type: p.type,
-    description: p.description,
     metadata: p.metadata,
+    description: p.description,
     updatedAt: p.updated_at,
     createdAt: p.created_at,
   }));
 
   res.status(200).json(
     new ApiResponse(200, 'Project activty', {
-      projectActivities: formattedPageProjectActivities,
+      projectActivities: pageProjectActivities,
       hasMore,
       cursor,
     }),

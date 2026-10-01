@@ -11,7 +11,7 @@ export type ProjectActivityType =
   | 'milestone_removed'
   | 'milestone_changed';
 
-export interface ProjectActivty {
+export interface ProjectActivity {
   id: string;
   project_id: string;
   user_id: string;
@@ -23,5 +23,22 @@ export interface ProjectActivty {
     to: string;
   };
   updated_at: Date;
+  created_at: Date;
+}
+
+export interface ProjectActivityWithComments {
+  id: string;
+  project_id: string;
+  user_id: string;
+  context: string | null;
+  type: ProjectActivityType;
+  metadata: {
+    field: string;
+    from: string;
+    to: string;
+  } | null;
+  description: string | null;
+  activity_type: 'comment' | 'activity';
+  updated_at: Date | null;
   created_at: Date;
 }
