@@ -30,8 +30,9 @@ export interface ProjectActivityWithComments {
   id: string;
   project_id: string;
   user_id: string;
-  context: string | null;
-  type: ProjectActivityType;
+  username: string;
+  content: string | null;
+  type: ProjectActivityType | null;
   metadata: {
     field: string;
     from: string;

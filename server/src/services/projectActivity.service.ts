@@ -35,37 +35,40 @@ export const getProjectActivity = async (
   cursorId: string | undefined,
   cursorTime: Date | undefined,
 ): Promise<ProjectActivityWithComments[]> => {
-  // NOTE: Manually added null to replace non-existence columns
   const results = await dbPool.query(
     `
       SELECT * FROM (
       SELECT
-          id,
-          project_id,
-          user_id,
-          content,
-          null AS type,
-          null AS metadata,
-          null AS description,
-          'comment' AS activity_type,
-          updated_at,
-          created_at
-          FROM comments
+          c.id,
+          c.project_id,
+          c.user_id,
+          u.username,
+          c.content,
+          null::text AS type,
+          null::jsonb AS metadata,
+          null::text AS description,
+          'comment'::text AS activity_type,
+          c.updated_at,
+          c.created_at
+        FROM comments AS c
+        INNER JOIN users AS u ON u.id = c.user_id
 
       UNION ALL
 
       SELECT 
-          id,
-          project_id,
-          user_id,
-          null AS content,
-          type,
-          metadata,
-          description,
-          'activity' AS activity_type,
-          null AS updated_at,
-          created_at
-          FROM project_activity
+          a.id,
+          a.project_id,
+          a.user_id,
+          u.username,
+          null::text AS content,
+          a.type,
+          a.metadata,
+          a.description,
+          'activity'::text AS activity_type,
+          null::timestamptz AS updated_at,
+          a.created_at
+        FROM project_activity AS a
+        INNER JOIN users AS u ON u.id = a.user_id
       ) WHERE project_id = $1
       AND (
           $2::timestamptz IS NULL
