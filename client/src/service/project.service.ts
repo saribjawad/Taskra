@@ -6,7 +6,7 @@ import type {
   ProjectTaskProgress,
 } from '#/type/project'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
-import type { ProjectActivity } from '#/type/projectActivity'
+import type { ProjectActivityEntry } from '#/type/projectActivity'
 
 export interface GetProjectsResponse {
   metadata: {
@@ -173,9 +173,31 @@ export async function removeProjectMembers(
 }
 
 export interface GetProjectActivitiesResponse {
-  projectActivities: ProjectActivity[]
+  projectActivities: ProjectActivityEntry[]
   hasMore: boolean
   cursor: { time: string; id: string } | null
+}
+
+export async function createProjectComment(
+  projectId: string,
+  content: string,
+): Promise<void> {
+  await api.post(`/projects/${projectId}/comments`, { content })
+}
+
+export async function updateProjectComment(
+  projectId: string,
+  commentId: string,
+  content: string,
+): Promise<void> {
+  await api.patch(`/projects/${projectId}/comments/${commentId}`, { content })
+}
+
+export async function deleteProjectComment(
+  projectId: string,
+  commentId: string,
+): Promise<void> {
+  await api.delete(`/projects/${projectId}/comments/${commentId}`)
 }
 
 export async function getProjectActivities(

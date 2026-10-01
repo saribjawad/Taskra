@@ -12,10 +12,27 @@ export type ProjectActivityType =
   | 'milestone_removed'
   | 'milestone_changed'
 
-export interface ProjectActivity {
+interface ProjectTimelineEntryBase {
   id: string
   projectId: string
   userId: string
+  username: string
+  activityType: 'comment' | 'activity'
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface ProjectCommentActivity extends ProjectTimelineEntryBase {
+  activityType: 'comment'
+  content: string
+  type: null
+  description: null
+  metadata: null
+}
+
+export interface ProjectEventActivity extends ProjectTimelineEntryBase {
+  activityType: 'activity'
+  content: null
   type: ProjectActivityType
   description: string
   metadata: {
@@ -23,6 +40,6 @@ export interface ProjectActivity {
     from: string
     to: string
   } | null
-  updatedAt: string
-  createdAt: string
 }
+
+export type ProjectActivityEntry = ProjectCommentActivity | ProjectEventActivity

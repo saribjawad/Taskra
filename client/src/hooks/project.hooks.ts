@@ -19,6 +19,9 @@ import {
   deleteProject,
   getProjectActivities,
   getProjectTaskProgress,
+  createProjectComment,
+  updateProjectComment,
+  deleteProjectComment,
 } from '#/service/project.service'
 
 type ProjectTaskFilters = Parameters<typeof getProjectTasks>[2]
@@ -132,6 +135,34 @@ export function useGetProjectActivity(projectId: string) {
     },
     enabled: Boolean(projectId),
   })
+}
+
+export function useProjectCommentActions(projectId: string) {
+  const queryClient = useQueryClient()
+  const invalidateActivity = () =>
+    queryClient.invalidateQueries({ queryKey: ['projectActivity', projectId] })
+
+  return {
+    create: useMutation({
+      mutationFn: (content: string) => createProjectComment(projectId, content),
+      onSuccess: invalidateActivity,
+    }),
+    update: useMutation({
+      mutationFn: ({
+        commentId,
+        content,
+      }: {
+        commentId: string
+        content: string
+      }) => updateProjectComment(projectId, commentId, content),
+      onSuccess: invalidateActivity,
+    }),
+    remove: useMutation({
+      mutationFn: (commentId: string) =>
+        deleteProjectComment(projectId, commentId),
+      onSuccess: invalidateActivity,
+    }),
+  }
 }
 
 export function useProjectMilestoneActions(

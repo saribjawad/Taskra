@@ -17,7 +17,9 @@ import { SidebarTrigger } from '#/components/ui/sidebar'
 import { useAuth } from '#/context/auth/auth-hook'
 import { useDeleteProject, useGetProject } from '#/hooks/project.hooks'
 import ProjectOverview from '#/components/projects/ProjectOverview'
-import ProjectActivity from '#/components/projects/ProjectActivity'
+import ProjectActivity, {
+  ProjectCommentComposer,
+} from '#/components/projects/ProjectActivity'
 import ProjectTasks from '#/components/projects/ProjectTasks'
 import ProjectInformation from '#/components/projects/ProjectInformation'
 import {
@@ -343,6 +345,9 @@ function ProjectDetailPage() {
                 )}
               </div>
             </div>
+            {view === 'activity' && (
+              <ProjectCommentComposer projectId={project.id} />
+            )}
           </div>
 
           <aside
