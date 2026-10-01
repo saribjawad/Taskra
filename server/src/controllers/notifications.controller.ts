@@ -38,6 +38,7 @@ export const GetUserNotifications = async (req: Request, res: Response) => {
     userId: n.user_id,
     actorId: n.actor_id,
     taskId: n.task_id,
+    projectId: n.project_id,
     workspaceId: n.workspace_id,
     seen: n.seen,
     type: n.type,

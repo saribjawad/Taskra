@@ -14,6 +14,7 @@ export interface MessagePayloadType {
   message: string
   metaData?: {
     taskId?: string
+    projectId?: string
     actorId?: string
   }
 }
@@ -115,6 +116,34 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
         case 'invite:declined':
           {
             const { title, icon: Icon } = notificationPresentation[type]
+
+            toast(title, {
+              description: message,
+              icon: <Icon className="size-4" />,
+            })
+          }
+          break
+
+        case 'project:completed':
+        case 'project:lead_assigned':
+        case 'project:member_assigned':
+        case 'project:task_added':
+        case 'project:commented':
+        case 'project:target_date_soon':
+          {
+            const { title, icon: Icon } = notificationPresentation[type]
+
+            if (metaData?.projectId) {
+              queryClient.invalidateQueries({
+                queryKey: ['project', user.activeWorkspace, metaData.projectId],
+              })
+              queryClient.invalidateQueries({
+                queryKey: ['project-tasks', metaData.projectId],
+              })
+            }
+            queryClient.invalidateQueries({
+              queryKey: ['projects', user.activeWorkspace],
+            })
 
             toast(title, {
               description: message,
