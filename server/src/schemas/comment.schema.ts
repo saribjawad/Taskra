@@ -13,3 +13,13 @@ export const CreateCommentSchema = z.object({
 });
 
 export const UpdateCommentSchema = CreateCommentSchema;
+
+export const ProjectCommentParamSchema = z.object({
+  projectId: z.uuid('Invalid project UUID'),
+});
+
+export const UpdateProjectCommentParamSchema = ProjectCommentParamSchema.extend(
+  {
+    commentId: z.uuid('Invalid comment UUID'),
+  },
+);

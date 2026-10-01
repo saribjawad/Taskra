@@ -12,6 +12,13 @@ import {
   UpdateProject,
 } from '../controllers/projects.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
+import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import {
+  CreateProjectComment,
+  DeleteProjectComment,
+  UpdateProjectComment,
+} from '../controllers/projectComments.controller';
 
 const projectsRouter = Router();
 projectsRouter.use(AuthMiddleware);
@@ -38,5 +45,14 @@ projectsRouter
   .delete(asyncHandler(RemoveProjectMembers));
 
 projectsRouter.route('/:projectId/tasks').get(asyncHandler(GetProjectTasks));
+
+projectsRouter
+  .route('/:projectId/comments')
+  .post(RequrieActiveWorkspace, asyncHandler(CreateProjectComment));
+
+projectsRouter
+  .route('/:projectId/comments/:commentId')
+  .patch(RequrieActiveWorkspace, asyncHandler(UpdateProjectComment))
+  .delete(RequrieActiveWorkspace, asyncHandler(DeleteProjectComment));
 
 export default projectsRouter;

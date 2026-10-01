@@ -67,6 +67,53 @@ export const createComment = async (
   return result.rows[0];
 };
 
+/** Create a comment attached to a project.
+ *
+ * @params projectId - UUID of the project
+ * @params userId - UUID of the commenter
+ * @params content - Comment content
+ *
+ * @returns Created comment
+ */
+export const createProjectComment = async (
+  projectId: string,
+  userId: string,
+  content: string,
+): Promise<Comment> => {
+  const result = await dbPool.query(
+    `
+    INSERT INTO comments (project_id, user_id, content)
+    VALUES ($1, $2, $3)
+    RETURNING *
+    `,
+    [projectId, userId, content],
+  );
+
+  return result.rows[0];
+};
+
+/** Find one comment only when it belongs to the requested project.
+ *
+ * @params commentId - UUID of the comment
+ * @params projectId - UUID of the project
+ *
+ * @returns Created comment
+ */
+export const findProjectCommentById = async (
+  commentId: string,
+  projectId: string,
+): Promise<Comment> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM comments
+    WHERE id = $1 AND project_id = $2
+    `,
+    [commentId, projectId],
+  );
+
+  return result.rows[0];
+};
+
 /**
  * Update comment in database
  *
@@ -87,6 +134,31 @@ export const updateComment = async (id: string, content: string) => {
   return result.rowCount;
 };
 
+/** Update a project comment without allowing it to be moved to another project.
+ *
+ * @params commentId - UUID of the comment
+ * @params projectId - UUID of the project
+ * @params content - Comment content
+ *
+ * @returns Number of updated rows
+ */
+export const updateProjectComment = async (
+  commentId: string,
+  projectId: string,
+  content: string,
+) => {
+  const result = await dbPool.query(
+    `
+    UPDATE comments
+    SET content = $3
+    WHERE id = $1 AND project_id = $2
+    `,
+    [commentId, projectId, content],
+  );
+
+  return result.rowCount;
+};
+
 /**
  * Delete comment in database
  *
@@ -99,6 +171,28 @@ export const deleteComment = async (id: string) => {
     DELETE FROM comments
     WHERE id = $1 `,
     [id],
+  );
+
+  return result.rowCount;
+};
+
+/** Delete a project comment only within its project.
+ *
+ * @param commentId - Comment ID
+ * @param projectId - Project ID
+ *
+ * @returns Number of deleted rows
+ */
+export const deleteProjectComment = async (
+  commentId: string,
+  projectId: string,
+) => {
+  const result = await dbPool.query(
+    `
+    DELETE FROM comments
+    WHERE id = $1 AND project_id = $2
+    `,
+    [commentId, projectId],
   );
 
   return result.rowCount;

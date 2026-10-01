@@ -8,7 +8,6 @@ import attachmentRouter from './attachment.routes';
 import notificationRouter from './notification.routes';
 import projectsRouter from './projects.routes';
 import projectMilestonesRouter from './projectMilestones.routes';
-import analyticsRouter from './analytics.routes';
 
 const router = Router();
 
@@ -19,7 +18,6 @@ router.get('/health', (_req: Request, res: Response) => {
 
 // App routes
 router.use(authRouter);
-router.use('/analytics', analyticsRouter);
 router.use('/users', userRouter);
 router.use('/projects', projectsRouter);
 router.use('/projects', projectMilestonesRouter);
