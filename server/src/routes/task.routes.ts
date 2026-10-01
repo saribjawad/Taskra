@@ -18,7 +18,7 @@ import {
   CreateComment,
   DeleteComment,
   UpdateComment,
-} from '../controllers/comment.controller';
+} from '../controllers/taskComments.controller';
 
 const taskRouter = Router();
 taskRouter.use(AuthMiddleware);
