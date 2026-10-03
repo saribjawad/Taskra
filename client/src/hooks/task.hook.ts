@@ -15,7 +15,12 @@ import type {
   GetTasksParams,
   UpdateTaskPayload,
 } from '#/service/task.service'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 export function useConnectTaskToProject(taskId: string) {
   const queryClient = useQueryClient()
@@ -170,9 +175,14 @@ export const useUpdateTask = () => {
 }
 
 export const useGetTaskActivity = (taskId: string) => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: [`task-activity-${taskId}`],
-    queryFn: () => getTaskActivities(taskId),
+    initialPageParam: undefined as { time: string; id: string } | undefined,
+    queryFn: ({ pageParam }) => getTaskActivities(taskId, pageParam),
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore && lastPage.cursor
+        ? { time: lastPage.cursor.time, id: lastPage.cursor.id }
+        : undefined,
     enabled: !!taskId,
   })
 }

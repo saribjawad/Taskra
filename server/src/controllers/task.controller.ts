@@ -4,6 +4,7 @@ import {
   ConnectTaskToProjectParamsSchema,
   CreateTaskSchema,
   GetTaskActivityParamsSchema,
+  GetTaskActivityQuerySchema,
   GetTaskQuerySchema,
   MarkTaskAsCompletedParamsSchema,
   TaskParamsSchema,
@@ -565,25 +566,12 @@ export const GetTask = async (req: Request, res: Response) => {
   const assignee = await findUserById(task.assignee);
   const reporter = await findUserById(task.reporter);
 
-  // Get task comments
-  const comments = await findCommentsByTaskId(taskId);
-
   // Get task attachments
   let attachments = await getAttachmentsByTaskId(taskId);
 
   return res.status(200).json(
     new ApiResponse(200, 'success', {
       ...task,
-      comments: comments.map((c) => ({
-        id: c.id,
-        content: c.content,
-        user: {
-          id: c.user_id,
-          username: c.username,
-        },
-        updated_at: c.updated_at,
-        created_at: c.created_at,
-      })),
       attachments: attachments,
       // In case of no assignee
       ...(assignee
@@ -637,7 +625,10 @@ export const DeleteTask = async (req: Request, res: Response) => {
 
 export const GetTaskActivity = async (req: Request, res: Response) => {
   const user = req.user;
+  const LIMIT = 2;
+
   const { taskId } = GetTaskActivityParamsSchema.parse(req.params);
+  const { cursorId, cursorTime } = GetTaskActivityQuerySchema.parse(req.query);
 
   const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
 
@@ -645,7 +636,50 @@ export const GetTaskActivity = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
-  const taskActivities = await getTaskActivitiesByTaskId(taskId);
+  const taskActivities = await getTaskActivitiesByTaskId(
+    taskId,
+    LIMIT + 1,
+    cursorId,
+    cursorTime,
+  );
+
+  const hasMore = taskActivities.length > LIMIT;
+  const pageActivities = hasMore
+    ? taskActivities.slice(0, LIMIT)
+    : taskActivities;
+  const cursor = hasMore
+    ? {
+        id: pageActivities[pageActivities.length - 1].id,
+        time: pageActivities[pageActivities.length - 1].created_at_cursor,
+      }
+    : null;
+
+  const formatedActivities = pageActivities.map((a) => {
+    if (a.activity_type === 'comment') {
+      return {
+        id: a.id,
+        taskId: a.task_id,
+        userId: a.user_id,
+        username: a.username,
+        content: a.content,
+        activityType: a.activity_type,
+        updatedAt: a.updated_at,
+        createdAt: a.created_at,
+      };
+    } else {
+      return {
+        id: a.id,
+        taskId: a.task_id,
+        userId: a.user_id,
+        username: a.username,
+        activityType: a.activity_type,
+        type: a.type,
+        metadata: a.metadata,
+        description: a.description,
+        createdAt: a.created_at,
+      };
+    }
+  });
 
   if (!taskActivities) {
     throw ApiError.notFound(
@@ -653,7 +687,13 @@ export const GetTaskActivity = async (req: Request, res: Response) => {
     );
   }
 
-  res.status(200).json(new ApiResponse(200, 'Task activity', taskActivities));
+  res.status(200).json(
+    new ApiResponse(200, 'Task activity', {
+      activities: formatedActivities,
+      hasMore,
+      cursor,
+    }),
+  );
 };
 
 export const ConnectTaskToProject = async (req: Request, res: Response) => {

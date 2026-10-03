@@ -9,16 +9,29 @@ export type TaskActivityType =
   | 'attachment_added'
   | 'task_completed'
 
-export interface TaskActivity {
+interface TaskTimelineEntryBase {
   id: string
-  task_id: string
-  user_id: string
+  taskId: string
+  userId: string
+  username: string
+  createdAt: string
+}
+
+export interface TaskCommentActivity extends TaskTimelineEntryBase {
+  activityType: 'comment'
+  content: string
+  updatedAt: string | null
+}
+
+export interface TaskEventActivity extends TaskTimelineEntryBase {
+  activityType: 'activity'
   type: TaskActivityType
   metadata: {
     field: string
     from: string
     to: string
-  }
+  } | null
   description: string
-  created_at: Date
 }
+
+export type TaskActivity = TaskCommentActivity | TaskEventActivity

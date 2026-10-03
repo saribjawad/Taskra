@@ -17,8 +17,9 @@ export function useCreateComment() {
       comment: string
     }) => createComment(taskId, comment),
     onSuccess: (_, variables) => {
-      console.log('Commented successfully')
-      queryClient.invalidateQueries({ queryKey: [`task-${variables.taskId}`] })
+      queryClient.invalidateQueries({
+        queryKey: [`task-activity-${variables.taskId}`],
+      })
     },
   })
 }
@@ -35,8 +36,9 @@ export function useDeleteComment() {
       commentId: string
     }) => deleteComment(taskId, commentId),
     onSuccess: (_, variables) => {
-      console.log('Deleted successfully')
-      queryClient.invalidateQueries({ queryKey: [`task-${variables.taskId}`] })
+      queryClient.invalidateQueries({
+        queryKey: [`task-activity-${variables.taskId}`],
+      })
     },
   })
 }
@@ -53,8 +55,9 @@ export function useUpdateComment() {
       comment: { id: string; content: string }
     }) => updateComment(taskId, comment),
     onSuccess: (_, variables) => {
-      console.log('Deleted successfully')
-      queryClient.invalidateQueries({ queryKey: [`task-${variables.taskId}`] })
+      queryClient.invalidateQueries({
+        queryKey: [`task-activity-${variables.taskId}`],
+      })
     },
   })
 }

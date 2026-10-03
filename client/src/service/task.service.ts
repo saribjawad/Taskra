@@ -89,18 +89,6 @@ export interface GetTaskResponse {
   created_at: string
   workspace_id: string
   created_by: Date
-  comments: [
-    {
-      id: string
-      content: string
-      user: {
-        id: string
-        username: string
-      }
-      updated_at: Date
-      created_at: Date
-    },
-  ]
   attachments: Attachments[]
 }
 
@@ -238,9 +226,20 @@ export async function markTaskAsCompleted(taskId: string): Promise<void> {
   await api.patch(`/tasks/${taskId}/completed`)
 }
 
+export interface GetTaskActivitiesResponse {
+  activities: TaskActivity[]
+  hasMore: boolean
+  cursor: { time: string; id: string } | null
+}
+
 export async function getTaskActivities(
   taskId: string,
-): Promise<TaskActivity[]> {
-  const result = await api.get(`/tasks/${taskId}/activity`)
+  cursor?: { time: string; id: string },
+): Promise<GetTaskActivitiesResponse> {
+  const result = await api.get(`/tasks/${taskId}/activity`, {
+    params: {
+      ...(cursor && { cursorTime: cursor.time, cursorId: cursor.id }),
+    },
+  })
   return result.data.data
 }

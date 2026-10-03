@@ -35,6 +35,15 @@ export const GetTaskQuerySchema = z.object({
   search: z.string('Invalid search').optional(),
 });
 
+export const GetTaskActivityQuerySchema = z
+  .object({
+    cursorId: z.uuid().optional(),
+    cursorTime: z.iso.datetime().optional(),
+  })
+  .refine((q) => (q.cursorId === undefined) === (q.cursorTime === undefined), {
+    message: 'cursorId and cursorTime must be provided together',
+  });
+
 export const CreateTaskSchema = z
   .object({
     body: z.object({

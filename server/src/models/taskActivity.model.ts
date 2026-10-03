@@ -22,3 +22,18 @@ export interface TaskActivity {
   description: string;
   created_at: Date;
 }
+
+export interface TaskActivityWithComments {
+  id: string;
+  task_id: string;
+  user_id: string;
+  username: string;
+  content: string | null;
+  type: TaskActivityType | null;
+  metadata: { field: string; from: string; to: string } | null;
+  description: string | null;
+  activity_type: 'comment' | 'activity';
+  updated_at: Date | null;
+  created_at: Date;
+  created_at_cursor: '2026-09-26T10:24:30.655987Z';
+}

@@ -59,7 +59,7 @@ import {
   formatLabel,
   getInitials,
 } from '#/lib/utils'
-import type { TaskActivity } from '#/type'
+import type { TaskEventActivity } from '#/type'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
 import {
@@ -83,7 +83,7 @@ import {
   Type,
   UserRound,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
 
@@ -117,7 +117,7 @@ function AttachmentTypeIcon({ mimeType }: { mimeType: string }) {
   return <FileIcon className="size-4 text-muted-foreground" />
 }
 
-function ActivityIcon({ type }: { type: TaskActivity['type'] }) {
+function ActivityIcon({ type }: { type: TaskEventActivity['type'] }) {
   const className = 'size-3.5'
 
   if (type === 'task_completed') return <CheckCircle2 className={className} />
@@ -166,6 +166,9 @@ function RouteComponent() {
     content: string
   } | null>()
   const [isEditDialogOpen, setEditIsDialogOpen] = useState(false)
+  const activityScrollRootRef = useRef<HTMLElement>(null)
+  const activityLoadMoreRef = useRef<HTMLDivElement>(null)
+  const isRequestingNextActivityPage = useRef(false)
 
   // Use Form
   const { handleSubmit, reset, control } = useForm({
@@ -181,8 +184,17 @@ function RouteComponent() {
   const { data: task, isLoading: isTasksLoading } = useGetTaskById({
     taskId: params.taskId!!,
   })
-  const { data: taskActivity, isLoading: isTaskActivityLoading } =
-    useGetTaskActivity(params.taskId!!)
+  const {
+    data: taskActivityPages,
+    isPending: isTaskActivityLoading,
+    isError: isTaskActivityError,
+    isFetching,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+    fetchNextPage,
+    refetch: refetchTaskActivity,
+  } = useGetTaskActivity(params.taskId!!)
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
   const { mutate: markTaskAsComplete, isPending: isMarkingTaskAsComplete } =
     useMarkTaskAsComplete()
@@ -193,6 +205,52 @@ function RouteComponent() {
     useUpdateComment()
   const { mutate: getPresignedUrl, isPending: isGettingPresignedUrl } =
     useGetPresignedUrl()
+
+  const activities =
+    taskActivityPages?.pages.flatMap((page) => page.activities) ?? []
+
+  const loadNextActivityPage = useCallback(async () => {
+    if (!hasNextPage || isFetching || isRequestingNextActivityPage.current) {
+      return
+    }
+
+    isRequestingNextActivityPage.current = true
+    try {
+      await fetchNextPage()
+    } finally {
+      isRequestingNextActivityPage.current = false
+    }
+  }, [fetchNextPage, hasNextPage, isFetching])
+
+  useEffect(() => {
+    const root = activityScrollRootRef.current
+    const sentinel = activityLoadMoreRef.current
+    if (!root || !sentinel) return
+
+    function handleScroll() {
+      if (
+        root &&
+        root.clientHeight + root.scrollTop + 100 >= root.scrollHeight
+      ) {
+        void loadNextActivityPage()
+      }
+    }
+
+    root.addEventListener('scroll', handleScroll)
+    handleScroll()
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void loadNextActivityPage()
+      },
+      { root, rootMargin: '100px' },
+    )
+    observer.observe(sentinel)
+
+    return () => {
+      root.removeEventListener('scroll', handleScroll)
+      observer.disconnect()
+    }
+  }, [activities.length, loadNextActivityPage])
 
   function onClickingAttachment(attachmentId: string) {
     getPresignedUrl(attachmentId)
@@ -281,20 +339,6 @@ function RouteComponent() {
     </div>
   )
 
-  // Comments carry their own content and actions, so omit generic comment events.
-  const activities = [
-    ...(taskActivity ?? [])
-      .filter((activity) => activity.type !== 'comment_added')
-      .map((activity) => ({ kind: 'event' as const, ...activity })),
-    ...task.comments.map((comment) => ({
-      kind: 'comment' as const,
-      ...comment,
-    })),
-  ].sort(
-    (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-  )
-
   return (
     <>
       <main className="flex h-dvh min-h-0 min-w-0 w-full flex-col overflow-hidden bg-background">
@@ -371,7 +415,10 @@ function RouteComponent() {
 
         <div className="min-h-0 flex-1">
           <div className="grid h-full min-h-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
-            <section className="min-h-0 min-w-0 overflow-y-auto overscroll-contain">
+            <section
+              ref={activityScrollRootRef}
+              className="min-h-0 min-w-0 overflow-y-auto overscroll-contain"
+            >
               <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
                 <div className="space-y-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -505,24 +552,35 @@ function RouteComponent() {
                   <div className="space-y-3">
                     {isTaskActivityLoading ? (
                       <ActivityEventSkeleton />
+                    ) : isTaskActivityError && activities.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        Could not load task activity.{' '}
+                        <button
+                          type="button"
+                          className="underline underline-offset-2"
+                          onClick={() => void refetchTaskActivity()}
+                        >
+                          Try again
+                        </button>
+                      </p>
                     ) : activities.length <= 0 ? (
                       <p className="text-sm text-muted-foreground">
                         No activity yet.
                       </p>
                     ) : (
                       activities.map((entry) => {
-                        if (entry.kind === 'event') {
+                        if (entry.activityType === 'activity') {
                           return (
                             <ActivityEventRow
-                              key={`event-${entry.id}`}
+                              key={`activity-${entry.id}`}
                               icon={<ActivityIcon type={entry.type} />}
                               description={entry.description}
-                              createdAt={entry.created_at}
+                              createdAt={entry.createdAt}
                             />
                           )
                         }
                         const comment = entry
-                        const isUsersComment = comment.user.id === user?.id
+                        const isUsersComment = comment.userId === user?.id
 
                         return (
                           <div
@@ -531,17 +589,17 @@ function RouteComponent() {
                           >
                             <div className="flex min-w-0 flex-1 gap-3">
                               <div
-                                className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white ${avatarColor(comment.user.username)}`}
+                                className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium text-white ${avatarColor(comment.username)}`}
                               >
-                                {getInitials(comment.user.username)}
+                                {getInitials(comment.username)}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="mb-1 flex flex-wrap items-baseline gap-2">
                                   <span className="text-sm font-medium wrap-anywhere">
-                                    {comment.user.username}
+                                    {comment.username}
                                   </span>
                                   <span className="text-xs text-muted-foreground">
-                                    {formatDateTime(comment.created_at)}
+                                    {formatDateTime(comment.createdAt)}
                                   </span>
                                 </div>
                                 <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground wrap-anywhere">
@@ -602,6 +660,20 @@ function RouteComponent() {
                           </div>
                         )
                       })
+                    )}
+                    {hasNextPage && (
+                      <div ref={activityLoadMoreRef} className="py-2">
+                        {isFetchingNextPage && <ActivityEventSkeleton />}
+                        {isFetchNextPageError && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => void loadNextActivityPage()}
+                          >
+                            Retry loading activity
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </div>
                 </section>
