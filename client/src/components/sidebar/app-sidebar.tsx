@@ -7,7 +7,12 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { Inbox, CircleDotDashed, FolderOpen } from 'lucide-react'
+import {
+  Inbox,
+  CircleDotDashed,
+  FolderOpen,
+  LayoutDashboard,
+} from 'lucide-react'
 import MyNav from './my-nav'
 import { SidebarHeaderMenu } from './sidebar-header-menu'
 
@@ -19,6 +24,11 @@ const data = {
     avatar: '/avatars/shadcn.jpg',
   },
   myNav: [
+    {
+      title: 'Dashboard',
+      url: '/$workspaceId/dashboard',
+      icon: <LayoutDashboard />,
+    },
     {
       title: 'Inbox',
       url: '/$workspaceId/inbox',

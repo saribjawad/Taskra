@@ -7,6 +7,7 @@ import {
   getWorkspaceUsers,
   removeUserFromWorkspace,
   switchWorkspace,
+  getWorkspaceDashboard,
 } from '#/service/workspace.service'
 import type { ApiErrorResponse } from '#/type'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -27,6 +28,14 @@ export const useGetWorkspaceUsers = (workspaceId: string) => {
     queryKey: [`workspace-${workspaceId}-users`],
     queryFn: () => getWorkspaceUsers(workspaceId),
     retry: 2,
+  })
+}
+
+export const useGetWorkspaceDashboard = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ['workspace-dashboard', workspaceId],
+    queryFn: () => getWorkspaceDashboard(workspaceId),
+    enabled: Boolean(workspaceId),
   })
 }
 

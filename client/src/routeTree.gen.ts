@@ -25,6 +25,7 @@ import { Route as AuthenticatedWorkspaceIdSettingsRouteRouteImport } from './rou
 import { Route as AuthenticatedWorkspaceIdAppRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/route'
 import { Route as AuthenticatedWorkspaceIdSettingsIndexRouteImport } from './routes/_authenticated/$workspaceId/settings/index'
 import { Route as AuthenticatedWorkspaceIdSettingsMembersRouteImport } from './routes/_authenticated/$workspaceId/settings/members'
+import { Route as AuthenticatedWorkspaceIdAppDashboardRouteImport } from './routes/_authenticated/$workspaceId/_app/dashboard'
 import { Route as AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/my-tasks/route'
 import { Route as AuthenticatedWorkspaceIdAppInboxRouteRouteImport } from './routes/_authenticated/$workspaceId/_app/inbox/route'
 import { Route as AuthenticatedWorkspaceIdAppProjectsIndexRouteImport } from './routes/_authenticated/$workspaceId/_app/projects/index'
@@ -122,6 +123,12 @@ const AuthenticatedWorkspaceIdSettingsMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedWorkspaceIdSettingsRouteRoute,
   } as any)
+const AuthenticatedWorkspaceIdAppDashboardRoute =
+  AuthenticatedWorkspaceIdAppDashboardRouteImport.update({
+    id: '/dashboard',
+    path: '/dashboard',
+    getParentRoute: () => AuthenticatedWorkspaceIdAppRouteRoute,
+  } as any)
 const AuthenticatedWorkspaceIdAppMyTasksRouteRoute =
   AuthenticatedWorkspaceIdAppMyTasksRouteRouteImport.update({
     id: '/my-tasks',
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/$workspaceId/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/$workspaceId/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  '/$workspaceId/dashboard': typeof AuthenticatedWorkspaceIdAppDashboardRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -232,6 +240,7 @@ export interface FileRoutesByTo {
   '/sign-up': typeof PublicSignUpRoute
   '/verify-email': typeof PublicVerifyEmailRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdIndexRoute
+  '/$workspaceId/dashboard': typeof AuthenticatedWorkspaceIdAppDashboardRoute
   '/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/$workspaceId/settings': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/$workspaceId/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
   '/_authenticated/$workspaceId/_app/inbox': typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   '/_authenticated/$workspaceId/_app/my-tasks': typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  '/_authenticated/$workspaceId/_app/dashboard': typeof AuthenticatedWorkspaceIdAppDashboardRoute
   '/_authenticated/$workspaceId/settings/members': typeof AuthenticatedWorkspaceIdSettingsMembersRoute
   '/_authenticated/$workspaceId/settings/': typeof AuthenticatedWorkspaceIdSettingsIndexRoute
   '/_authenticated/$workspaceId/_app/inbox/chats': typeof AuthenticatedWorkspaceIdAppInboxChatsRoute
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
     | '/$workspaceId/'
     | '/$workspaceId/inbox'
     | '/$workspaceId/my-tasks'
+    | '/$workspaceId/dashboard'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings/'
     | '/$workspaceId/inbox/chats'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/verify-email'
     | '/$workspaceId'
+    | '/$workspaceId/dashboard'
     | '/$workspaceId/settings/members'
     | '/$workspaceId/settings'
     | '/$workspaceId/inbox/chats'
@@ -345,6 +357,7 @@ export interface FileRouteTypes {
     | '/_authenticated/$workspaceId/'
     | '/_authenticated/$workspaceId/_app/inbox'
     | '/_authenticated/$workspaceId/_app/my-tasks'
+    | '/_authenticated/$workspaceId/_app/dashboard'
     | '/_authenticated/$workspaceId/settings/members'
     | '/_authenticated/$workspaceId/settings/'
     | '/_authenticated/$workspaceId/_app/inbox/chats'
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$workspaceId/settings/members'
       preLoaderRoute: typeof AuthenticatedWorkspaceIdSettingsMembersRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdSettingsRouteRoute
+    }
+    '/_authenticated/$workspaceId/_app/dashboard': {
+      id: '/_authenticated/$workspaceId/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/$workspaceId/dashboard'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIdAppDashboardRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceIdAppRouteRoute
     }
     '/_authenticated/$workspaceId/_app/my-tasks': {
       id: '/_authenticated/$workspaceId/_app/my-tasks'
@@ -613,6 +633,7 @@ const AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren =
 interface AuthenticatedWorkspaceIdAppRouteRouteChildren {
   AuthenticatedWorkspaceIdAppInboxRouteRoute: typeof AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren
   AuthenticatedWorkspaceIdAppMyTasksRouteRoute: typeof AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren
+  AuthenticatedWorkspaceIdAppDashboardRoute: typeof AuthenticatedWorkspaceIdAppDashboardRoute
   AuthenticatedWorkspaceIdAppProjectsProjectIdRoute: typeof AuthenticatedWorkspaceIdAppProjectsProjectIdRoute
   AuthenticatedWorkspaceIdAppTasksTaskIdRoute: typeof AuthenticatedWorkspaceIdAppTasksTaskIdRoute
   AuthenticatedWorkspaceIdAppProjectsIndexRoute: typeof AuthenticatedWorkspaceIdAppProjectsIndexRoute
@@ -624,6 +645,8 @@ const AuthenticatedWorkspaceIdAppRouteRouteChildren: AuthenticatedWorkspaceIdApp
       AuthenticatedWorkspaceIdAppInboxRouteRouteWithChildren,
     AuthenticatedWorkspaceIdAppMyTasksRouteRoute:
       AuthenticatedWorkspaceIdAppMyTasksRouteRouteWithChildren,
+    AuthenticatedWorkspaceIdAppDashboardRoute:
+      AuthenticatedWorkspaceIdAppDashboardRoute,
     AuthenticatedWorkspaceIdAppProjectsProjectIdRoute:
       AuthenticatedWorkspaceIdAppProjectsProjectIdRoute,
     AuthenticatedWorkspaceIdAppTasksTaskIdRoute:

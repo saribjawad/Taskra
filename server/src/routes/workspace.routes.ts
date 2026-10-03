@@ -9,6 +9,7 @@ import {
   GetPendingWorkspaceInvites,
   GetUserWorkspaces,
   GetWorkspaceInvites,
+  GetWorkspaceDashboard,
   GetWorkspaceUsers,
   InviteToWorkspace,
   RemoveMemberFromWorkspace,
@@ -52,6 +53,12 @@ workspaceRouter
 workspaceRouter
   .route('/:workspaceId/users')
   .get(asyncHandler(GetWorkspaceUsers));
+workspaceRouter
+  .route('/:workspaceId/dashboard')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetWorkspaceDashboard),
+  );
 workspaceRouter.get(
   '/:workspaceId/invite/pending',
   RequiredRoles(['owner', 'admin']),

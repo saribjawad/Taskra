@@ -50,6 +50,13 @@ import { env } from '../config/env';
 import { WorkspaceMemberRole } from '../models/workspace.model';
 import { createNotification } from '../services/notifications.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
+import {
+  getCompletionTrend,
+  getDashboardSummary,
+  getOverdueTasks,
+  getTaskStatusBreakdown,
+  getUpcomingDeadlines,
+} from '../services/dashboard.service';
 
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -768,6 +775,40 @@ export const GetWorkspaceUsers = async (req: Request, res: Response) => {
   res
     .status(200)
     .json(new ApiResponse(200, 'Workspace users', workspaceMembers));
+};
+
+export const GetWorkspaceDashboard = async (req: Request, res: Response) => {
+  const userId = req.user.id;
+  const { workspaceId } = GetWorkspaceUsersParamsSchema.parse(req.params);
+  const membership = await getWorkspaceMember(userId, workspaceId);
+
+  if (!membership) {
+    throw ApiError.forbidden('You are not a member of this workspace');
+  }
+
+  const [
+    summary,
+    completionTrend,
+    overdueTasks,
+    upcomingDeadlines,
+    taskStatusBreakdown,
+  ] = await Promise.all([
+      getDashboardSummary(workspaceId),
+      getCompletionTrend(workspaceId),
+      getOverdueTasks(workspaceId),
+      getUpcomingDeadlines(workspaceId),
+      getTaskStatusBreakdown(workspaceId),
+    ]);
+
+  const dashboard = {
+    summary,
+    completionTrend,
+    overdueTasks,
+    upcomingDeadlines,
+    taskStatusBreakdown,
+  };
+
+  res.status(200).json(new ApiResponse(200, 'Workspace dashboard', dashboard));
 };
 
 export const GetPendingWorkspaceInvites = async (

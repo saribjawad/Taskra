@@ -1,6 +1,7 @@
 import { api } from '#/lib/api'
 import type { CreateWorkspaceFormPayload } from '#/routes/_authenticated/create-workspace'
 import type { MemberRole } from '#/type'
+import type { WorkspaceDashboard } from '#/type/dashboard'
 
 interface CreateWorkspaceResponse {
   workspaceId: string
@@ -42,6 +43,13 @@ export async function getWorkspaceUsers(
 ): Promise<GetWorkspaceUsersResponse[]> {
   const resp = await api.get(`/workspace/${workspaceId}/users`)
 
+  return resp.data.data
+}
+
+export async function getWorkspaceDashboard(
+  workspaceId: string,
+): Promise<WorkspaceDashboard> {
+  const resp = await api.get(`/workspace/${workspaceId}/dashboard`)
   return resp.data.data
 }
 
