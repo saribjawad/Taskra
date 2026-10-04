@@ -23,3 +23,9 @@ export async function getUserNotifications(
 
   return resp.data.data
 }
+
+export async function markNotificationAsSeen(
+  notificationId: string,
+): Promise<void> {
+  await api.patch(`/notifications/${notificationId}/seen`)
+}

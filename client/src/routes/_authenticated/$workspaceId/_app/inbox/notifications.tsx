@@ -5,8 +5,12 @@ import { Button } from '#/components/ui/button'
 import { notificationPresentation } from '#/constants/notifications'
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns'
 import { cn } from '#/lib/utils'
-import { useGetUserNotifications } from '#/hooks/notification.hooks'
+import {
+  useGetUserNotifications,
+  useMarkNotificationAsSeen,
+} from '#/hooks/notification.hooks'
 import { Spinner } from '#/components/ui/spinner'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/inbox/notifications',
@@ -21,6 +25,7 @@ function NotificationInbox() {
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>(
     {},
   )
+  const { mutate: markNotificationAsSeen } = useMarkNotificationAsSeen()
   const { data, isPending, isError, isFetching, hasNextPage, fetchNextPage } =
     useGetUserNotifications()
 
@@ -49,12 +54,18 @@ function NotificationInbox() {
     (item) => filter === 'all' || !item.read,
   )
 
-  function toggleRead(id: string) {
+  function markAsRead(id: string) {
     const notification = formatedNotifications.find((item) => item.id === id)
 
-    if (!notification) return
+    if (!notification || notification.read) return
 
-    setReadOverrides((items) => ({ ...items, [id]: !notification.read }))
+    setReadOverrides((items) => ({ ...items, [id]: true }))
+    markNotificationAsSeen(id, {
+      onError: () => {
+        setReadOverrides((items) => ({ ...items, [id]: false }))
+        toast.error('Could not mark notification as read')
+      },
+    })
   }
 
   // Infinite Scroll
@@ -265,11 +276,12 @@ function NotificationInbox() {
                               variant="ghost"
                               size="icon-sm"
                               className="size-7 text-muted-foreground"
-                              aria-label={`${item.read ? 'Mark as unread' : 'Mark as read'}: ${title}`}
+                              disabled={item.read}
+                              aria-label={`${item.read ? 'Already read' : 'Mark as read'}: ${title}`}
                               title={
-                                item.read ? 'Mark as unread' : 'Mark as read'
+                                item.read ? 'Already read' : 'Mark as read'
                               }
-                              onClick={() => toggleRead(item.id)}
+                              onClick={() => markAsRead(item.id)}
                             >
                               {item.read ? (
                                 <Mail className="size-3.5" />

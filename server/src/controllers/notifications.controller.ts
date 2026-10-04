@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
-import { getNotificationsByUserAndWorkspaceId } from '../services/notifications.service';
+import {
+  getNotification,
+  getNotificationsByUserAndWorkspaceId,
+  markNotificationAsSeen,
+} from '../services/notifications.service';
 import { NotificationIdParamsSchema } from '../schemas/notifications.schema';
+import { ApiError } from '../utils/ApiErrors';
 
 export const GetUserNotifications = async (req: Request, res: Response) => {
   const LIMIT = 10;
@@ -57,9 +62,26 @@ export const GetUserNotifications = async (req: Request, res: Response) => {
 };
 
 export const MarkNotificationAsSeen = async (req: Request, res: Response) => {
+  const user = req.user;
   const { notificationId } = NotificationIdParamsSchema.parse(req.params);
 
-  console.log(notificationId);
+  const notification = await getNotification(
+    notificationId,
+    user.id,
+    user.activeWorkspace,
+  );
+
+  if (!notification) {
+    throw ApiError.notFound('Notification not found');
+  }
+
+  const noOfUpdatedRows = await markNotificationAsSeen(notification.id);
+
+  if (!noOfUpdatedRows || noOfUpdatedRows <= 0) {
+    throw ApiError.internal(
+      'Something went wrong while marking notification as seen',
+    );
+  }
 
   res.status(200).json(new ApiResponse(200, 'Notification marked as seen'));
 };

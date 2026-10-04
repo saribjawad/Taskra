@@ -79,3 +79,45 @@ export async function getNotificationsByUserAndWorkspaceId(
 
   return result.rows;
 }
+
+/**
+ * Get notification
+ *
+ * @param id - Notification uuid
+ * @param workspaceId - Workspace uuid
+ * @returns The notification
+ */
+export async function getNotification(
+  notificationId: string,
+  userId: string,
+  workspaceId: string,
+): Promise<Notification> {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM notifications
+    WHERE id = $1 AND user_id = $2 AND workspace_id = $3
+    `,
+    [notificationId, userId, workspaceId],
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Mark notification as seen
+ *
+ * @param id - Notification uuid
+ * @returns Number of updated rows
+ */
+export async function markNotificationAsSeen(id: string) {
+  const results = await dbPool.query(
+    `
+    UPDATE notifications
+    SET seen = true
+    WHERE id = $1
+    `,
+    [id],
+  );
+
+  return results.rowCount;
+}
