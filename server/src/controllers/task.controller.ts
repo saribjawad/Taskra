@@ -625,7 +625,7 @@ export const DeleteTask = async (req: Request, res: Response) => {
 
 export const GetTaskActivity = async (req: Request, res: Response) => {
   const user = req.user;
-  const LIMIT = 2;
+  const LIMIT = 20;
 
   const { taskId } = GetTaskActivityParamsSchema.parse(req.params);
   const { cursorId, cursorTime } = GetTaskActivityQuerySchema.parse(req.query);
