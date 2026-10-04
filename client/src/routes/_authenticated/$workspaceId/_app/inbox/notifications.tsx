@@ -140,14 +140,17 @@ function NotificationInbox() {
                   {value === 'all' ? 'All' : 'Unread'}
                   {value === 'unread' && (
                     <span className="text-xs text-muted-foreground">
-                      {unread}
+                      {unread > 9 ? '9+' : unread}
                     </span>
                   )}
                 </Button>
               ))}
             </div>
             <span className="text-xs text-muted-foreground">
-              {formatedNotifications.length} notifications
+              {formatedNotifications.length > 9
+                ? '9+'
+                : formatedNotifications.length}{' '}
+              notifications
             </span>
           </div>
           {isPending ? (
