@@ -37,7 +37,7 @@ export function initWebSocket(server: Server) {
 
     try {
       const decoded = jwt.verify(accessToken, env.JWT_SECRET) as JwtPayloadUser;
-      request.user = decoded;
+      request.user = { ...decoded, fullName: decoded.fullName ?? '' };
     } catch (error) {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();

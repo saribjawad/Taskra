@@ -24,6 +24,7 @@ import { Spinner } from '#/components/ui/spinner'
 
 const SignUpFormSchema = z
   .object({
+    fullName: z.string().trim().min(1, 'Full name is required').max(100),
     username: z.string().min(3, 'Username must be at least 3 characters long'),
     email: z.email('Invalid email'),
     password: z.string().min(8, 'Password must be at least 8 characters long'),
@@ -46,6 +47,7 @@ function RouteComponent() {
   const form = useForm({
     resolver: zodResolver(SignUpFormSchema),
     defaultValues: {
+      fullName: '',
       username: '',
       email: '',
       password: '',
@@ -70,6 +72,29 @@ function RouteComponent() {
           <CardContent>
             <form id="sign-up-form" onSubmit={form.handleSubmit(onSubmit)}>
               <FieldGroup>
+                <Controller
+                  name="fullName"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="sign-up-full-name">
+                        Full name
+                      </FieldLabel>
+                      <Input
+                        {...field}
+                        disabled={isPending}
+                        id="sign-up-full-name"
+                        placeholder="Jhon Doe"
+                        autoComplete="name"
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {fieldState.invalid && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
                 <Controller
                   name="username"
                   control={form.control}

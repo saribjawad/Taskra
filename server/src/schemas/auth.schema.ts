@@ -9,6 +9,11 @@ export const LoginUserSchema = z.object({
 
 export const SignUpUserSchema = z
   .object({
+    fullName: z
+      .string('Full name is required')
+      .trim()
+      .min(1, 'Full name is required')
+      .max(100, 'Full name can not be more than 100 characters'),
     username: z
       .string('Username is required')
       .max(50, 'Username can not be more then 50 characters'),

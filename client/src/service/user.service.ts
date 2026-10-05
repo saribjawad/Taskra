@@ -5,6 +5,7 @@ export async function getMe(): Promise<{
   id: string
   email: string
   username: string
+  fullName: string
   activeWorkspace: string | null
   role: MemberRole | null
 }> {

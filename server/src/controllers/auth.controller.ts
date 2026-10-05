@@ -86,12 +86,14 @@ export const LoginUser = async (req: Request, res: Response) => {
     user.email,
     user.active_workspace,
     workspaceMember?.role ?? null,
+    user.full_name,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     user.active_workspace,
     workspaceMember?.role ?? null,
+    user.full_name,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -117,7 +119,7 @@ export const LoginUser = async (req: Request, res: Response) => {
 export const SignUpUser = async (req: Request, res: Response) => {
   // Validate incoming body
   const parsedBody = SignUpUserSchema.parse(req.body);
-  const { username, password, email } = parsedBody;
+  const { fullName, username, password, email } = parsedBody;
 
   // Check duplicate user
   const userWithUsernameExist = await findUserByUsername(username);
@@ -134,6 +136,7 @@ export const SignUpUser = async (req: Request, res: Response) => {
     await updateUser(userWithEmailExist.id, {
       email,
       username,
+      full_name: fullName,
       hashed_password: hashedPassword,
     });
 
@@ -156,7 +159,12 @@ export const SignUpUser = async (req: Request, res: Response) => {
   }
 
   const hashedPassword = await hashPassword(password);
-  const createdUser = await createUser(username, email, hashedPassword);
+  const createdUser = await createUser(
+    fullName,
+    username,
+    email,
+    hashedPassword,
+  );
 
   // Send and create verification code
   await sendVerificationCode(createdUser.id);
@@ -227,12 +235,14 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     user.email,
     user.active_workspace,
     workspaceMember?.role ?? null,
+    user.full_name,
   );
   const newRefreshToken = await generateRefreshToken(
     user.id,
     user.email,
     user.active_workspace,
     workspaceMember?.role ?? null,
+    user.full_name,
   );
 
   res.cookie('accessToken', accessToken, {

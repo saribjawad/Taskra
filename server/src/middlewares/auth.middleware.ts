@@ -7,6 +7,7 @@ import { WorkspaceMemberRole } from '../models/workspace.model';
 export interface JwtPayloadUser extends JwtPayload {
   id: string;
   email: string;
+  fullName?: string;
   activeWorkspace: string;
   role: WorkspaceMemberRole | null;
 }
@@ -32,6 +33,7 @@ export function AuthMiddleware(
   req.user = {
     id: decoded.id,
     email: decoded.email,
+    fullName: decoded.fullName ?? '',
     activeWorkspace: decoded.activeWorkspace,
     role: decoded.role,
   };

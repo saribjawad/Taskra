@@ -49,16 +49,17 @@ const findUserByUsername = async (username: string) => {
  * @returns The user row if found, otherwise undefined
  */
 const createUser = async (
+  fullName: string,
   username: string,
   email: string,
   hashedPassword: string,
 ) => {
   const result = await dbPool.query(
     `
-    INSERT INTO users(username, email, hashed_password)
-    VALUES ($1, $2, $3)
+    INSERT INTO users(full_name, username, email, hashed_password)
+    VALUES ($1, $2, $3, $4)
     RETURNING *`,
-    [username, email, hashedPassword],
+    [fullName, username, email, hashedPassword],
   );
 
   return result.rows[0];
@@ -117,6 +118,7 @@ const updateUser = async (
   data: {
     email?: string;
     username?: string;
+    full_name?: string;
     is_verified?: boolean;
     hashed_password?: string;
     active_workspace?: string;

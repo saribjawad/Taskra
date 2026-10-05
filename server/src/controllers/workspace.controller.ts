@@ -95,12 +95,14 @@ export const SwitchWorkspace = async (req: Request, res: Response) => {
     user.email,
     (user.activeWorkspace = workspaceId),
     workspaceMember.role,
+    user.fullName,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     (user.activeWorkspace = workspaceId),
     workspaceMember.role,
+    user.fullName,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -153,12 +155,14 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
     user.email,
     workspace.id,
     workspaceMember.role,
+    user.fullName,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     workspace.id,
     workspaceMember.role,
+    user.fullName,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -200,12 +204,14 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
       user.email,
       (user.activeWorkspace = ''),
       null,
+      user.fullName,
     );
     const refreshToken = await generateRefreshToken(
       user.id,
       user.email,
       (user.activeWorkspace = ''),
       null,
+      user.fullName,
     );
 
     res.cookie('accessToken', accessToken, {
@@ -249,12 +255,14 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
     user.email,
     (user.activeWorkspace = newActiveWorkspaceId),
     workspaceMember.role,
+    user.fullName,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     (user.activeWorkspace = newActiveWorkspaceId),
     workspaceMember.role,
+    user.fullName,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -503,12 +511,14 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     user.email,
     member.workspace_id,
     member.role,
+    user.full_name,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
     member.workspace_id,
     member.role,
+    user.full_name,
   );
 
   res.cookie('accessToken', accessToken, {
@@ -793,12 +803,12 @@ export const GetWorkspaceDashboard = async (req: Request, res: Response) => {
     upcomingDeadlines,
     taskStatusBreakdown,
   ] = await Promise.all([
-      getDashboardSummary(workspaceId),
-      getCompletionTrend(workspaceId),
-      getOverdueTasks(workspaceId),
-      getUpcomingDeadlines(workspaceId),
-      getTaskStatusBreakdown(workspaceId),
-    ]);
+    getDashboardSummary(workspaceId),
+    getCompletionTrend(workspaceId),
+    getOverdueTasks(workspaceId),
+    getUpcomingDeadlines(workspaceId),
+    getTaskStatusBreakdown(workspaceId),
+  ]);
 
   const dashboard = {
     summary,

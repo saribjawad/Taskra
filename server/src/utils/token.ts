@@ -17,9 +17,10 @@ export function generateAccessToken(
   email: string,
   activeWorkspace: string | null,
   role: WorkspaceMemberRole | null,
+  fullName = '',
 ) {
   const accessToken = jwt.sign(
-    { id, email, activeWorkspace, role },
+    { id, email, activeWorkspace, role, fullName },
     env.JWT_SECRET,
     {
       expiresIn: '600000ms', // 10 minutes
@@ -42,9 +43,10 @@ export async function generateRefreshToken(
   email: string,
   activeWorkspace: string | null,
   role: WorkspaceMemberRole | null,
+  fullName = '',
 ) {
   const refreshToken = jwt.sign(
-    { id, email, activeWorkspace, role },
+    { id, email, activeWorkspace, role, fullName },
     env.REFRESH_SECRET,
     {
       expiresIn: '7d',
