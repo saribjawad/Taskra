@@ -1,4 +1,5 @@
 import {
+  deleteNotification,
   getUserNotifications,
   markNotificationAsSeen,
 } from '#/service/notification.service'
@@ -26,6 +27,16 @@ export function useMarkNotificationAsSeen() {
 
   return useMutation({
     mutationFn: markNotificationAsSeen,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
+  })
+}
+
+export function useDeleteNotification() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteNotification,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
   })

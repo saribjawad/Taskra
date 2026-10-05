@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
+  deleteNotification,
   getNotification,
   getNotificationsByUserAndWorkspaceId,
   markNotificationAsSeen,
@@ -84,4 +85,27 @@ export const MarkNotificationAsSeen = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Notification marked as seen'));
+};
+
+export const DeleteNotification = async (req: Request, res: Response) => {
+  const user = req.user;
+  const { notificationId } = NotificationIdParamsSchema.parse(req.params);
+
+  const notification = await getNotification(
+    notificationId,
+    user.id,
+    user.activeWorkspace,
+  );
+
+  if (!notification) {
+    throw ApiError.notFound('Notification not found');
+  }
+
+  const deletedRowCount = await deleteNotification(notification.id);
+
+  if (!deletedRowCount || deletedRowCount <= 0) {
+    throw ApiError.internal('Someting went wrong while deleting notification');
+  }
+
+  res.status(200).json(new ApiResponse(200, 'Notification deleted'));
 };

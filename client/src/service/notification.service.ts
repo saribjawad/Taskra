@@ -29,3 +29,9 @@ export async function markNotificationAsSeen(
 ): Promise<void> {
   await api.patch(`/notifications/${notificationId}/seen`)
 }
+
+export async function deleteNotification(
+  notificationId: string,
+): Promise<void> {
+  await api.delete(`/notifications/${notificationId}`)
+}

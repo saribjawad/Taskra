@@ -1,12 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
-import { Bell, Check, CheckCheck, Mail, MailOpen } from 'lucide-react'
+import { Bell, Check, CheckCheck, Mail, MailOpen, Trash2 } from 'lucide-react'
 import { Button } from '#/components/ui/button'
 import { notificationPresentation } from '#/constants/notifications'
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns'
 import { cn } from '#/lib/utils'
 import {
   useGetUserNotifications,
+  useDeleteNotification,
   useMarkNotificationAsSeen,
 } from '#/hooks/notification.hooks'
 import { Spinner } from '#/components/ui/spinner'
@@ -25,7 +26,11 @@ function NotificationInbox() {
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>(
     {},
   )
+  const [deletedOverrides, setDeletedOverrides] = useState<
+    Record<string, boolean>
+  >({})
   const { mutate: markNotificationAsSeen } = useMarkNotificationAsSeen()
+  const { mutate: deleteNotification } = useDeleteNotification()
   const { data, isPending, isError, isFetching, hasNextPage, fetchNextPage } =
     useGetUserNotifications()
 
@@ -33,6 +38,7 @@ function NotificationInbox() {
 
   // Formating data, adding read, time, group
   const formatedNotifications = notifications
+    .filter((item) => !deletedOverrides[item.id])
     .map((item) => {
       const createdAt = new Date(item.createdAt)
 
@@ -64,6 +70,17 @@ function NotificationInbox() {
       onError: () => {
         setReadOverrides((items) => ({ ...items, [id]: false }))
         toast.error('Could not mark notification as read')
+      },
+    })
+  }
+
+  function removeNotification(id: string) {
+    setDeletedOverrides((items) => ({ ...items, [id]: true }))
+    deleteNotification(id, {
+      onSuccess: () => toast.success('Notification deleted'),
+      onError: () => {
+        setDeletedOverrides((items) => ({ ...items, [id]: false }))
+        toast.error('Could not delete notification')
       },
     })
   }
@@ -261,7 +278,7 @@ function NotificationInbox() {
                               {item.message}
                             </p>
                           </div>
-                          <div className="flex w-7 shrink-0 flex-col items-center gap-2 pt-1">
+                          <div className="flex w-8 shrink-0 flex-col items-center gap-1 pt-1">
                             <span
                               className={cn(
                                 'size-1.5 rounded-full',
@@ -288,6 +305,16 @@ function NotificationInbox() {
                               ) : (
                                 <MailOpen className="size-3.5" />
                               )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="size-7 text-muted-foreground hover:text-destructive"
+                              aria-label={`Delete notification: ${title}`}
+                              title="Delete notification"
+                              onClick={() => removeNotification(item.id)}
+                            >
+                              <Trash2 className="size-3.5" />
                             </Button>
                           </div>
                         </li>

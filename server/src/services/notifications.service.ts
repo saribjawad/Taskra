@@ -121,3 +121,22 @@ export async function markNotificationAsSeen(id: string) {
 
   return results.rowCount;
 }
+
+/**
+ * Delete notification
+ *
+ * @param id - Notification uuid
+ *
+ * @returns Number of deleted rows
+ */
+export async function deleteNotification(id: string) {
+  const results = await dbPool.query(
+    `
+    DELETE FROM notifications
+    WHERE id = $1
+    `,
+    [id],
+  );
+
+  return results.rowCount;
+}
