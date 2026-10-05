@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   deleteNotification,
+  deleteAllNotifications,
   getNotification,
   getNotificationsByUserAndWorkspaceId,
+  markAllNotificationsAsSeen,
   markNotificationAsSeen,
 } from '../services/notifications.service';
 import { NotificationIdParamsSchema } from '../schemas/notifications.schema';
@@ -87,6 +89,20 @@ export const MarkNotificationAsSeen = async (req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(200, 'Notification marked as seen'));
 };
 
+export const MarkAllNotificationsAsSeen = async (
+  req: Request,
+  res: Response,
+) => {
+  const { id: userId, activeWorkspace: workspaceId } = req.user;
+  const updatedCount = await markAllNotificationsAsSeen(userId, workspaceId);
+
+  res.status(200).json(
+    new ApiResponse(200, 'All notifications marked as seen', {
+      updatedCount,
+    }),
+  );
+};
+
 export const DeleteNotification = async (req: Request, res: Response) => {
   const user = req.user;
   const { notificationId } = NotificationIdParamsSchema.parse(req.params);
@@ -108,4 +124,13 @@ export const DeleteNotification = async (req: Request, res: Response) => {
   }
 
   res.status(200).json(new ApiResponse(200, 'Notification deleted'));
+};
+
+export const DeleteAllNotifications = async (req: Request, res: Response) => {
+  const { id: userId, activeWorkspace: workspaceId } = req.user;
+  const deletedCount = await deleteAllNotifications(userId, workspaceId);
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'All notifications deleted', { deletedCount }));
 };

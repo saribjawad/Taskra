@@ -6,12 +6,22 @@ import { notificationPresentation } from '#/constants/notifications'
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns'
 import { cn } from '#/lib/utils'
 import {
+  useDeleteAllNotifications,
   useGetUserNotifications,
   useDeleteNotification,
+  useMarkAllNotificationsAsSeen,
   useMarkNotificationAsSeen,
 } from '#/hooks/notification.hooks'
 import { Spinner } from '#/components/ui/spinner'
 import { toast } from 'sonner'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/inbox/notifications',
@@ -23,14 +33,21 @@ function NotificationInbox() {
   const scrollRef = useRef<HTMLElement>(null)
 
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false)
   const [readOverrides, setReadOverrides] = useState<Record<string, boolean>>(
     {},
   )
   const [deletedOverrides, setDeletedOverrides] = useState<
     Record<string, boolean>
   >({})
+  const { mutate: markAllAsSeen, isPending: isMarkingAllAsSeen } =
+    useMarkAllNotificationsAsSeen()
   const { mutate: markNotificationAsSeen } = useMarkNotificationAsSeen()
   const { mutate: deleteNotification } = useDeleteNotification()
+  const {
+    mutateAsync: deleteAllNotifications,
+    isPending: isDeletingAllNotifications,
+  } = useDeleteAllNotifications()
   const { data, isPending, isError, isFetching, hasNextPage, fetchNextPage } =
     useGetUserNotifications()
 
@@ -85,6 +102,47 @@ function NotificationInbox() {
     })
   }
 
+  function markAllAsRead() {
+    const unreadItems = formatedNotifications.filter((item) => !item.read)
+    if (!unreadItems.length) return
+
+    const unreadIds = unreadItems.map((item) => item.id)
+    setReadOverrides((items) => ({
+      ...items,
+      ...Object.fromEntries(unreadIds.map((id) => [id, true])),
+    }))
+
+    markAllAsSeen(undefined, {
+      onError: () => {
+        setReadOverrides((items) => ({
+          ...items,
+          ...Object.fromEntries(unreadIds.map((id) => [id, false])),
+        }))
+        toast.error('Could not mark notifications as read')
+      },
+    })
+  }
+
+  async function confirmDeleteAll() {
+    const ids = formatedNotifications.map((item) => item.id)
+    setDeletedOverrides((items) => ({
+      ...items,
+      ...Object.fromEntries(ids.map((id) => [id, true])),
+    }))
+
+    try {
+      await deleteAllNotifications()
+      setDeleteAllDialogOpen(false)
+      toast.success('All notifications deleted')
+    } catch {
+      setDeletedOverrides((items) => ({
+        ...items,
+        ...Object.fromEntries(ids.map((id) => [id, false])),
+      }))
+      toast.error('Could not delete notifications')
+    }
+  }
+
   // Infinite Scroll
   useEffect(() => {
     const element = scrollRef.current
@@ -133,54 +191,65 @@ function NotificationInbox() {
                 Task assignments, comments, and reminders in one place.
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              disabled={unread === 0}
-              onClick={() =>
-                setReadOverrides((items) => ({
-                  ...items,
-                  ...Object.fromEntries(
-                    formatedNotifications.map((item) => [item.id, true]),
-                  ),
-                }))
-              }
-            >
-              <CheckCheck className="size-4" />
-              <span>Mark all as read</span>
-            </Button>
-          </div>
-          <div className="mb-5 flex items-center justify-between gap-3 border-b pb-3">
-            <div className="flex gap-1" aria-label="Filter notifications">
-              {(['all', 'unread'] as const).map((value) => (
+            {formatedNotifications.length > 0 && (
+              <div className="flex items-center gap-1">
+                {unread > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground"
+                    disabled={isMarkingAllAsSeen}
+                    onClick={markAllAsRead}
+                  >
+                    <CheckCheck className="size-4" />
+                    <span>Mark all as read</span>
+                  </Button>
+                )}
                 <Button
-                  key={value}
                   variant="ghost"
-                  size="sm"
-                  aria-pressed={filter === value}
-                  onClick={() => setFilter(value)}
-                  className={cn(
-                    'h-8 text-muted-foreground',
-                    filter === value && 'bg-muted text-foreground',
-                  )}
+                  size="icon-sm"
+                  className="size-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Delete all notifications"
+                  title="Delete all notifications"
+                  onClick={() => setDeleteAllDialogOpen(true)}
                 >
-                  {value === 'all' ? 'All' : 'Unread'}
-                  {value === 'unread' && (
-                    <span className="text-xs text-muted-foreground">
-                      {unread > 9 ? '9+' : unread}
-                    </span>
-                  )}
+                  <Trash2 className="size-3.5" />
                 </Button>
-              ))}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {formatedNotifications.length > 9
-                ? '9+'
-                : formatedNotifications.length}{' '}
-              notifications
-            </span>
+              </div>
+            )}
           </div>
+          {formatedNotifications.length > 0 && (
+            <div className="mb-5 flex items-center justify-between gap-3 border-b pb-3">
+              <div className="flex gap-1" aria-label="Filter notifications">
+                {(['all', 'unread'] as const).map((value) => (
+                  <Button
+                    key={value}
+                    variant="ghost"
+                    size="sm"
+                    aria-pressed={filter === value}
+                    onClick={() => setFilter(value)}
+                    className={cn(
+                      'h-8 text-muted-foreground',
+                      filter === value && 'bg-muted text-foreground',
+                    )}
+                  >
+                    {value === 'all' ? 'All' : 'Unread'}
+                    {value === 'unread' && (
+                      <span className="text-xs text-muted-foreground">
+                        {unread > 9 ? '9+' : unread}
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {formatedNotifications.length > 9
+                  ? '9+'
+                  : formatedNotifications.length}{' '}
+                notifications
+              </span>
+            </div>
+          )}
           {isPending ? (
             <p
               className="flex flex-col items-center gap-3 py-20 text-center text-sm text-muted-foreground"
@@ -205,23 +274,15 @@ function NotificationInbox() {
                 <Bell className="size-5 text-muted-foreground" />
               </div>
               <h3 className="text-sm font-medium">
-                {notifications.length === 0
+                {formatedNotifications.length === 0
                   ? 'No notifications yet'
                   : 'You’re all caught up'}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {filter === 'unread' && notifications.length > 0
+                {filter === 'unread' && formatedNotifications.length > 0
                   ? 'No unread notifications. Your updates are in All.'
                   : 'Your notifications will appear here.'}
               </p>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="mt-4"
-                onClick={() => setFilter('all')}
-              >
-                View all notifications
-              </Button>
             </div>
           ) : (
             (['Today', 'Yesterday', 'Earlier'] as const).map((group) => {
@@ -325,12 +386,47 @@ function NotificationInbox() {
               )
             })
           )}
-          <p className="flex items-center justify-center gap-1.5 pb-3 text-xs text-muted-foreground">
-            <Check className="size-3" />
-            You’re viewing your notifications
-          </p>
+          {formatedNotifications.length > 0 && (
+            <p className="flex items-center justify-center gap-1.5 pb-3 text-xs text-muted-foreground">
+              <Check className="size-3" />
+              You’re viewing your notifications
+            </p>
+          )}
         </div>
       </div>
+      <Dialog
+        open={deleteAllDialogOpen}
+        onOpenChange={(open) => {
+          if (!isDeletingAllNotifications) setDeleteAllDialogOpen(open)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete all notifications?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes all notifications in this workspace. This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={isDeletingAllNotifications}
+              onClick={() => setDeleteAllDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isDeletingAllNotifications}
+              onClick={() => void confirmDeleteAll()}
+            >
+              {isDeletingAllNotifications && <Spinner />}
+              Delete all
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

@@ -1,6 +1,8 @@
 import {
+  deleteAllNotifications,
   deleteNotification,
   getUserNotifications,
+  markAllNotificationsAsSeen,
   markNotificationAsSeen,
 } from '#/service/notification.service'
 import type { NotificationCursor } from '#/service/notification.service'
@@ -32,11 +34,31 @@ export function useMarkNotificationAsSeen() {
   })
 }
 
+export function useMarkAllNotificationsAsSeen() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: markAllNotificationsAsSeen,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
+  })
+}
+
 export function useDeleteNotification() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: deleteNotification,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
+  })
+}
+
+export function useDeleteAllNotifications() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteAllNotifications,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: notificationQueryKey }),
   })

@@ -122,6 +122,23 @@ export async function markNotificationAsSeen(id: string) {
   return results.rowCount;
 }
 
+/** Mark every notification for this user in this workspace as seen. */
+export async function markAllNotificationsAsSeen(
+  userId: string,
+  workspaceId: string,
+): Promise<number> {
+  const result = await dbPool.query(
+    `
+    UPDATE notifications
+    SET seen = true
+    WHERE user_id = $1 AND workspace_id = $2 AND seen = false
+    `,
+    [userId, workspaceId],
+  );
+
+  return result.rowCount ?? 0;
+}
+
 /**
  * Delete notification
  *
@@ -139,4 +156,20 @@ export async function deleteNotification(id: string) {
   );
 
   return results.rowCount;
+}
+
+/** Delete every notification for this user in this workspace. */
+export async function deleteAllNotifications(
+  userId: string,
+  workspaceId: string,
+): Promise<number> {
+  const result = await dbPool.query(
+    `
+    DELETE FROM notifications
+    WHERE user_id = $1 AND workspace_id = $2
+    `,
+    [userId, workspaceId],
+  );
+
+  return result.rowCount ?? 0;
 }
