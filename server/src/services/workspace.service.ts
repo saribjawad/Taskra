@@ -1,5 +1,9 @@
 import { dbPool } from '../db';
-import { Workspace, WorkspaceMemberRole } from '../models/workspace.model';
+import {
+  Workspace,
+  WorkspaceMemberRole,
+  WorkspaceMemberWithUserDetails,
+} from '../models/workspace.model';
 import { WorkspaceMember } from '../models/workspace.model';
 
 /**
@@ -38,6 +42,37 @@ const getUserWorkspaces = async (userId: string) => {
   );
 
   return result.rows;
+};
+
+/**
+ *
+ * @param userIds - Array of user's UUID
+ * @param workspaceId - Workspace UUID
+ * @returns workspace members
+ */
+const getWorkspaceMembers = async (
+  userIds: string[],
+  workspaceId: string,
+): Promise<WorkspaceMemberWithUserDetails[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT
+    wm.id,
+    wm.workspace_id,
+    wm.role,
+    wm.joined_at,
+    json_build_object ('id', u.id, 'username', u.username, 'full_name', u.full_name, 'email', u.email) as user
+FROM
+    workspace_members as wm
+    INNER JOIN users as u ON u.id = wm.user_id
+WHERE
+    wm.user_id in (${userIds.join(',')})
+    AND workspace_id = ${workspaceId};
+    `,
+    [workspaceId],
+  );
+
+  return results.rows;
 };
 
 /**
@@ -176,4 +211,5 @@ export {
   createWorkspaceMember,
   deleteWorkspaceMember,
   getWorkspaceUsers,
+  getWorkspaceMembers,
 };

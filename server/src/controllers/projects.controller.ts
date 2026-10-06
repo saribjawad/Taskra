@@ -32,6 +32,7 @@ import { findUserById } from '../services/user.service';
 import {
   getWorkspaceById,
   getWorkspaceMember,
+  getWorkspaceMembers,
 } from '../services/workspace.service';
 import {
   createProjectMember,
@@ -387,25 +388,20 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
     throw ApiError.notFound('Project not found');
   }
 
+  // Get workspace members
+  const members = await getWorkspaceMembers(memberIds, user.activeWorkspace);
+  const foundIds = new Set(members.map((m) => m.user.id));
+
+  const failed = memberIds.filter((id) => !foundIds.has(id));
+
   const result = {
     added: [] as string[],
-    failed: [] as string[],
+    failed,
   };
 
-  // TODO: instead of looping fetching all the members in single query
-  // Check if members belong the workspace
-  for (const memberId of memberIds) {
-    const workspaceMember = await getWorkspaceMember(
-      memberId,
-      user.activeWorkspace,
-    );
-
-    if (!workspaceMember) {
-      result.failed.push(memberId);
-      continue;
-    }
-
-    const projectMember = await createProjectMember(memberId, project.id);
+  // TODO: drop this and add transactions
+  for (const member of members) {
+    const projectMember = await createProjectMember(member.user.id, project.id);
 
     if (!projectMember) {
       throw ApiError.internal(
@@ -416,9 +412,7 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
       const createdProjectActivity = await createProjectActivity(
         project.id,
         user.id,
-        // TEMP:
-        // TODO: return user detail from workspace member and use it
-        `${user.fullName} added ${memberId} as member`,
+        `${user.fullName} added ${member.user.full_name} as member`,
         'member_added',
       );
 
@@ -455,7 +449,7 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
       }
     }
 
-    result.added.push(memberId);
+    result.added.push(member.user.id);
   }
 
   res.status(200).json(new ApiResponse(200, 'Members added', result));
@@ -475,25 +469,20 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
     throw ApiError.notFound('Project not found');
   }
 
+  // Get workspace membersa
+  const members = await getWorkspaceMembers(memberIds, user.activeWorkspace);
+  const foundIds = new Set(members.map((m) => m.user.id));
+
+  const failed = memberIds.filter((id) => !foundIds.has(id));
+
   const result = {
     removed: [] as string[],
-    failed: [] as string[],
+    failed,
   };
 
-  // TODO: instead of looping fetching all the members in single query
-  for (const memberId of memberIds) {
-    // Check if project member exists
-    const projectMember = await getProjectMemberByIdAndProjectId(
-      memberId,
-      project.id,
-    );
-
-    if (!projectMember) {
-      result.failed.push(memberId);
-      continue;
-    }
-
-    const rowsCount = await deleteProjectMember(memberId, project.id);
+  // TODO: drop and add transcations
+  for (const member of members) {
+    const rowsCount = await deleteProjectMember(member.user.id, project.id);
 
     if (!rowsCount || rowsCount <= 0) {
       throw ApiError.internal(
@@ -506,7 +495,7 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
         user.id,
         // TEMP:
         // TODO: return user detail from workspace member and use it
-        `${user.fullName} removed ${memberId} from member`,
+        `${user.fullName} removed ${member.user.full_name} from member`,
         'member_removed',
       );
 
@@ -517,7 +506,7 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
       }
     }
 
-    result.removed.push(memberId);
+    result.removed.push(member.user.id);
   }
 
   res.status(200).json(new ApiResponse(200, 'Members removed', result));
