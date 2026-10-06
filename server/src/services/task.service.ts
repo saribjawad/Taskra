@@ -13,7 +13,7 @@ import {
  *
  * @param id - Task uuid
  * @param workspaceId - Workspace uuid task belongs to
- * @returns The task row if found, otherwise undefined
+ * @returns The task row if found
  */
 export const findTaskByIdAndWorkspaceId = async (
   id: string,

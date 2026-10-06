@@ -7,7 +7,10 @@ export type TaskActivityType =
   | 'reporter_changed'
   | 'comment_added'
   | 'attachment_added'
-  | 'task_completed';
+  | 'task_completed'
+  | 'task_connected_to_project'
+  | 'task_connected_to_milestone'
+  | 'task_removed_from_project';
 
 export interface TaskActivity {
   id: string;

@@ -719,8 +719,9 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       throw ApiError.notFound('Project not found');
     }
 
+    let milestone;
     if (milestoneId) {
-      const milestone = await getProjectMilestonesWithIdAndProjectId(
+      milestone = await getProjectMilestonesWithIdAndProjectId(
         milestoneId,
         project.id,
       );
@@ -730,12 +731,25 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       }
     }
 
+    const activity = await createTaskActivity(
+      task.id,
+      user.id,
+      milestone ? 'task_connected_to_milestone' : 'task_connected_to_project',
+      `${user.fullName} added '${task.title}' to '${milestone ? milestone.id : project.name}'`,
+    );
+
+    if (!activity) {
+      throw ApiError.internal(
+        'Something went wrong while creating task activity',
+      );
+    }
+
     if (project.lead_id && project.lead_id !== user.id) {
       const createdNotification = await createNotification(
         project.lead_id,
         project.workspace_id,
         'project:task_added',
-        `${user.fullName} added '${task.title}' to '${project.name}'`,
+        `${user.fullName} added task to '${project.name}'`,
         { actorId: user.id, projectId: project.id },
       );
 
@@ -761,6 +775,21 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     project_id: projectId,
     project_milestone_id: projectId === null ? null : (milestoneId ?? null),
   });
+
+  if (!projectId) {
+    const activity = await createTaskActivity(
+      task.id,
+      user.id,
+      'task_removed_from_project',
+      `${user.fullName} removed '${task.title}' from project`,
+    );
+
+    if (!activity) {
+      throw ApiError.internal(
+        'Something went wrong while creating task activity',
+      );
+    }
+  }
 
   if (!updatedRowsCount || updatedRowsCount <= 0) {
     throw ApiError.internal('Something went wrong while updating tasks');
