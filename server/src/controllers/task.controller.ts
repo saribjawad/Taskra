@@ -132,7 +132,7 @@ export const CreateTask = async (req: Request, res: Response) => {
     task.id,
     user.id,
     'task_created',
-    `${user.email} created the task.`,
+    `${user.fullName} created the task.`,
   );
 
   if (!taskActivity) {
@@ -310,14 +310,14 @@ export const UpdateTask = async (req: Request, res: Response) => {
       ) {
         const nextValue = payload[field];
 
-        let description = `${user.email} changed ${field} to '${nextValue ?? 'none'}'`;
+        let description = `${user.fullName} changed ${field} to '${nextValue ?? 'none'}'`;
 
         // Manually add assignee/reporter email
         if (field === 'assignee' && payload['assignee'] !== null) {
-          description = `${user.email} changed the assignee to ${assigneeUser?.email}`;
+          description = `${user.fullName} changed the assignee to ${assigneeUser?.full_name}`;
         }
         if (field === 'reporter' && payload['reporter'] !== null) {
-          description = `${user.email} changed the reporter to ${reporterUser?.email}`;
+          description = `${user.fullName} changed the reporter to ${reporterUser?.full_name}`;
         }
 
         await createTaskActivity(
@@ -370,7 +370,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
         task.id,
         user.id,
         'attachment_added',
-        `${user.email} attached an attachment '${f.originalname}'`,
+        `${user.fullName} attached an attachment '${f.originalname}'`,
       );
     }),
   );
@@ -462,7 +462,7 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
     taskId,
     user.id,
     'task_completed',
-    `${user.email} marked the task as completed`,
+    `${user.fullName} marked the task as completed`,
   );
 
   if (!taskActivity) {
@@ -735,7 +735,7 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
         project.lead_id,
         project.workspace_id,
         'project:task_added',
-        `${user.email} added '${task.title}' to '${project.name}'`,
+        `${user.fullName} added '${task.title}' to '${project.name}'`,
         { actorId: user.id, projectId: project.id },
       );
 
@@ -747,7 +747,7 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
 
       notifyMemberInWorkspace(project.lead_id, project.workspace_id, {
         type: 'project:task_added',
-        message: `${user.email} added '${task.title}' to '${project.name}'`,
+        message: `${user.fullName} added '${task.title}' to '${project.name}'`,
         metaData: {
           actorId: user.id,
           projectId: project.id,

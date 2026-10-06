@@ -123,7 +123,7 @@ export const CreateProject = async (req: Request, res: Response) => {
   const createdProjectActivity = await createProjectActivity(
     createdProject.id,
     user.id,
-    `${user.email} created the project.`,
+    `${user.fullName} created the project.`,
     'project_created',
   );
 
@@ -232,11 +232,11 @@ export const UpdateProject = async (req: Request, res: Response) => {
       payload[field] !== undefined &&
       payload[field] !== project[field as keyof Project]
     ) {
-      let description = `${user.email} changed ${field} to ${payload[field]}`;
+      let description = `${user.fullName} changed ${field} to ${payload[field]}`;
 
       // Manually add lead email
       if (field === 'lead_id') {
-        description = `${user.email} changed lead to ${leadUser?.email}`;
+        description = `${user.fullName} changed lead to ${leadUser?.full_name}`;
       }
 
       const createdProjectActivity = await createProjectActivity(
@@ -306,7 +306,7 @@ export const UpdateProject = async (req: Request, res: Response) => {
         m,
         project.workspace_id,
         'project:completed',
-        `${user.email} marked the '${payload.name ?? project.name}' project as done.`,
+        `${user.fullName} marked the '${payload.name ?? project.name}' project as done.`,
         { actorId: user.id, projectId: project.id },
       );
 
@@ -318,7 +318,7 @@ export const UpdateProject = async (req: Request, res: Response) => {
 
       notifyMemberInWorkspace(m, project.workspace_id, {
         type: 'project:completed',
-        message: `${user.email} marked the '${payload.name ?? project.name}' project as done.`,
+        message: `${user.fullName} marked the '${payload.name ?? project.name}' project as done.`,
         metaData: {
           actorId: user.id,
           projectId: project.id,
@@ -418,7 +418,7 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
         user.id,
         // TEMP:
         // TODO: return user detail from workspace member and use it
-        `${user.email} added ${memberId} as member`,
+        `${user.fullName} added ${memberId} as member`,
         'member_added',
       );
 
@@ -506,7 +506,7 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
         user.id,
         // TEMP:
         // TODO: return user detail from workspace member and use it
-        `${user.email} removed ${memberId} from member`,
+        `${user.fullName} removed ${memberId} from member`,
         'member_removed',
       );
 
