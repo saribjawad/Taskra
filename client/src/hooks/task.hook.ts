@@ -30,6 +30,9 @@ export function useConnectTaskToProject(taskId: string) {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
+        queryClient.invalidateQueries({
+          queryKey: [`task-activity-${taskId}`],
+        }),
         queryClient.invalidateQueries({ queryKey: ['tasks'] }),
         queryClient.invalidateQueries({ queryKey: ['project-tasks'] }),
         queryClient.invalidateQueries({ queryKey: ['project-task-progress'] }),

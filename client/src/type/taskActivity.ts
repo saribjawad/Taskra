@@ -8,6 +8,9 @@ export type TaskActivityType =
   | 'comment_added'
   | 'attachment_added'
   | 'task_completed'
+  | 'task_connected_to_project'
+  | 'task_connected_to_milestone'
+  | 'task_removed_from_project'
 
 interface TaskTimelineEntryBase {
   id: string

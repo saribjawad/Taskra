@@ -709,8 +709,11 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
 
+  let project = null;
+  let milestone = null;
+
   if (projectId !== null) {
-    const project = await getProjectByIdAndWorkspaceId(
+    project = await getProjectByIdAndWorkspaceId(
       projectId,
       user.activeWorkspace,
     );
@@ -719,7 +722,6 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       throw ApiError.notFound('Project not found');
     }
 
-    let milestone;
     if (milestoneId) {
       milestone = await getProjectMilestonesWithIdAndProjectId(
         milestoneId,
@@ -730,58 +732,43 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
         throw ApiError.notFound('Project milestone not found');
       }
     }
-
-    const activity = await createTaskActivity(
-      task.id,
-      user.id,
-      milestone ? 'task_connected_to_milestone' : 'task_connected_to_project',
-      `${user.fullName} added '${task.title}' to '${milestone ? milestone.id : project.name}'`,
-    );
-
-    if (!activity) {
-      throw ApiError.internal(
-        'Something went wrong while creating task activity',
-      );
-    }
-
-    if (project.lead_id && project.lead_id !== user.id) {
-      const createdNotification = await createNotification(
-        project.lead_id,
-        project.workspace_id,
-        'project:task_added',
-        `${user.fullName} added task to '${project.name}'`,
-        { actorId: user.id, projectId: project.id },
-      );
-
-      if (!createdNotification) {
-        throw ApiError.internal(
-          'Something went wrong while creating notification',
-        );
-      }
-
-      notifyMemberInWorkspace(project.lead_id, project.workspace_id, {
-        type: 'project:task_added',
-        message: `${user.fullName} added '${task.title}' to '${project.name}'`,
-        metaData: {
-          actorId: user.id,
-          projectId: project.id,
-        },
-      });
-    }
   }
+
+  const nextMilestoneId = projectId === null ? null : (milestoneId ?? null);
+  const associationChanged =
+    task.project_id !== projectId ||
+    task.project_milestone_id !== nextMilestoneId;
 
   // Clear both associations together when the user selects "No project".
   const updatedRowsCount = await updateTask(task.id, {
     project_id: projectId,
-    project_milestone_id: projectId === null ? null : (milestoneId ?? null),
+    project_milestone_id: nextMilestoneId,
   });
 
-  if (!projectId) {
+  if (!updatedRowsCount || updatedRowsCount <= 0) {
+    throw ApiError.internal('Something went wrong while updating tasks');
+  }
+
+  if (associationChanged) {
+    let activityType: TaskActivityType;
+    let description: string;
+
+    if (!projectId) {
+      activityType = 'task_removed_from_project';
+      description = `${user.fullName} removed '${task.title}' from its project`;
+    } else if (milestone) {
+      activityType = 'task_connected_to_milestone';
+      description = `${user.fullName} connected '${task.title}' to milestone '${milestone.name}' in '${project!.name}'`;
+    } else {
+      activityType = 'task_connected_to_project';
+      description = `${user.fullName} connected '${task.title}' to project '${project!.name}'`;
+    }
+
     const activity = await createTaskActivity(
       task.id,
       user.id,
-      'task_removed_from_project',
-      `${user.fullName} removed '${task.title}' from project`,
+      activityType,
+      description,
     );
 
     if (!activity) {
@@ -791,8 +778,35 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     }
   }
 
-  if (!updatedRowsCount || updatedRowsCount <= 0) {
-    throw ApiError.internal('Something went wrong while updating tasks');
+  // Notify the destination project's lead when a task is newly connected.
+  if (
+    project &&
+    task.project_id !== project.id &&
+    project.lead_id &&
+    project.lead_id !== user.id
+  ) {
+    const createdNotification = await createNotification(
+      project.lead_id,
+      project.workspace_id,
+      'project:task_added',
+      `${user.fullName} added task to '${project.name}'`,
+      { actorId: user.id, projectId: project.id },
+    );
+
+    if (!createdNotification) {
+      throw ApiError.internal(
+        'Something went wrong while creating notification',
+      );
+    }
+
+    notifyMemberInWorkspace(project.lead_id, project.workspace_id, {
+      type: 'project:task_added',
+      message: `${user.fullName} added '${task.title}' to '${project.name}'`,
+      metaData: {
+        actorId: user.id,
+        projectId: project.id,
+      },
+    });
   }
 
   res.status(200).json(new ApiResponse(200, 'Task project updated'));

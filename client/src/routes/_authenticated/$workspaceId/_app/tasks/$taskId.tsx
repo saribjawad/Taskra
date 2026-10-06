@@ -70,9 +70,12 @@ import {
   Flag,
   File as FileIcon,
   FileText,
+  FolderPlus,
+  FolderX,
   Image as ImageIcon,
   Loader2,
   MessageSquare,
+  Milestone,
   Paperclip,
   PanelRight,
   Pencil,
@@ -130,6 +133,15 @@ function ActivityIcon({ type }: { type: TaskEventActivity['type'] }) {
   if (type === 'status_changed') return <CircleDot className={className} />
   if (type === 'title_changed') return <Type className={className} />
   if (type === 'task_created') return <Circle className={className} />
+  if (type === 'task_connected_to_project') {
+    return <FolderPlus className={className} />
+  }
+  if (type === 'task_connected_to_milestone') {
+    return <Milestone className={className} />
+  }
+  if (type === 'task_removed_from_project') {
+    return <FolderX className={className} />
+  }
 
   return <RefreshCw className={className} />
 }
