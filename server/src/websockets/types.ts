@@ -9,3 +9,22 @@ export interface NotificationPayloadType {
     projectId?: string;
   };
 }
+
+export type NewConversationPayload = {
+  type: 'conversation:new';
+  payload: {
+    conversationId: string;
+  };
+};
+
+export type SendMessagePayloadType = {
+  type: 'message:send';
+  payload: {
+    conversationId: string;
+    message: string;
+  };
+};
+
+export type WebsocketMessagePayload =
+  | NewConversationPayload
+  | SendMessagePayloadType;

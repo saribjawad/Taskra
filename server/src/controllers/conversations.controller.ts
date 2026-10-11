@@ -2,11 +2,11 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   createConversation,
-  getExistingConversationWithParticipants,
+  getExistingConversationByParticipants,
 } from '../services/conversations.service';
 import { ApiError } from '../utils/ApiErrors';
 import { CreateConversationBodySchema } from '../schemas/conversations.schema';
-import { createConversationUser } from '../services/conversationUsers.service';
+import { createConversationParticipant } from '../services/conversationParticipants.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
 
 export const CreateConversation = async (req: Request, res: Response) => {
@@ -24,8 +24,9 @@ export const CreateConversation = async (req: Request, res: Response) => {
   }
 
   // Check if conversation already exists with matching participants
-  const conversationsParticipants =
-    await getExistingConversationWithParticipants([...participants, user.id]);
+  const conversationsParticipants = await getExistingConversationByParticipants(
+    [...participants, user.id],
+  );
 
   if (conversationsParticipants) {
     throw ApiError.forbidden('Conversation already exists');
@@ -43,7 +44,7 @@ export const CreateConversation = async (req: Request, res: Response) => {
   // Create conversation user -> connected to conversation
   await Promise.all([
     uniqueParticipants.forEach(async (p) => {
-      const createdConversationUser = await createConversationUser(
+      const createdConversationUser = await createConversationParticipant(
         p,
         conversations.id,
       );

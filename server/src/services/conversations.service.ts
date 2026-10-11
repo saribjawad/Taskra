@@ -16,7 +16,7 @@ export const createConversation = async (
   return results.rows[0];
 };
 
-export const getExistingConversationWithParticipants = async (
+export const getExistingConversationByParticipants = async (
   participants: string[],
 ): Promise<{
   conversation_id: string;
@@ -40,4 +40,17 @@ export const getExistingConversationWithParticipants = async (
   );
 
   return results.rows[0];
+};
+
+export const GetConversationsUserIsPartOf = async (
+  userId: string,
+): Promise<{ conversation_id: string }[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT conversation_id from conversation_users where user_id = $1;
+    `,
+    [userId],
+  );
+
+  return results.rows;
 };

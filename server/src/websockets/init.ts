@@ -4,8 +4,9 @@ import * as jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { Server } from 'node:http';
-import { NotificationPayloadType } from './types';
+import { NotificationPayloadType, WebsocketMessagePayload } from './types';
 import logger from '../utils/logger';
+import { GetConversationsUserIsPartOf } from '../services/conversations.service';
 
 // Websocket Server
 const wss = new WebSocketServer({
@@ -52,7 +53,7 @@ export function initWebSocket(server: Server) {
     });
   });
 
-  wss.on('connection', (ws, payload) => {
+  wss.on('connection', async (ws, payload) => {
     logger.info(`Welcome, ${payload.user.email}, to the server`);
 
     const user = payload.user;
@@ -74,11 +75,67 @@ export function initWebSocket(server: Server) {
       ]);
     }
 
+    // Check if user is part of conversations
+    try {
+      const userConversations = await GetConversationsUserIsPartOf(user.id);
+
+      if (userConversations.length >= 1) {
+        // If chatroom exists add the user in it
+        // Else create the room
+        for (const { conversation_id } of userConversations) {
+          const room = chatRooms.get(conversation_id);
+
+          if (room) {
+            room.push({ id: user.id, ws });
+          } else {
+            chatRooms.set(conversation_id, [
+              {
+                id: user.id,
+                ws,
+              },
+            ]);
+          }
+        }
+      }
+    } catch (e) {
+      logger.error(
+        "Error occured while finding user's conversation on WS init",
+        e,
+      );
+    }
+
     ws.on('error', console.error);
 
     ws.on('message', function (message) {
-      const payload = JSON.parse(String(message));
-      console.log(payload);
+      const { payload, type } = JSON.parse(
+        String(message),
+      ) as WebsocketMessagePayload;
+
+      /**
+       * CONVERSATION:NEW
+       */
+      if (type === 'conversation:new') {
+        // Create a chat room
+        chatRooms.set(payload.conversationId, [
+          {
+            id: user.id,
+            ws,
+          },
+        ]);
+      }
+
+      /**
+       * MESSAGE:SEND
+       */
+      if (type === 'message:send') {
+        const chatRoom = chatRooms.get(payload.conversationId);
+
+        if (chatRoom && chatRoom.length > 1) {
+          for (const u of chatRoom) {
+            if (u.id !== user.id) u.ws.send(JSON.stringify(payload.message));
+          }
+        }
+      }
     });
 
     ws.on('close', function () {
