@@ -37,7 +37,6 @@ import {
 import {
   createProjectMember,
   deleteProjectMember,
-  getProjectMemberByIdAndProjectId,
   getProjectMembersByProjectId,
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';

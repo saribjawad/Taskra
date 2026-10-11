@@ -19,11 +19,13 @@ const workspaceRooms: Map<
     ws: WebSocket;
   }[]
 > = new Map();
+const chatRooms: Map<string, { id: string; ws: WebSocket }[]> = new Map();
 
 export function initWebSocket(server: Server) {
+  // On upgrade network
   server.on('upgrade', (request, socket, head) => {
     socket.on('error', (err) => {
-      console.log('Error while upgrading socket', err);
+      logger.error('Error while upgrading socket', err);
     });
 
     // Check for authentication
@@ -51,11 +53,12 @@ export function initWebSocket(server: Server) {
   });
 
   wss.on('connection', (ws, payload) => {
-    logger.info(`${payload.user.email} connected`);
+    logger.info(`Welcome, ${payload.user.email}, to the server`);
 
     const user = payload.user;
 
-    // Check if the room for user's active workspace exist
+    // If a room exists for the workspace, if not create one
+    // And push the user in the room
     if (workspaceRooms.get(user.activeWorkspace)) {
       const workspaceRoom = workspaceRooms.get(user.activeWorkspace);
       workspaceRoom?.push({
@@ -63,7 +66,6 @@ export function initWebSocket(server: Server) {
         ws,
       });
     } else {
-      // If not create one
       workspaceRooms.set(user.activeWorkspace, [
         {
           id: user.id,
@@ -75,14 +77,8 @@ export function initWebSocket(server: Server) {
     ws.on('error', console.error);
 
     ws.on('message', function (message) {
-      // Temp, revist on in app messaging
-      const workspaceRoom = workspaceRooms.get(user.activeWorkspace);
-
-      workspaceRoom?.forEach((m) => {
-        if (ws !== m.ws) {
-          m.ws.send(String(message));
-        }
-      });
+      const payload = JSON.parse(String(message));
+      console.log(payload);
     });
 
     ws.on('close', function () {

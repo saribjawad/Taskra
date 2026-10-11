@@ -65,11 +65,11 @@ const getWorkspaceMembers = async (
 FROM
     workspace_members as wm
     INNER JOIN users as u ON u.id = wm.user_id
-WHERE
-    wm.user_id in (${userIds.join(',')})
-    AND workspace_id = ${workspaceId};
+    WHERE
+    wm.user_id = ANY($1::uuid[])
+    AND wm.workspace_id = $2;
     `,
-    [workspaceId],
+    [userIds, workspaceId],
   );
 
   return results.rows;

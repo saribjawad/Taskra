@@ -8,6 +8,7 @@ import attachmentRouter from './attachment.routes';
 import notificationRouter from './notification.routes';
 import projectsRouter from './projects.routes';
 import projectMilestonesRouter from './projectMilestones.routes';
+import conversationRouter from './conversations.routes';
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use('/tasks', taskRouter);
 router.use('/workspace', workspaceRouter);
 router.use('/attachment', attachmentRouter);
 router.use('/notifications', notificationRouter);
+router.use('/conversations', conversationRouter);
 
 export default router;
