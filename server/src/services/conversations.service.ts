@@ -24,10 +24,10 @@ export const getExistingConversationByParticipants = async (
   const results = await dbPool.query(
     `
     SELECT conversation_id
-    FROM conversation_users
+    FROM conversation_participants
     WHERE conversation_id = ANY (
       SELECT conversation_id
-      FROM conversation_users
+      FROM conversation_participants
       WHERE user_id = ANY ($1::uuid[])
     )
     GROUP BY conversation_id
@@ -42,15 +42,30 @@ export const getExistingConversationByParticipants = async (
   return results.rows[0];
 };
 
-export const GetConversationsUserIsPartOf = async (
+export const getConversationsUserIsPartOf = async (
   userId: string,
 ): Promise<{ conversation_id: string }[]> => {
   const results = await dbPool.query(
     `
-    SELECT conversation_id from conversation_users where user_id = $1;
+    SELECT conversation_id from conversation_participants where user_id = $1;
     `,
     [userId],
   );
 
   return results.rows;
+};
+
+export const getConversationByIdAndWorkspaceId = async (
+  id: string,
+  workspaceId: string,
+): Promise<Conversation> => {
+  const results = await dbPool.query(
+    `
+    SELECT * FROM conversations
+    WHERE id = $1 AND workspace_id = $2
+    `,
+    [id, workspaceId],
+  );
+
+  return results.rows[0];
 };

@@ -6,7 +6,7 @@ import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { Server } from 'node:http';
 import { NotificationPayloadType, WebsocketMessagePayload } from './types';
 import logger from '../utils/logger';
-import { GetConversationsUserIsPartOf } from '../services/conversations.service';
+import { getConversationsUserIsPartOf } from '../services/conversations.service';
 
 // Websocket Server
 const wss = new WebSocketServer({
@@ -77,7 +77,7 @@ export function initWebSocket(server: Server) {
 
     // Check if user is part of conversations
     try {
-      const userConversations = await GetConversationsUserIsPartOf(user.id);
+      const userConversations = await getConversationsUserIsPartOf(user.id);
 
       if (userConversations.length >= 1) {
         // If chatroom exists add the user in it

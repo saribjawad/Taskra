@@ -1,4 +1,4 @@
-export interface ConversationUsers {
+export interface ConversationParticipant {
   id: string;
   user_id: string;
   conversation_id: string;
