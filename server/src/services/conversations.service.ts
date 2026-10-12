@@ -47,7 +47,7 @@ export const getConversationsUserIsPartOf = async (
 ): Promise<{ conversation_id: string }[]> => {
   const results = await dbPool.query(
     `
-    SELECT conversation_id from conversation_participants where user_id = $1;
+    SELECT conversation_id FROM conversation_participants WHERE user_id = $1;
     `,
     [userId],
   );
@@ -68,4 +68,21 @@ export const getConversationByIdAndWorkspaceId = async (
   );
 
   return results.rows[0];
+};
+
+export const addLastMessageOnConversation = async (
+  id: string,
+  lastMessageId: string,
+  lastMessageDate: Date,
+) => {
+  const results = await dbPool.query(
+    `
+      UPDATE conversations
+      SET last_message_id = $2, last_message_date = $3
+      WHERE id = $1
+    `,
+    [id, lastMessageId, lastMessageDate],
+  );
+
+  return results.rowCount;
 };

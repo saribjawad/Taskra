@@ -4,7 +4,10 @@ import {
   SendMessageBodySchema,
   SendMessageParamSchema,
 } from '../schemas/messages.schema';
-import { getConversationByIdAndWorkspaceId } from '../services/conversations.service';
+import {
+  addLastMessageOnConversation,
+  getConversationByIdAndWorkspaceId,
+} from '../services/conversations.service';
 import { ApiError } from '../utils/ApiErrors';
 import { getConversationParticipantByUserId } from '../services/conversationParticipants.service';
 import { createMessage } from '../services/mesages.service';
@@ -46,6 +49,18 @@ export const SendMessage = async (req: Request, res: Response) => {
 
   if (!createdMessage) {
     throw ApiError.internal('Something went wrong while creating the message');
+  }
+
+  const updatedRowsCount = await addLastMessageOnConversation(
+    conversation.id,
+    createdMessage.id,
+    createdMessage.created_at,
+  );
+
+  if (!updatedRowsCount || updatedRowsCount <= 0) {
+    throw ApiError.internal(
+      'Something went wrong while adding message on conversation',
+    );
   }
 
   res.status(200).json(new ApiResponse(200, 'Message sent', createdMessage));

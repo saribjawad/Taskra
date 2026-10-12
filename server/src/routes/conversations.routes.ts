@@ -6,6 +6,9 @@ import { CreateConversation } from '../controllers/conversations.controller';
 const conversationRouter = Router();
 conversationRouter.use(AuthMiddleware);
 
-conversationRouter.route('/').post(asyncHandler(CreateConversation));
+conversationRouter
+  .route('/')
+  .get(asyncHandler)
+  .post(asyncHandler(CreateConversation));
 
 export default conversationRouter;
