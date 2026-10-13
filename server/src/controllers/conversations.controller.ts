@@ -129,7 +129,7 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
 
 export const GetConversationMessages = async (req: Request, res: Response) => {
   const user = req.user;
-  const LIMIT = 2;
+  const LIMIT = 20;
 
   const { conversationId } = GetConversationMessagesParamSchema.parse(
     req.params,
