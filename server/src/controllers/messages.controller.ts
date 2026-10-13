@@ -22,7 +22,6 @@ export const SendMessage = async (req: Request, res: Response) => {
     conversationId,
     user.activeWorkspace,
   );
-  console.log('Conversation', conversation);
 
   if (!conversation) {
     throw ApiError.notFound('Conversation not found');
@@ -33,16 +32,10 @@ export const SendMessage = async (req: Request, res: Response) => {
     user.id,
     conversation.id,
   );
-  console.log('Conversation participants', conversationParticipant);
 
   if (!conversationParticipant) {
-    // throw ApiError.notFound('Conversation participant not found');
     throw ApiError.forbidden('User is not participant of the conversation');
   }
-
-  // if (conversationParticipant.conversation_id !== conversation.id) {
-  //   throw ApiError.forbidden('User is not participant of the conversation');
-  // }
 
   const createdMessage = await createMessage(
     conversation.id,
