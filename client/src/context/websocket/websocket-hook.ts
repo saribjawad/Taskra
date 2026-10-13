@@ -4,9 +4,8 @@ import { WebsocketContext } from './websocket-context'
 export const useWebsocketContextHook = () => {
   const context = useContext(WebsocketContext)
 
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
+  if (!context)
+    throw new Error('useWebsocketContext must be used within WebsocketProvider')
 
   return context
 }

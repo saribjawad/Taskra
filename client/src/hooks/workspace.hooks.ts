@@ -23,11 +23,12 @@ export const useGetUserWorkspace = () => {
   })
 }
 
-export const useGetWorkspaceUsers = (workspaceId: string) => {
+export const useGetWorkspaceUsers = (workspaceId: string, enabled = true) => {
   return useQuery({
     queryKey: [`workspace-${workspaceId}-users`],
     queryFn: () => getWorkspaceUsers(workspaceId),
     retry: 2,
+    enabled: enabled && Boolean(workspaceId),
   })
 }
 
