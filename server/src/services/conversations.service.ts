@@ -1,6 +1,8 @@
+import { DeletePublicAccessBlock$ } from '@aws-sdk/client-s3';
 import { dbPool } from '../db';
 import {
   Conversation,
+  ConversationMessage,
   ConversationParticipants,
   UsersConversations,
 } from '../models/conversations.model';
@@ -145,4 +147,39 @@ export const addLastMessageOnConversation = async (
   );
 
   return results.rowCount;
+};
+
+export const getConversationMessages = async (
+  conversationId: string,
+  limit: number,
+  cursorTime?: string,
+  cursorId?: string,
+): Promise<ConversationMessage[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT
+        m."id",
+        m."content",
+        m.conversation_id,
+        m.is_edited,
+        json_build_object ('id', u.id, 'username', u.username, 'full_name', u.full_name) AS sender,
+        m.created_at,
+        to_char(m.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at_cursor,
+        m.updated_at
+    FROM
+        messages as m
+        JOIN users as u on u."id" = m.author_id
+    WHERE
+        conversation_id = $1
+        AND (
+          $2::timestamptz IS NULL
+          OR (m.created_at, m.id) < ($2::timestamptz, $3::uuid)
+        )
+      ORDER BY m.created_at DESC, m.id DESC
+      LIMIT $4
+    `,
+    [conversationId, cursorTime ?? null, cursorId ?? null, limit],
+  );
+
+  return results.rows;
 };

@@ -26,3 +26,18 @@ export interface ConversationParticipants {
     full_name: string;
   };
 }
+
+export interface ConversationMessage {
+  id: string;
+  content: string;
+  conversation_id: string;
+  is_edited: boolean;
+  sender: {
+    id: string;
+    username: string;
+    full_name: string;
+  };
+  created_at: string;
+  created_at_cursor: string;
+  updated_at: string;
+}

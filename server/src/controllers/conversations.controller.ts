@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   createConversation,
+  getConversationByIdAndWorkspaceId,
+  getConversationMessages,
   getConversationParticipantsExceptUser,
   getExistingConversationByParticipants,
   getUsersConversations,
@@ -9,10 +11,13 @@ import {
 import { ApiError } from '../utils/ApiErrors';
 import {
   CreateConversationBodySchema,
+  GetConversationMessagesParamSchema,
+  GetConversationMessagesQuerySchema,
   GetUsersConversationQuerySchema,
 } from '../schemas/conversations.schema';
 import { createConversationParticipant } from '../services/conversationParticipants.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
+import { format } from 'winston';
 
 export const CreateConversation = async (req: Request, res: Response) => {
   const user = req.user;
@@ -118,6 +123,77 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
       conversations: formatedConversations,
       cursor,
       hasNextPage,
+    }),
+  );
+};
+
+export const GetConversationMessages = async (req: Request, res: Response) => {
+  const user = req.user;
+  const LIMIT = 2;
+
+  const { conversationId } = GetConversationMessagesParamSchema.parse(
+    req.params,
+  );
+  const { cursorId, cursorTime } = GetConversationMessagesQuerySchema.parse(
+    req.query,
+  );
+
+  const conversation = await getConversationByIdAndWorkspaceId(
+    conversationId,
+    user.activeWorkspace,
+  );
+
+  if (!conversation) {
+    throw ApiError.notFound('Conversation not found');
+  }
+
+  const conversationMessages = await getConversationMessages(
+    conversationId,
+    LIMIT + 1,
+    cursorTime,
+    cursorId,
+  );
+
+  if (!conversationMessages || conversationMessages.length < 1) {
+    return res.status(200).json(
+      new ApiResponse(200, 'Conversation messages', {
+        messages: [],
+        hasNextPage: null,
+        cursor: {
+          id: null,
+          time: null,
+        },
+      }),
+    );
+  }
+
+  const hasNextPage = conversationMessages.length > LIMIT;
+  const pageConversationMessages = hasNextPage
+    ? conversationMessages.slice(0, LIMIT)
+    : conversationMessages;
+
+  const cursor = {
+    id: hasNextPage ? pageConversationMessages[LIMIT - 1].id : null,
+    time: hasNextPage
+      ? pageConversationMessages[LIMIT - 1].created_at_cursor
+      : null,
+  };
+
+  const formatedMessages = pageConversationMessages.map((m) => ({
+    id: m.id,
+    conversationId: m.conversation_id,
+    isEdited: m.is_edited,
+    sender: m.sender,
+    content: m.content,
+    createdAt: m.created_at,
+    updatedAt: m.updated_at,
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, 'Conversation messages', {
+      messages: formatedMessages,
+      hasNextPage,
+      cursor,
     }),
   );
 };
