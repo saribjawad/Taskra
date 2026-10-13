@@ -171,19 +171,23 @@ export function initWebSocket(server: Server) {
        * CONVERSATION:NEW
        */
       if (type === 'conversation:new') {
-        void getActiveConversationSockets(
+        getActiveConversationSockets(
           payload.conversationId,
           user.id,
           user.activeWorkspace,
         )
           .then((conversationSockets) => {
-            chatRooms.set(
-              payload.conversationId,
-              [...new Map(conversationSockets.map((member) => [member.ws, member])).values()],
-            );
+            chatRooms.set(payload.conversationId, [
+              ...new Map(
+                conversationSockets.map((member) => [member.ws, member]),
+              ).values(),
+            ]);
           })
           .catch((error) => {
-            logger.error('Could not populate conversation websocket room', error);
+            logger.error(
+              'Could not populate conversation websocket room',
+              error,
+            );
           });
       }
 
@@ -191,30 +195,24 @@ export function initWebSocket(server: Server) {
        * MESSAGE:SEND
        */
       if (type === 'message:send') {
-        void getActiveConversationSockets(
-          payload.conversationId,
-          user.id,
-          user.activeWorkspace,
-        )
-          .then((chatRoom) => {
-            chatRooms.set(payload.conversationId, chatRoom);
-            for (const member of chatRoom) {
-              if (member.id !== user.id && member.ws.readyState === WebSocket.OPEN) {
-                member.ws.send(
-                  JSON.stringify({
-                    type: 'message:new',
-                    payload: {
-                      conversationId: payload.conversationId,
-                      message: payload.message,
-                    },
-                  }),
-                );
-              }
-            }
-          })
-          .catch((error) => {
-            logger.error('Could not deliver conversation message', error);
-          });
+        const chatRoom = chatRooms.get(payload.conversationId);
+
+        chatRoom?.forEach((member) => {
+          if (
+            member.id !== user.id &&
+            member.ws.readyState === WebSocket.OPEN
+          ) {
+            member.ws.send(
+              JSON.stringify({
+                type: 'message:new',
+                payload: {
+                  conversationId: payload.conversationId,
+                  message: payload.message,
+                },
+              }),
+            );
+          }
+        });
       }
     });
 
