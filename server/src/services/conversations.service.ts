@@ -1,5 +1,9 @@
 import { dbPool } from '../db';
-import { Conversation } from '../models/conversations.model';
+import {
+  Conversation,
+  ConversationParticipants,
+  UsersConversations,
+} from '../models/conversations.model';
 
 export const createConversation = async (
   workspaceId: string,
@@ -68,6 +72,62 @@ export const getConversationByIdAndWorkspaceId = async (
   );
 
   return results.rows[0];
+};
+
+export const getUsersConversations = async (
+  userId: string,
+  limit: number,
+  cursorId?: string,
+  cursorDate?: string,
+): Promise<UsersConversations[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT
+        c."id",
+        c.created_at,
+        cp."id" as conversation_participant_id,
+        to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at_cursor,
+        json_build_object('id', m.id, 'content', m."content", 'created_at', m.created_at) AS last_message
+    FROM
+        conversation_participants as cp
+        JOIN conversations as c on c.id = cp.conversation_id
+        JOIN messages as m on c.last_message_id = m."id"
+    WHERE
+        user_id = $1
+        AND
+          (
+            $2::timestamptz IS NULL
+            OR (c.created_at, c.id) < ($2::timestamptz, $3::uuid)
+          )
+    ORDER BY c.created_at DESC, c.id DESC
+    LIMIT $4
+    `,
+    [userId, cursorDate ?? null, cursorId ?? null, limit],
+  );
+
+  return results.rows;
+};
+
+export const getConversationParticipantsExceptUser = async (
+  conversationIds: string[],
+  userId: string,
+): Promise<ConversationParticipants[]> => {
+  const results = await dbPool.query(
+    `
+    SELECT
+        cp.conversation_id as conversation_id ,json_build_object('id', u.id, 'username', u.username, 'full_name', u.full_name) AS recipient
+    FROM
+        conversation_participants AS cp
+        JOIN users AS u ON cp.user_id = u.id
+    WHERE
+        cp.conversation_id = ANY ($1::uuid[])
+    AND
+        cp.user_id <> $2
+    `,
+    [conversationIds, userId],
+  );
+
+  return results.rows;
 };
 
 export const addLastMessageOnConversation = async (
