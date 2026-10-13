@@ -1,4 +1,5 @@
 import { NotificationType } from '../models/notifications.model';
+import { Message } from '../models/messages.model';
 
 export interface NotificationPayloadType {
   type: NotificationType;
@@ -21,7 +22,7 @@ export type SendMessagePayloadType = {
   type: 'message:send';
   payload: {
     conversationId: string;
-    message: string;
+    message: Message;
   };
 };
 

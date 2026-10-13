@@ -17,7 +17,6 @@ import {
 } from '../schemas/conversations.schema';
 import { createConversationParticipant } from '../services/conversationParticipants.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
-import { format } from 'winston';
 
 export const CreateConversation = async (req: Request, res: Response) => {
   const user = req.user;
@@ -39,7 +38,15 @@ export const CreateConversation = async (req: Request, res: Response) => {
   );
 
   if (conversationsParticipants) {
-    throw ApiError.forbidden('Conversation already exists');
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          'Conversation created',
+          conversationsParticipants.conversation_id,
+        ),
+      );
   }
 
   // Create conversation
@@ -52,8 +59,8 @@ export const CreateConversation = async (req: Request, res: Response) => {
   }
 
   // Create conversation user -> connected to conversation
-  await Promise.all([
-    uniqueParticipants.forEach(async (p) => {
+  await Promise.all(
+    [...uniqueParticipants].map(async (p) => {
       const createdConversationUser = await createConversationParticipant(
         p,
         conversations.id,
@@ -65,9 +72,11 @@ export const CreateConversation = async (req: Request, res: Response) => {
         );
       }
     }),
-  ]);
+  );
 
-  res.status(200).json(new ApiResponse(200, 'Conversation created'));
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Conversation created', conversations.id));
 };
 
 export const GetUsersConversations = async (req: Request, res: Response) => {

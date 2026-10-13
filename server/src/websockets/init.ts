@@ -6,7 +6,10 @@ import { JwtPayloadUser } from '../middlewares/auth.middleware';
 import { Server } from 'node:http';
 import { NotificationPayloadType, WebsocketMessagePayload } from './types';
 import logger from '../utils/logger';
-import { getConversationsUserIsPartOf } from '../services/conversations.service';
+import {
+  getConversationParticipantsExceptUser,
+  getConversationsUserIsPartOf,
+} from '../services/conversations.service';
 
 // Websocket Server
 const wss = new WebSocketServer({
@@ -21,6 +24,25 @@ const workspaceRooms: Map<
   }[]
 > = new Map();
 const chatRooms: Map<string, { id: string; ws: WebSocket }[]> = new Map();
+
+async function getActiveConversationSockets(
+  conversationId: string,
+  userId: string,
+  workspaceId: string,
+) {
+  const recipients = await getConversationParticipantsExceptUser(
+    [conversationId],
+    userId,
+  );
+  const participantIds = new Set([
+    userId,
+    ...recipients.map((recipient) => recipient.recipient.id),
+  ]);
+
+  return (workspaceRooms.get(workspaceId) ?? []).filter((member) =>
+    participantIds.has(member.id),
+  );
+}
 
 export function initWebSocket(server: Server) {
   // On upgrade network
@@ -86,7 +108,9 @@ export function initWebSocket(server: Server) {
           const room = chatRooms.get(conversation_id);
 
           if (room) {
-            room.push({ id: user.id, ws });
+            if (!room.some((member) => member.ws === ws)) {
+              room.push({ id: user.id, ws });
+            }
           } else {
             chatRooms.set(conversation_id, [
               {
@@ -147,30 +171,63 @@ export function initWebSocket(server: Server) {
        * CONVERSATION:NEW
        */
       if (type === 'conversation:new') {
-        // Create a chat room
-        chatRooms.set(payload.conversationId, [
-          {
-            id: user.id,
-            ws,
-          },
-        ]);
+        void getActiveConversationSockets(
+          payload.conversationId,
+          user.id,
+          user.activeWorkspace,
+        )
+          .then((conversationSockets) => {
+            chatRooms.set(
+              payload.conversationId,
+              [...new Map(conversationSockets.map((member) => [member.ws, member])).values()],
+            );
+          })
+          .catch((error) => {
+            logger.error('Could not populate conversation websocket room', error);
+          });
       }
 
       /**
        * MESSAGE:SEND
        */
       if (type === 'message:send') {
-        const chatRoom = chatRooms.get(payload.conversationId);
-
-        if (chatRoom && chatRoom.length > 1) {
-          for (const u of chatRoom) {
-            if (u.id !== user.id) u.ws.send(JSON.stringify(payload.message));
-          }
-        }
+        void getActiveConversationSockets(
+          payload.conversationId,
+          user.id,
+          user.activeWorkspace,
+        )
+          .then((chatRoom) => {
+            chatRooms.set(payload.conversationId, chatRoom);
+            for (const member of chatRoom) {
+              if (member.id !== user.id && member.ws.readyState === WebSocket.OPEN) {
+                member.ws.send(
+                  JSON.stringify({
+                    type: 'message:new',
+                    payload: {
+                      conversationId: payload.conversationId,
+                      message: payload.message,
+                    },
+                  }),
+                );
+              }
+            }
+          })
+          .catch((error) => {
+            logger.error('Could not deliver conversation message', error);
+          });
       }
     });
 
     ws.on('close', function () {
+      for (const [conversationId, chatRoom] of chatRooms) {
+        const activeSockets = chatRoom.filter((member) => member.ws !== ws);
+        if (activeSockets.length) {
+          chatRooms.set(conversationId, activeSockets);
+        } else {
+          chatRooms.delete(conversationId);
+        }
+      }
+
       const roomMembers = workspaceRooms.get(user.activeWorkspace);
 
       if (roomMembers && roomMembers.length <= 1) {

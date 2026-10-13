@@ -19,13 +19,14 @@ export const createConversationParticipant = async (
 
 export const getConversationParticipantByUserId = async (
   id: string,
+  conversationId: string,
 ): Promise<ConversationParticipant> => {
   const results = await dbPool.query(
     `
     SELECT * FROM conversation_participants
-    WHERE user_id = $1
+    WHERE user_id = $1 AND conversation_id = $2
     `,
-    [id],
+    [id, conversationId],
   );
 
   return results.rows[0];
