@@ -104,6 +104,38 @@ export function initWebSocket(server: Server) {
       );
     }
 
+    const workspaceMembers = workspaceRooms.get(user.activeWorkspace);
+
+    if (workspaceMembers && workspaceMembers.length > 1) {
+      // Send ID's of active people to user except his own
+      const activeUsers = workspaceMembers
+        ?.filter((u) => u.id !== user.id)
+        .map((u) => u.id);
+      ws.send(
+        JSON.stringify({
+          type: 'active:users',
+          payload: {
+            users: activeUsers,
+          },
+        }),
+      );
+    }
+
+    if (workspaceMembers && workspaceMembers.length > 1) {
+      // Send USER:CONNECTED to the active members in workspace
+      for (const member of workspaceMembers) {
+        if (member.id !== user.id)
+          member.ws.send(
+            JSON.stringify({
+              type: 'user:connected',
+              payload: {
+                id: user.id,
+              },
+            }),
+          );
+      }
+    }
+
     ws.on('error', console.error);
 
     ws.on('message', function (message) {
@@ -148,6 +180,18 @@ export function initWebSocket(server: Server) {
           user.activeWorkspace,
           roomMembers?.filter((rm) => rm.ws !== ws),
         );
+
+        for (const member of roomMembers) {
+          // Send USER:DISCONNECTED to the connected members
+          member.ws.send(
+            JSON.stringify({
+              type: 'user:disconnected',
+              payload: {
+                id: user.id,
+              },
+            }),
+          );
+        }
       }
     });
   });
