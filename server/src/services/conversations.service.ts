@@ -9,14 +9,16 @@ import {
 
 export const createConversation = async (
   workspaceId: string,
+  isGroup: boolean = false,
+  title?: string,
 ): Promise<Conversation> => {
   const results = await dbPool.query(
     `
-      INSERT INTO conversations (workspace_id)
-      VALUES ($1)
+      INSERT INTO conversations (workspace_id, is_group, title)
+      VALUES ($1, $2, $3)
       RETURNING*
     `,
-    [workspaceId],
+    [workspaceId, isGroup, title ?? null],
   );
 
   return results.rows[0];
@@ -29,19 +31,15 @@ export const getExistingConversationByParticipants = async (
 }> => {
   const results = await dbPool.query(
     `
-    SELECT conversation_id
-    FROM conversation_participants
-    WHERE conversation_id = ANY (
       SELECT conversation_id
       FROM conversation_participants
       WHERE user_id = ANY ($1::uuid[])
-    )
-    GROUP BY conversation_id
-    HAVING
-      COUNT(user_id) = ${participants.length}
-      AND
-      COUNT(user_id) FILTER (WHERE user_id = ANY ($1::uuid[])) = ${participants.length}
-    `,
+      GROUP BY conversation_id
+      HAVING
+        COUNT(user_id) = ${participants.length}
+        AND
+        COUNT(user_id) FILTER (WHERE user_id = ANY ($1::uuid[])) = ${participants.length}
+      `,
     [participants],
   );
 
@@ -87,6 +85,7 @@ export const getUsersConversations = async (
     SELECT
         c."id",
         c.created_at,
+        c.is_group,
         cp."id" as conversation_participant_id,
         to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at_cursor,
         json_build_object('id', m.id, 'content', m."content", 'created_at', m.created_at) AS last_message

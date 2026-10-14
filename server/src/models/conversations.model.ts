@@ -3,12 +3,15 @@ export interface Conversation {
   workspace_id: string;
   last_message_id: string;
   last_message_date: Date;
+  title: string | null;
+  is_group: Boolean;
   created_at: Date;
 }
 
 export interface UsersConversations {
   id: string;
   conversation_participant_id: string;
+  is_group: Boolean;
   last_message: {
     id: string;
     content: string;

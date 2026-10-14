@@ -20,7 +20,9 @@ import { getWorkspaceMembers } from '../services/workspace.service';
 
 export const CreateConversation = async (req: Request, res: Response) => {
   const user = req.user;
-  const { participants } = CreateConversationBodySchema.parse(req.body);
+  const { participants, isGroup, title } = CreateConversationBodySchema.parse(
+    req.body,
+  );
   const uniqueParticipants = new Set([...participants, user.id]);
 
   // Check if participants are part of workspace
@@ -32,25 +34,32 @@ export const CreateConversation = async (req: Request, res: Response) => {
     );
   }
 
-  // Check if conversation already exists with matching participants
-  const conversationsParticipants = await getExistingConversationByParticipants(
-    [...participants, user.id],
-  );
-
-  if (conversationsParticipants) {
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          'Conversation created',
-          conversationsParticipants.conversation_id,
-        ),
+  if (!isGroup) {
+    // Check if conversation already exists with matching participants when its not a group req
+    const conversationsParticipants =
+      await getExistingConversationByParticipants(
+        Array.from(uniqueParticipants),
       );
+
+    if (conversationsParticipants) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            200,
+            'Conversation already exists',
+            conversationsParticipants.conversation_id,
+          ),
+        );
+    }
   }
 
   // Create conversation
-  const conversations = await createConversation(user.activeWorkspace);
+  const conversations = await createConversation(
+    user.activeWorkspace,
+    isGroup,
+    title,
+  );
 
   if (!conversations) {
     throw ApiError.internal(
@@ -81,7 +90,7 @@ export const CreateConversation = async (req: Request, res: Response) => {
 
 export const GetUsersConversations = async (req: Request, res: Response) => {
   const user = req.user;
-  const LIMIT = 1;
+  const LIMIT = 20;
   const { cursorId, cursorTime } = GetUsersConversationQuerySchema.parse(
     req.query,
   );
@@ -119,6 +128,7 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
   const formatedConversations = pageUserConversations.map((c) => ({
     id: c.id,
     conversationParticipantId: c.conversation_participant_id,
+    isGroup: c.is_group,
     lastMessage: c.last_message,
     // TODO: see if a better way to do this
     recipient: conversationRecipients.filter(
