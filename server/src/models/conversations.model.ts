@@ -12,6 +12,7 @@ export interface UsersConversations {
   id: string;
   conversation_participant_id: string;
   is_group: Boolean;
+  title: string | null;
   last_message: {
     id: string;
     content: string;

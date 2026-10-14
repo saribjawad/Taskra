@@ -129,11 +129,13 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
     id: c.id,
     conversationParticipantId: c.conversation_participant_id,
     isGroup: c.is_group,
+    title: c.title,
     lastMessage: c.last_message,
     // TODO: see if a better way to do this
-    recipient: conversationRecipients.filter(
-      (cr) => cr.conversation_id === c.id,
-    )[0].recipient,
+    recipient: c.is_group
+      ? conversationRecipients.filter((cr) => cr.conversation_id === c.id)
+      : conversationRecipients.filter((cr) => cr.conversation_id === c.id)[0]
+          .recipient,
     createdAt: c.created_at,
   }));
 

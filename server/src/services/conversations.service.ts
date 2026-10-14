@@ -86,6 +86,7 @@ export const getUsersConversations = async (
         c."id",
         c.created_at,
         c.is_group,
+        c.title,
         cp."id" as conversation_participant_id,
         to_char(c.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as created_at_cursor,
         json_build_object('id', m.id, 'content', m."content", 'created_at', m.created_at) AS last_message
