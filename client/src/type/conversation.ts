@@ -2,6 +2,7 @@ export interface ConversationPerson {
   id: string
   username: string
   full_name?: string
+  member?: 'admin' | 'member' | null
 }
 
 export interface ConversationPreviewMessage {

@@ -138,7 +138,15 @@ export function NewConversationDialog({
         title: cleanTitle,
       }
       const id = await createConversation(input)
-      onCreated({ id, participants: selectedPeople, isGroup: true, title: cleanTitle })
+      onCreated({
+        id,
+        participants: selectedPeople.map((person) => ({
+          ...person,
+          member: 'member',
+        })),
+        isGroup: true,
+        title: cleanTitle,
+      })
       toast.success('Group conversation created')
       handleOpenChange(false)
       setSearch('')

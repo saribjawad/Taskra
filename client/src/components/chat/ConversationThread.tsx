@@ -10,7 +10,12 @@ import {
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import { Button } from '#/components/ui/button'
 import { Textarea } from '#/components/ui/textarea'
-import { ParticipantAvatars, conversationName } from './chat-utils'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import { ParticipantAvatars, conversationName, personName } from './chat-utils'
 import { cn, getInitials } from '#/lib/utils'
 import type { ChatMessage, Conversation } from '#/type/conversation'
 
@@ -101,7 +106,27 @@ export function ConversationThread({
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {conversation.isGroup
-              ? `${conversation.participants.length + 1} participants`
+              ? <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="cursor-default underline decoration-dotted underline-offset-4"
+                      aria-label="Show group members and roles"
+                    >
+                      {conversation.participants.length} participants
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="start" className="flex flex-col items-stretch gap-1.5 p-2.5">
+                    {conversation.participants.map((person) => (
+                      <span key={person.id} className="flex items-center gap-2 whitespace-nowrap">
+                        <span className="text-muted-foreground">
+                          {person.member === 'admin' ? 'Admin' : 'Member'}
+                        </span>
+                        <span>{personName(person)}</span>
+                      </span>
+                    ))}
+                  </TooltipContent>
+                </Tooltip>
               : activeChat
                 ? 'Active now'
                 : isConnected
