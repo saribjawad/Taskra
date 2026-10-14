@@ -7,8 +7,13 @@ export function personName(person: ConversationPerson) {
   return person.full_name || person.username
 }
 
-export function conversationName(participants: ConversationPerson[]) {
-  if (!participants.length) return 'Conversation'
+export function conversationName(
+  participants: ConversationPerson[],
+  isGroup = false,
+  title?: string | null,
+) {
+  if (title?.trim()) return title
+  if (!participants.length) return isGroup ? 'Group conversation' : 'Conversation'
   if (participants.length === 1) return personName(participants[0])
   const firstNames = participants.slice(0, 2).map(personName)
   const remaining = participants.length - firstNames.length
@@ -18,9 +23,11 @@ export function conversationName(participants: ConversationPerson[]) {
 export function ParticipantAvatars({
   participants,
   activeUserIds,
+  isGroup = false,
 }: {
   participants: ConversationPerson[]
   activeUserIds: string[]
+  isGroup?: boolean
 }) {
   if (participants.length > 1) {
     return (
@@ -38,6 +45,15 @@ export function ParticipantAvatars({
   }
 
   const person = participants[0]
+  if (isGroup && participants.length <= 1) {
+    return (
+      <Avatar>
+        <AvatarFallback>
+          <Users className="size-4" />
+        </AvatarFallback>
+      </Avatar>
+    )
+  }
   if (!person) {
     return (
       <Avatar>

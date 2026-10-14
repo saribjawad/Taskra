@@ -13,6 +13,8 @@ export interface ConversationPreviewMessage {
 export interface Conversation {
   id: string
   conversationParticipantId: string
+  isGroup: boolean
+  title: string | null
   lastMessage: ConversationPreviewMessage | null
   participants: ConversationPerson[]
   createdAt: string

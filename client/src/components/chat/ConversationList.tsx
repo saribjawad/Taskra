@@ -49,11 +49,16 @@ function ConversationRow({
       <ParticipantAvatars
         participants={conversation.participants}
         activeUserIds={activeUserIds}
+        isGroup={conversation.isGroup}
       />
       <span className="min-w-0 flex-1">
         <span className="flex items-center justify-between gap-2">
           <span className="truncate text-sm font-medium">
-            {conversationName(conversation.participants)}
+            {conversationName(
+              conversation.participants,
+              conversation.isGroup,
+              conversation.title,
+            )}
           </span>
           <span className="shrink-0 text-[11px] text-muted-foreground">
             {formatDistanceToNow(new Date(time), { addSuffix: false })}
@@ -84,7 +89,11 @@ export function ConversationList({
 }: ConversationListProps) {
   const listRef = useRef<HTMLDivElement>(null)
   const visibleConversations = conversations.filter((conversation) =>
-    conversationName(conversation.participants)
+    conversationName(
+      conversation.participants,
+      conversation.isGroup,
+      conversation.title,
+    )
       .toLowerCase()
       .includes(search.trim().toLowerCase()),
   )

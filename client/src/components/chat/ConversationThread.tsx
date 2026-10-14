@@ -89,14 +89,19 @@ export function ConversationThread({
         <ParticipantAvatars
           participants={conversation.participants}
           activeUserIds={activeUserIds}
+          isGroup={conversation.isGroup}
         />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-sm font-semibold">
-            {conversationName(conversation.participants)}
+            {conversationName(
+              conversation.participants,
+              conversation.isGroup,
+              conversation.title,
+            )}
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {conversation.participants.length > 1
-              ? `${conversation.participants.length} participants`
+            {conversation.isGroup
+              ? `${conversation.participants.length + 1} participants`
               : activeChat
                 ? 'Active now'
                 : isConnected
@@ -104,7 +109,7 @@ export function ConversationThread({
                   : 'Connecting…'}
           </p>
         </div>
-        {conversation.participants.length > 1 && (
+        {conversation.isGroup && (
           <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
             <Users className="size-3.5" />
             Group conversation

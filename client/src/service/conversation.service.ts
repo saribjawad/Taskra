@@ -20,19 +20,30 @@ export async function getConversations(cursor?: { id: string; time: string }) {
 
   return {
     ...data,
-    conversations: data.conversations.map((conversation: any) => ({
-      ...conversation,
-      // The current API supports direct conversations; keep the UI's
-      // participant list shape ready for groups when the API adds them.
-      participants: conversation.participants ?? [conversation.recipient],
-    })),
+    conversations: data.conversations.map((conversation: any) => {
+      // Group conversations return recipient rows; direct conversations return one recipient.
+      const recipients = Array.isArray(conversation.recipient)
+        ? conversation.recipient.map((entry: any) => entry.recipient)
+        : [conversation.recipient]
+
+      return {
+        ...conversation,
+        isGroup: conversation.isGroup ?? false,
+        title: conversation.title ?? null,
+        participants: conversation.participants ?? recipients.filter(Boolean),
+      }
+    }),
   } as ConversationPage
 }
 
-export async function createConversation(participantId: string) {
-  const response = await api.post('/conversations', {
-    participants: [participantId],
-  })
+export interface CreateConversationInput {
+  participants: string[]
+  isGroup?: boolean
+  title?: string
+}
+
+export async function createConversation(input: CreateConversationInput) {
+  const response = await api.post('/conversations', input)
   return response.data.data as string
 }
 

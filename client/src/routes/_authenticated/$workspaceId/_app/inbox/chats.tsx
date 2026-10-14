@@ -166,16 +166,18 @@ function ChatsPage() {
         onOpenChange={setNewConversationOpen}
         workspaceId={workspaceId}
         conversations={conversations}
-        onCreated={(conversationId, person) => {
+        onCreated={({ id, participants, isGroup, title }) => {
           // Add the empty conversation locally so it can open before its first message.
           addConversationToCache(queryClient, workspaceId, {
-            id: conversationId,
+            id,
             conversationParticipantId: '',
+            isGroup,
+            title,
             lastMessage: null,
-            participants: [person],
+            participants,
             createdAt: new Date().toISOString(),
           })
-          setSelectedId(conversationId)
+          setSelectedId(id)
         }}
       />
     </section>

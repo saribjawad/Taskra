@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { LoaderCircle, Search } from 'lucide-react'
+import { Check, LoaderCircle, Search, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '#/components/ui/avatar'
+import { Button } from '#/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -15,14 +16,22 @@ import { useWebsocketContextHook } from '#/context/websocket/websocket-hook'
 import { useCreateConversation } from '#/hooks/conversation.hooks'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { getInitials } from '#/lib/utils'
+import type { CreateConversationInput } from '#/service/conversation.service'
 import type { Conversation, ConversationPerson } from '#/type/conversation'
+
+interface CreatedConversation {
+  id: string
+  participants: ConversationPerson[]
+  isGroup: boolean
+  title: string | null
+}
 
 interface NewConversationDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   workspaceId: string
   conversations: Conversation[]
-  onCreated: (conversationId: string, person: ConversationPerson) => void
+  onCreated: (conversation: CreatedConversation) => void
 }
 
 export function NewConversationDialog({
@@ -43,6 +52,19 @@ export function NewConversationDialog({
   const { mutateAsync: createConversation, isPending: isCreating } =
     useCreateConversation()
   const [search, setSearch] = useState('')
+  const [isGroup, setIsGroup] = useState(false)
+  const [title, setTitle] = useState('')
+  const [selectedPeople, setSelectedPeople] = useState<ConversationPerson[]>([])
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setSearch('')
+      setTitle('')
+      setSelectedPeople([])
+      setIsGroup(false)
+    }
+    onOpenChange(nextOpen)
+  }
 
   const people = useMemo(
     () =>
@@ -61,6 +83,15 @@ export function NewConversationDialog({
   )
 
   async function startConversation(person: ConversationPerson) {
+    if (isGroup) {
+      setSelectedPeople((current) =>
+        current.some((selected) => selected.id === person.id)
+          ? current.filter((selected) => selected.id !== person.id)
+          : [...current, person],
+      )
+      return
+    }
+
     // Open the existing direct conversation instead of creating a duplicate.
     const existing = conversations.find(
       (conversation) =>
@@ -69,31 +100,90 @@ export function NewConversationDialog({
     )
 
     if (existing) {
-      onCreated(existing.id, person)
-      onOpenChange(false)
+      onCreated({
+        id: existing.id,
+        participants: [person],
+        isGroup: false,
+        title: null,
+      })
+      handleOpenChange(false)
       return
     }
 
     try {
-      const conversationId = await createConversation(person.id)
-      onCreated(conversationId, person)
+      const input: CreateConversationInput = { participants: [person.id] }
+      const conversationId = await createConversation(input)
+      onCreated({
+        id: conversationId,
+        participants: [person],
+        isGroup: false,
+        title: null,
+      })
       toast.success('Conversation ready')
-      onOpenChange(false)
+      handleOpenChange(false)
       setSearch('')
     } catch {
       toast.error('Could not start a conversation')
     }
   }
 
+  async function createGroup() {
+    const cleanTitle = title.trim()
+    if (!cleanTitle || !selectedPeople.length || isCreating) return
+
+    try {
+      const input: CreateConversationInput = {
+        participants: selectedPeople.map((person) => person.id),
+        isGroup: true,
+        title: cleanTitle,
+      }
+      const id = await createConversation(input)
+      onCreated({ id, participants: selectedPeople, isGroup: true, title: cleanTitle })
+      toast.success('Group conversation created')
+      handleOpenChange(false)
+      setSearch('')
+      setTitle('')
+      setSelectedPeople([])
+      setIsGroup(false)
+    } catch {
+      toast.error('Could not create a group conversation')
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="border-b px-5 py-4">
-          <DialogTitle>New message</DialogTitle>
+          <DialogTitle>{isGroup ? 'New group conversation' : 'New message'}</DialogTitle>
           <DialogDescription>
-            Choose someone in your workspace to message.
+            {isGroup
+              ? 'Choose people and give the group a name.'
+              : 'Choose someone in your workspace to message.'}
           </DialogDescription>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute top-3 right-12"
+            onClick={() => {
+              setIsGroup((current) => !current)
+              setSelectedPeople([])
+            }}
+          >
+            {isGroup ? 'Direct message' : <><Users /> New group</>}
+          </Button>
         </DialogHeader>
+        {isGroup && (
+          <div className="border-b px-3 py-2">
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Group name"
+              maxLength={25}
+              aria-label="Group name"
+            />
+          </div>
+        )}
         <div className="border-b p-3">
           <div className="relative">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -143,6 +233,9 @@ export function NewConversationDialog({
                   </span>
                 </span>
                 {isCreating && <LoaderCircle className="size-4 animate-spin" />}
+                {isGroup && selectedPeople.some((selected) => selected.id === person.id) && (
+                  <Check className="size-4 text-primary" />
+                )}
               </button>
             ))
           ) : (
@@ -151,6 +244,21 @@ export function NewConversationDialog({
             </p>
           )}
         </div>
+        {isGroup && (
+          <div className="flex items-center justify-between border-t px-4 py-3">
+            <span className="text-xs text-muted-foreground">
+              {selectedPeople.length} selected
+            </span>
+            <Button
+              size="sm"
+              disabled={!title.trim() || !selectedPeople.length || isCreating}
+              onClick={() => void createGroup()}
+            >
+              {isCreating && <LoaderCircle className="animate-spin" />}
+              Create group
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )
