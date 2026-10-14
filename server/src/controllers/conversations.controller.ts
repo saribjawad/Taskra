@@ -4,7 +4,7 @@ import {
   createConversation,
   getConversationByIdAndWorkspaceId,
   getConversationMessages,
-  getConversationParticipantsExceptUser,
+  getConversationParticipants,
   getExistingConversationByParticipants,
   getUsersConversations,
 } from '../services/conversations.service';
@@ -17,6 +17,7 @@ import {
 } from '../schemas/conversations.schema';
 import { createConversationParticipant } from '../services/conversationParticipants.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
+import { ConversationParticipantMemberType } from '../models/conversationParticipants.model';
 
 export const CreateConversation = async (req: Request, res: Response) => {
   const user = req.user;
@@ -70,9 +71,13 @@ export const CreateConversation = async (req: Request, res: Response) => {
   // Create conversation user -> connected to conversation
   await Promise.all(
     [...uniqueParticipants].map(async (p) => {
+      let member: ConversationParticipantMemberType | null = null;
+      if (isGroup) p === user.id ? (member = 'admin') : (member = 'member');
+
       const createdConversationUser = await createConversationParticipant(
         p,
         conversations.id,
+        member,
       );
 
       if (!createdConversationUser) {
@@ -120,10 +125,7 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
   const conversationIds = pageUserConversations.map((c) => c.id);
 
   // If there are, get the conversation recipients and attach to the conversations
-  const conversationRecipients = await getConversationParticipantsExceptUser(
-    conversationIds,
-    user.id,
-  );
+  const conversationRecipients = await getConversationParticipants(conversationIds);
 
   const formatedConversations = pageUserConversations.map((c) => ({
     id: c.id,
@@ -134,8 +136,9 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
     // TODO: see if a better way to do this
     recipient: c.is_group
       ? conversationRecipients.filter((cr) => cr.conversation_id === c.id)
-      : conversationRecipients.filter((cr) => cr.conversation_id === c.id)[0]
-          .recipient,
+      : conversationRecipients.find(
+          (cr) => cr.conversation_id === c.id && cr.recipient.id !== user.id,
+        )?.recipient,
     createdAt: c.created_at,
   }));
 

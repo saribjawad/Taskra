@@ -1,17 +1,21 @@
 import { dbPool } from '../db';
-import { ConversationParticipant } from '../models/conversationParticipants.model';
+import {
+  ConversationParticipant,
+  ConversationParticipantMemberType,
+} from '../models/conversationParticipants.model';
 
 export const createConversationParticipant = async (
   userId: string,
   conversationId: string,
+  memberRole?: ConversationParticipantMemberType | null,
 ) => {
   const results = await dbPool.query(
     `
-    INSERT INTO conversation_participants (user_id, conversation_id)
-    VALUES ($1, $2)
+    INSERT INTO conversation_participants (user_id, conversation_id, member)
+    VALUES ($1, $2, $3)
     RETURNING*
     `,
-    [userId, conversationId],
+    [userId, conversationId, memberRole ?? null],
   );
 
   return results.rows[0];

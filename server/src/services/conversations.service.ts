@@ -110,26 +110,31 @@ export const getUsersConversations = async (
   return results.rows;
 };
 
-export const getConversationParticipantsExceptUser = async (
+export const getConversationParticipants = async (
   conversationIds: string[],
-  userId: string,
 ): Promise<ConversationParticipants[]> => {
   const results = await dbPool.query(
     `
     SELECT
-        cp.conversation_id as conversation_id ,json_build_object('id', u.id, 'username', u.username, 'full_name', u.full_name) AS recipient
+        cp.conversation_id as conversation_id ,json_build_object('id', u.id, 'username', u.username, 'full_name', u.full_name, 'member', cp.member) AS recipient
     FROM
         conversation_participants AS cp
         JOIN users AS u ON cp.user_id = u.id
     WHERE
         cp.conversation_id = ANY ($1::uuid[])
-    AND
-        cp.user_id <> $2
     `,
-    [conversationIds, userId],
+    [conversationIds],
   );
 
   return results.rows;
+};
+
+export const getConversationParticipantsExceptUser = async (
+  conversationIds: string[],
+  userId: string,
+): Promise<ConversationParticipants[]> => {
+  const participants = await getConversationParticipants(conversationIds);
+  return participants.filter((participant) => participant.recipient.id !== userId);
 };
 
 export const addLastMessageOnConversation = async (
