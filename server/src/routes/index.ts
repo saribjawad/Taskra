@@ -10,6 +10,7 @@ import projectsRouter from './projects.routes';
 import projectMilestonesRouter from './projectMilestones.routes';
 import conversationRouter from './conversations.routes';
 import messageRouter from './messages.routes';
+import teamRouter from './teams.routes';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/projects', projectsRouter);
 router.use('/projects', projectMilestonesRouter);
 router.use('/tasks', taskRouter);
 router.use('/workspace', workspaceRouter);
+router.use('/teams', teamRouter);
 router.use('/attachment', attachmentRouter);
 router.use('/notifications', notificationRouter);
 router.use('/conversations', conversationRouter);

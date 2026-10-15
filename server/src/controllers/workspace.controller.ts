@@ -158,7 +158,15 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   const firstName = name.split(' ')[0];
   const capitalFirstLetter = firstName[0].toUpperCase();
   const teamName = capitalFirstLetter + firstName.slice(1);
-  const createdTeam = await createTeam(createdWorkspace.id, teamName);
+
+  // Team identifier
+  const identifier = teamName.slice(0, 3).toUpperCase();
+
+  const createdTeam = await createTeam(
+    createdWorkspace.id,
+    teamName,
+    identifier,
+  );
 
   if (!createdTeam) {
     throw ApiError.internal('Something went wrong while creating team');
