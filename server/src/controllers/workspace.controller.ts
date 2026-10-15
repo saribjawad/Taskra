@@ -57,6 +57,8 @@ import {
   getTaskStatusBreakdown,
   getUpcomingDeadlines,
 } from '../services/dashboard.service';
+import { createTeam } from '../services/teams.service';
+import { createTeamMember } from '../services/teamMembers.service';
 
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -122,15 +124,15 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   const user = req.user;
   const { name } = CreateWorkspaceSchema.parse(req.body);
 
-  const workspace = await createWorkspace(name);
+  const createdWorkspace = await createWorkspace(name);
 
-  if (!workspace) {
+  if (!createdWorkspace) {
     throw ApiError.internal('Something went wrong while creating workspace');
   }
 
   // Update the user's active workspace
   const updatedUser = await updateUser(user.id, {
-    active_workspace: workspace.id,
+    active_workspace: createdWorkspace.id,
   });
 
   if (!updatedUser || updatedUser <= 0) {
@@ -138,30 +140,48 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   }
 
   // Create the workspace member
-  const workspaceMember = await createWorkspaceMember(
+  const createdWorkspaceMember = await createWorkspaceMember(
     user.id,
-    workspace.id,
-    'admin',
+    createdWorkspace.id,
+    'owner',
   );
 
-  if (!workspaceMember) {
+  if (!createdWorkspaceMember) {
     throw ApiError.internal(
       'Something went wrong while creating workspace member',
     );
   }
 
+  // Create Team and Team member
+
+  // Capatilize first letter
+  const firstName = name.split(' ')[0];
+  const capitalFirstLetter = firstName[0].toUpperCase();
+  const teamName = capitalFirstLetter + firstName.slice(1);
+  const createdTeam = await createTeam(createdWorkspace.id, teamName);
+
+  if (!createdTeam) {
+    throw ApiError.internal('Something went wrong while creating team');
+  }
+
+  const createdTeamMember = await createTeamMember(user.id, createdTeam.id);
+
+  if (!createdTeamMember) {
+    throw ApiError.internal('Something went wrong while creating team member');
+  }
+
   const accessToken = generateAccessToken(
     user.id,
     user.email,
-    workspace.id,
-    workspaceMember.role,
+    createdWorkspace.id,
+    createdWorkspaceMember.role,
     user.fullName,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
-    workspace.id,
-    workspaceMember.role,
+    createdWorkspace.id,
+    createdWorkspaceMember.role,
     user.fullName,
   );
 
@@ -175,7 +195,7 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
 
   res.status(201).json(
     new ApiResponse(200, 'Workspace created', {
-      workspaceId: workspace.id,
+      workspaceId: createdWorkspace.id,
     }),
   );
 };
