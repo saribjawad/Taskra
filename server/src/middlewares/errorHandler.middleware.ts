@@ -45,6 +45,9 @@ export function ErrorHandlerMiddleware(
         message: (messages as string[])?.[0] ?? 'Invalid',
       }),
     );
+    errors.push(
+      ...flattenError.formErrors.map((message) => ({ field: 'form', message })),
+    );
 
     return res.status(400).json({
       statusCode: 400,

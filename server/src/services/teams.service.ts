@@ -32,3 +32,49 @@ export const getTeamsByWorkspaceId = async (
 
   return results.rows;
 };
+
+export const getTeamByIdAndWorkspaceId = async (
+  teamId: string,
+  workspaceId: string,
+): Promise<Team> => {
+  const results = await dbPool.query(
+    `SELECT * FROM teams WHERE id = $1 AND workspace_id = $2`,
+    [teamId, workspaceId],
+  );
+
+  return results.rows[0];
+};
+
+export const getTeamsCountByWorkspaceId = async (
+  workspaceId: string,
+): Promise<number> => {
+  const result = await dbPool.query(
+    'SELECT COUNT(*)::int AS count FROM teams WHERE workspace_id = $1',
+    [workspaceId],
+  );
+  return result.rows[0].count;
+};
+
+export const getTeamDocumentCount = async (teamId: string): Promise<number> => {
+  const result = await dbPool.query(
+    'SELECT COUNT(*)::int AS count FROM team_documents WHERE team_id = $1',
+    [teamId],
+  );
+  return result.rows[0].count;
+};
+
+export const getTeamLinkCount = async (teamId: string): Promise<number> => {
+  const result = await dbPool.query(
+    'SELECT COUNT(*)::int AS count FROM team_links WHERE team_id = $1',
+    [teamId],
+  );
+  return result.rows[0].count;
+};
+
+export const deleteTeam = async (teamId: string, workspaceId: string) => {
+  const result = await dbPool.query(
+    'DELETE FROM teams WHERE id = $1 AND workspace_id = $2',
+    [teamId, workspaceId],
+  );
+  return result.rowCount;
+};

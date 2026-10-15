@@ -12,3 +12,15 @@ export const CreateTeamBodySchema = z.object({
     .transform((val) => val.toUpperCase()),
   description: z.string().optional(),
 });
+
+export const TeamIdParamsSchema = z.object({
+  teamId: z.uuid('Invalid team UUID'),
+});
+
+export const TeamMemberParamsSchema = TeamIdParamsSchema.extend({
+  memberId: z.uuid('Invalid member UUID'),
+});
+
+export const CreateTeamMemberBodySchema = z.object({
+  memberIds: z.array(z.uuid('Invalid member UUID')).min(1),
+});
