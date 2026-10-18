@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useCreateBlockNote } from '@blocknote/react'
 import { BlockNoteView } from '@blocknote/shadcn'
 import { en } from '@blocknote/core/locales'
-import { type Block } from '@blocknote/core'
+import type { Block } from '@blocknote/core'
 import '@blocknote/core/fonts/inter.css'
 import '@blocknote/shadcn/style.css'
 import '../../styles.css'
@@ -11,12 +11,14 @@ interface TaskDescriptionEditorProps {
   value: string
   onChange: (value: string) => void
   disabled?: boolean
+  className?: string
 }
 
 function TaskDescriptionEditor({
   value,
   onChange,
   disabled,
+  className,
 }: TaskDescriptionEditorProps) {
   const initialContent = useMemo<Block[] | undefined>(() => {
     if (!value) return undefined
@@ -44,7 +46,7 @@ function TaskDescriptionEditor({
   })
 
   return (
-    <div>
+    <div className={className}>
       <BlockNoteView
         theme="dark"
         editor={editor}

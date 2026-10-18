@@ -83,24 +83,32 @@ export const AddTeamMember = async (req: Request, res: Response) => {
   const user = req.user;
   const { teamId } = TeamIdParamsSchema.parse(req.params);
   const { memberIds } = CreateTeamMemberBodySchema.parse(req.body);
+
   const team = await getTeamByIdAndWorkspaceId(teamId, user.activeWorkspace);
-  if (!team) throw ApiError.notFound('Team not found');
+
+  if (!team) {
+    throw ApiError.notFound('Team not found');
+  }
 
   const uniqueMemberIds = [...new Set(memberIds)];
   const workspaceMembers = await getWorkspaceMembers(
     uniqueMemberIds,
     user.activeWorkspace,
   );
+
   const validIds = new Set(workspaceMembers.map((member) => member.user.id));
   const validMemberIds = uniqueMemberIds.filter((id) => validIds.has(id));
+
   const failed = uniqueMemberIds.filter((id) => !validIds.has(id));
 
   const existingMembers = await getTeamMembersByUserIds(
     validMemberIds,
     team.id,
   );
+
   const existingIds = new Set(existingMembers.map((member) => member.user_id));
   const newMemberIds = validMemberIds.filter((id) => !existingIds.has(id));
+
   const createdMembers = newMemberIds.length
     ? await createTeamMembers(newMemberIds, team.id)
     : [];
@@ -117,11 +125,16 @@ export const AddTeamMember = async (req: Request, res: Response) => {
 export const RemoveTeamMember = async (req: Request, res: Response) => {
   const user = req.user;
   const { teamId, memberId } = TeamMemberParamsSchema.parse(req.params);
+
   const team = await getTeamByIdAndWorkspaceId(teamId, user.activeWorkspace);
-  if (!team) throw ApiError.notFound('Team not found');
+  if (!team) {
+    throw ApiError.notFound('Team not found');
+  }
 
   const member = await getTeamMember(memberId, team.id);
-  if (!member) throw ApiError.notFound('Team member not found');
+  if (!member) {
+    throw ApiError.notFound('Team member not found');
+  }
 
   const memberCount = await getTeamMembersCount(team.id);
   if (memberCount <= 1) {
@@ -129,7 +142,9 @@ export const RemoveTeamMember = async (req: Request, res: Response) => {
   }
 
   const deletedRows = await deleteTeamMember(memberId, team.id);
-  if (!deletedRows) throw ApiError.notFound('Team member not found');
+  if (!deletedRows) {
+    throw ApiError.notFound('Team member not found');
+  }
 
   res.status(200).json(new ApiResponse(200, 'Team member removed'));
 };
@@ -149,7 +164,7 @@ export const DeleteTeam = async (req: Request, res: Response) => {
     getTeamDocumentCount(team.id),
     getTeamLinkCount(team.id),
   ]);
-  
+
   if (documentCount > 0 || linkCount > 0) {
     throw ApiError.conflict(
       'Remove the team documents and links before deleting this team',

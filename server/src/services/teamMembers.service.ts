@@ -45,7 +45,12 @@ export const getTeamMembersByUserIds = async (
 
 export const createTeamMembers = async (userIds: string[], teamId: string) => {
   const result = await dbPool.query(
-    `INSERT INTO team_members (user_id, team_id) SELECT user_id, $2 FROM unnest($1::uuid[]) AS user_id RETURNING user_id`,
+    `
+    INSERT INTO team_members (user_id, team_id)
+    SELECT user_id, $2
+    FROM unnest($1::uuid[]) AS user_id
+    RETURNING user_id
+    `,
     [userIds, teamId],
   );
   return result.rows;

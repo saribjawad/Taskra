@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import MyNav from './my-nav'
 import { SidebarHeaderMenu } from './sidebar-header-menu'
+import { TeamNav } from './team-nav'
 
 // This is sample data.
 const data = {
@@ -58,6 +59,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <MyNav items={data.myNav} />
         <MyNav label="Workspace" items={data.workspaceNav} />
+        <TeamNav />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />
