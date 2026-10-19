@@ -13,7 +13,6 @@ import {
 } from '../controllers/projects.controller';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
-import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 import {
   CreateProjectComment,
   DeleteProjectComment,

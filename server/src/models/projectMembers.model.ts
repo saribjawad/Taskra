@@ -1,7 +1,19 @@
 export type ProjectMemberWithUser = Omit<ProjectMember, 'user_id'> & {
-  id: string;
-  username: string;
-  email: string;
+  user: {
+    id: string;
+    username: string;
+    full_name: string;
+    email: string;
+  };
+};
+
+export type ProjectMemberWithUserId = ProjectMember & {
+  user: {
+    id: string;
+    username: string;
+    full_name: string;
+    email: string;
+  };
 };
 
 export interface ProjectMember {

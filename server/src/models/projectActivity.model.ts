@@ -1,5 +1,6 @@
 export type ProjectActivityType =
   | 'project_created'
+  | 'project_updated'
   | 'lead_changed'
   | 'member_added'
   | 'member_removed'

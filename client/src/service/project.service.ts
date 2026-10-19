@@ -35,7 +35,7 @@ export interface CreateProjectPayload {
   description?: string
   status: Project['status']
   priority: Project['priority']
-  leadId: string
+  leadId?: string
   startDate?: string
   targetDate?: string
 }
@@ -161,11 +161,10 @@ export async function removeProjectMembers(
   const response = await api.delete(`/projects/${projectId}/members`, {
     data: { memberIds: membershipIds },
   })
+
   const result = response.data.data as { removed: string[]; failed: string[] }
-  if (
-    !membershipIds.every((id) => result.removed.includes(id)) ||
-    result.failed.length
-  ) {
+
+  if (result.failed.length > 0) {
     throw new Error(
       'Some members could not be removed. Refresh the list and try again.',
     )

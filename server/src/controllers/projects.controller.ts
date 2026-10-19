@@ -18,13 +18,11 @@ import {
   GetProjectActivityQuery,
 } from '../schemas/projects.schema';
 import {
-  createProject,
   deleteProject,
   getProjectByIdAndWorkspaceId,
   getProjectsByWorkspaceId,
   getProjectWithLeadDetails,
   getProjectTaskProgress,
-  updateProject,
 } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
 import { getProjectMilestones } from '../services/projectMilestones.service';
@@ -35,20 +33,33 @@ import {
   getWorkspaceMembers,
 } from '../services/workspace.service';
 import {
-  createProjectMember,
-  deleteProjectMember,
-  getProjectMembersByProjectId,
+  getProjectMembersByUserIdsAndProjectId,
   getProjectMembersWithUserDetail,
 } from '../services/projectMembers';
 import { getTasksByProjectId } from '../services/task.service';
-import {
-  createProjectActivity,
-  getProjectActivity,
-} from '../services/projectActivity.service';
-import { Project } from '../models/projects.model';
-import { ProjectActivityType } from '../models/projectActivity.model';
-import { createNotification } from '../services/notifications.service';
+import { getProjectActivity } from '../services/projectActivity.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
+import logger from '../utils/logger';
+import {
+  addProjectMemberWorkflow,
+  createProjectWorkflow,
+  removeProjectMemberWorkflow,
+  updateProjectWorkflow,
+} from '../transactions/project.transactions';
+
+async function requireProject(projectId: string, workspaceId: string) {
+  const project = await getProjectByIdAndWorkspaceId(projectId, workspaceId);
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  return project;
+}
+
+// ==================================================================================
+// Projects Controllers
+// ==================================================================================
 
 export const GetProject = async (req: Request, res: Response) => {
   const user = req.user;
@@ -88,78 +99,56 @@ export const CreateProject = async (req: Request, res: Response) => {
   let leadUser;
   if (parsedBody.leadId) {
     leadUser = await findUserById(parsedBody.leadId);
-  }
 
-  if (!leadUser) {
-    throw ApiError.notFound('Lead user not found');
-  }
-
-  const isLeadUserMember = await getWorkspaceMember(
-    leadUser.id,
-    user.activeWorkspace,
-  );
-
-  if (!isLeadUserMember) {
-    throw ApiError.forbidden('Lead is not member of this workspace');
-  }
-
-  const createdProject = await createProject({
-    name: parsedBody.name,
-    priority: parsedBody.priority,
-    status: parsedBody.status,
-    workspace_id: user.activeWorkspace,
-    description: parsedBody.description,
-    lead_id: leadUser.id,
-    short_summary: parsedBody.shortSummary,
-    start_date: parsedBody.startDate,
-    target_date: parsedBody.targetDate,
-  });
-
-  if (!createdProject) {
-    throw ApiError.internal('Something went wrong while creating the project');
-  }
-
-  // Create project activity
-  const createdProjectActivity = await createProjectActivity(
-    createdProject.id,
-    user.id,
-    `${user.fullName} created the project.`,
-    'project_created',
-  );
-
-  if (!createdProjectActivity) {
-    throw ApiError.internal(
-      'Something went wrong while creating project activity',
-    );
-  }
-
-  // Notifiy the lead user
-  if (leadUser && leadUser.id !== user.id) {
-    const createdNotification = await createNotification(
-      leadUser.id,
-      createdProject.workspace_id,
-      'project:lead_assigned',
-      `You have been assigne as a lead to "${createdProject.name}" project`,
-      { actorId: user.id, projectId: createdProject.id },
-    );
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
+    if (!leadUser) {
+      throw ApiError.notFound('Lead user not found');
     }
 
-    notifyMemberInWorkspace(leadUser.id, createdProject.workspace_id, {
-      type: 'project:lead_assigned',
-      message: `You have been assigne as a lead to "${createdProject.name}" project`,
-      metaData: {
-        actorId: user.id,
-        projectId: createdProject.id,
-      },
-    });
+    const isLeadUserMember = await getWorkspaceMember(
+      leadUser.id,
+      user.activeWorkspace,
+    );
+
+    if (!isLeadUserMember) {
+      throw ApiError.forbidden('Lead is not member of this workspace');
+    }
   }
 
-  res.status(201).json(new ApiResponse(201, 'Project created'));
+  const { project } = await createProjectWorkflow({
+    user: req.user,
+    leadUser: {
+      id: leadUser?.id,
+    },
+    projectPayload: {
+      name: parsedBody.name,
+      priority: parsedBody.priority,
+      status: parsedBody.status,
+      workspace_id: user.activeWorkspace,
+      description: parsedBody.description,
+      lead_id: leadUser ? leadUser.id : undefined,
+      short_summary: parsedBody.shortSummary,
+      start_date: parsedBody.startDate,
+      target_date: parsedBody.targetDate,
+    },
+  });
+
+  // Fire websocket notification only after the transactions is successfull
+  if (leadUser && leadUser.id && leadUser.id !== user.id) {
+    try {
+      notifyMemberInWorkspace(leadUser.id, project.workspace_id, {
+        type: 'project:lead_assigned',
+        message: `You have been assigne as a lead to "${project.name}" project`,
+        metaData: {
+          actorId: user.id,
+          projectId: project.id,
+        },
+      });
+    } catch (e) {
+      logger.error('Failed to send real-time notification', e);
+    }
+  }
+
+  res.status(201).json(new ApiResponse(201, 'Project created', project));
 };
 
 export const UpdateProject = async (req: Request, res: Response) => {
@@ -168,14 +157,7 @@ export const UpdateProject = async (req: Request, res: Response) => {
   const { projectId } = UpdateProjectParamsSchema.parse(req.params);
   const parsedBody = UpdateProjectSchema.parse(req.body);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   let leadUser;
   if (parsedBody.leadId) {
@@ -209,122 +191,36 @@ export const UpdateProject = async (req: Request, res: Response) => {
     }).filter(([, value]) => value !== undefined),
   );
 
-  const updatedRowsCount = await updateProject(projectId, payload);
+  const pendingSocketEvents = await updateProjectWorkflow({
+    user,
+    leadUser,
+    payload,
+    project,
+  });
 
-  if (!updatedRowsCount || updatedRowsCount <= 0) {
-    throw ApiError.internal('Something went wrong while updating the project');
-  }
-
-  const activityMap = {
-    name: 'project_updated',
-    short_summary: 'project_updated',
-    description: 'project_updated',
-    lead_id: 'lead_changed',
-    priority: 'priority_changed',
-    status: 'status_changed',
-    start_date: 'start_date_changed',
-    target_date: 'end_date_changed',
-  };
-
-  // Create project activities
-  for (const [field, activityType] of Object.entries(activityMap)) {
-    if (
-      payload[field] !== undefined &&
-      payload[field] !== project[field as keyof Project]
-    ) {
-      let description = `${user.fullName} changed ${field} to ${payload[field]}`;
-
-      // Manually add lead email
-      if (field === 'lead_id') {
-        description = `${user.fullName} changed lead to ${leadUser?.full_name}`;
-      }
-
-      const createdProjectActivity = await createProjectActivity(
-        project.id,
-        user.id,
-        description,
-        activityType as ProjectActivityType,
-        {
-          field,
-          from: String(project[field as keyof Project] ?? ''),
-          to: String(payload[field] ?? ''),
-        },
-      );
-
-      if (!createdProjectActivity) {
-        throw ApiError.internal(
-          'Something went wrong while creating project activity',
-        );
-      }
-    }
-  }
-
-  // Notifiy the lead user if its not the same lead who was assigned to project
+  // Send real time notification after the transaction success
   if (leadUser && leadUser.id !== user.id && leadUser.id !== project.lead_id) {
-    const createdNotification = await createNotification(
-      leadUser.id,
-      project.workspace_id,
-      'project:lead_assigned',
-      `You have been assigne as a lead to '${payload.name ?? project.name}' project`,
-      { actorId: user.id, projectId: project.id },
-    );
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
-
-    notifyMemberInWorkspace(leadUser.id, project.workspace_id, {
-      type: 'project:lead_assigned',
-      message: `You have been assigne as a lead to '${payload.name ?? project.name}' project`,
-      metaData: {
-        actorId: user.id,
-        projectId: project.id,
-      },
-    });
-  }
-
-  // Notify lead user and the members if completed
-  if (
-    payload.status &&
-    payload.status === 'completed' &&
-    project.status !== payload.status
-  ) {
-    const members = (await getProjectMembersByProjectId(projectId)).map(
-      (m) => m.user_id,
-    );
-
-    const currentLeadId =
-      (payload.lead_id as string | undefined) ?? project.lead_id;
-    const notificationRecipients = new Set([currentLeadId, ...members]);
-
-    notificationRecipients.forEach(async (m) => {
-      if (!m || m === user.id) return;
-
-      const createdNotification = await createNotification(
-        m,
-        project.workspace_id,
-        'project:completed',
-        `${user.fullName} marked the '${payload.name ?? project.name}' project as done.`,
-        { actorId: user.id, projectId: project.id },
-      );
-
-      if (!createdNotification) {
-        throw ApiError.internal(
-          'Something went wrong while creating notification',
-        );
-      }
-
-      notifyMemberInWorkspace(m, project.workspace_id, {
-        type: 'project:completed',
-        message: `${user.fullName} marked the '${payload.name ?? project.name}' project as done.`,
+    try {
+      notifyMemberInWorkspace(leadUser.id, project.workspace_id, {
+        type: 'project:lead_assigned',
+        message: `You have been assigne as a lead to '${payload.name ?? project.name}' project`,
         metaData: {
           actorId: user.id,
           projectId: project.id,
         },
       });
-    });
+    } catch (e) {
+      logger.error('Failed to send real-time notification to lead user');
+    }
+  }
+
+  // Notify lead user and the members on completion
+  for (const w of pendingSocketEvents) {
+    try {
+      notifyMemberInWorkspace(w.userId, w.workspaceId, w.event);
+    } catch (e) {
+      logger.error('Failed to send real-time notification', e);
+    }
   }
 
   res.status(200).json(new ApiResponse(200, 'Project updated'));
@@ -376,16 +272,7 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
   const { projectId } = AddProjectMembersParamsSchema.parse(req.params);
 
   const { memberIds } = AddProjectMembersBodySchema.parse(req.body);
-
-  // Check if project exists
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   // Get workspace members
   const members = await getWorkspaceMembers(memberIds, user.activeWorkspace);
@@ -398,57 +285,22 @@ export const AddProjectMembers = async (req: Request, res: Response) => {
     failed,
   };
 
-  // TODO: drop this and add transactions
-  for (const member of members) {
-    const projectMember = await createProjectMember(member.user.id, project.id);
+  const pendingWebsocketEvents = await addProjectMemberWorkflow({
+    user,
+    members,
+    project,
+    result,
+  });
 
-    if (!projectMember) {
-      throw ApiError.internal(
-        'Something went wrong while creating project member',
-      );
-    } else {
-      // Create project activity
-      const createdProjectActivity = await createProjectActivity(
-        project.id,
-        user.id,
-        `${user.fullName} added ${member.user.full_name} as member`,
-        'member_added',
-      );
-
-      if (!createdProjectActivity) {
-        throw ApiError.internal(
-          'Something went wrong while creating project activity',
-        );
+  // Send real-time notification to members that they have been added as member
+  for (const w of pendingWebsocketEvents) {
+    try {
+      if (w.userId !== user.id) {
+        notifyMemberInWorkspace(w.userId, w.workspaceId, w.event);
       }
-
-      // Notify the members
-      if (projectMember.id) {
-        const createdNotification = await createNotification(
-          projectMember.user_id,
-          project.workspace_id,
-          'project:member_assigned',
-          `You have been added as a member to '${project.name}' project`,
-          { actorId: user.id, projectId: project.id },
-        );
-
-        if (!createdNotification) {
-          throw ApiError.internal(
-            'Something went wrong while creating notification',
-          );
-        }
-
-        notifyMemberInWorkspace(projectMember.user_id, project.workspace_id, {
-          type: 'project:member_assigned',
-          message: `You have been added as a member to '${project.name}' project`,
-          metaData: {
-            actorId: user.id,
-            projectId: project.id,
-          },
-        });
-      }
+    } catch (e) {
+      logger.error('Failed to send real-time notifications');
     }
-
-    result.added.push(member.user.id);
   }
 
   res.status(200).json(new ApiResponse(200, 'Members added', result));
@@ -459,18 +311,15 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
   const { projectId } = RemoveProjectMembersParamsSchema.parse(req.params);
   const { memberIds } = RemoveProjectMembersBodySchema.parse(req.body);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
+  const project = await requireProject(projectId, user.activeWorkspace);
+
+  // Only remove users who are currently members of this project.
+  const members = await getProjectMembersByUserIdsAndProjectId(
+    memberIds,
+    project.id,
   );
 
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
-
-  // Get workspace membersa
-  const members = await getWorkspaceMembers(memberIds, user.activeWorkspace);
-  const foundIds = new Set(members.map((m) => m.user.id));
+  const foundIds = new Set(members.map((member) => member.id));
 
   const failed = memberIds.filter((id) => !foundIds.has(id));
 
@@ -479,34 +328,12 @@ export const RemoveProjectMembers = async (req: Request, res: Response) => {
     failed,
   };
 
-  // TODO: drop and add transcations
-  for (const member of members) {
-    const rowsCount = await deleteProjectMember(member.user.id, project.id);
-
-    if (!rowsCount || rowsCount <= 0) {
-      throw ApiError.internal(
-        'Something went wrong while deleting project member',
-      );
-    } else {
-      // Create project activity
-      const createdProjectActivity = await createProjectActivity(
-        project.id,
-        user.id,
-        // TEMP:
-        // TODO: return user detail from workspace member and use it
-        `${user.fullName} removed ${member.user.full_name} from member`,
-        'member_removed',
-      );
-
-      if (!createdProjectActivity) {
-        throw ApiError.internal(
-          'Something went wrong while creating project activity',
-        );
-      }
-    }
-
-    result.removed.push(member.user.id);
-  }
+  await removeProjectMemberWorkflow({
+    user,
+    members,
+    project,
+    result,
+  });
 
   res.status(200).json(new ApiResponse(200, 'Members removed', result));
 };
@@ -519,14 +346,7 @@ export const GetProjectTasks = async (req: Request, res: Response) => {
     GetProjectTasksQuerySchema.parse(req.query);
   const { projectId } = GetProjectTasksParamsSchema.parse(req.params);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const tasks = await getTasksByProjectId(
     project.id,
@@ -575,14 +395,7 @@ export const GetProjectTasks = async (req: Request, res: Response) => {
 export const GetProjectProgress = async (req: Request, res: Response) => {
   const user = req.user;
   const { projectId } = GetProjectParamsSchema.parse(req.params);
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const progress = await getProjectTaskProgress(project.id);
   res.status(200).json(new ApiResponse(200, 'Project progress', progress));
@@ -592,14 +405,7 @@ export const DeleteProject = async (req: Request, res: Response) => {
   const user = req.user;
   const { projectId } = DeleteProjectParamsSchema.parse(req.params);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const deleteProjectRowCount = await deleteProject(project.id);
 
@@ -617,14 +423,7 @@ export const GetProjectActivity = async (req: Request, res: Response) => {
   const { cursorId, cursorTime } = GetProjectActivityQuery.parse(req.query);
   const { projectId } = GetProjectActivityParamsSchema.parse(req.params);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const projectActivities = await getProjectActivity(
     project.id,

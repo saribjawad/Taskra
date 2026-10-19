@@ -144,16 +144,16 @@ export const CreateTask = async (req: Request, res: Response) => {
   // Notify the assignee if the actor himself is not the assignee
 
   if (assigneeMember && assigneeMember.user_id !== user.id) {
-    const createdNotification = await createNotification(
-      assigneeMember.user_id,
-      task.workspace_id,
-      'task:assigned',
-      'A task has been assigned to you',
-      {
+    const createdNotification = await createNotification({
+      userId: assigneeMember.user_id,
+      workspaceId: task.workspace_id,
+      type: 'task:assigned',
+      message: 'A task has been assigned to you',
+      metaData: {
         actorId: user.id,
         taskId: task.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(
@@ -176,16 +176,16 @@ export const CreateTask = async (req: Request, res: Response) => {
     reporterMember.user_id !== user.id &&
     reporterMember.user_id !== assigneeMember?.user_id
   ) {
-    const createdNotification = await createNotification(
-      reporterMember.user_id,
-      task.workspace_id,
-      'task:reporter_assigned',
-      'You were assigned as the reporter of a task',
-      {
+    const createdNotification = await createNotification({
+      userId: reporterMember.user_id,
+      workspaceId: task.workspace_id,
+      type: 'task:reporter_assigned',
+      message: 'You were assigned as the reporter of a task',
+      metaData: {
         actorId: user.id,
         taskId: task.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(
@@ -377,16 +377,16 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   // Notify the assignee if the actor himself is not the assignee
   if (assigneeUser && assigneeUser.id !== user.id) {
-    const createdNotification = await createNotification(
-      assigneeUser.id,
-      task.workspace_id,
-      'task:assigned',
-      'A task has been assigned to you',
-      {
+    const createdNotification = await createNotification({
+      userId: assigneeUser.id,
+      workspaceId: task.workspace_id,
+      type: 'task:assigned',
+      message: 'A task has been assigned to you',
+      metaData: {
         actorId: user.id,
         taskId: task.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(
@@ -409,16 +409,16 @@ export const UpdateTask = async (req: Request, res: Response) => {
     reporterUser.id !== user.id &&
     reporterUser.id !== assigneeUser?.id
   ) {
-    const createdNotification = await createNotification(
-      reporterUser.id,
-      task.workspace_id,
-      'task:reporter_assigned',
-      'You were assigned as the reporter of a task',
-      {
+    const createdNotification = await createNotification({
+      userId: reporterUser.id,
+      workspaceId: task.workspace_id,
+      type: 'task:reporter_assigned',
+      message: 'You were assigned as the reporter of a task',
+      metaData: {
         actorId: user.id,
         taskId: task.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(
@@ -476,16 +476,16 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
 
   for (const recipent of notificationRecipents) {
     if (recipent && recipent !== user.id) {
-      const createdNotification = await createNotification(
-        recipent,
-        task.workspace_id,
-        'task:completed',
-        'Task has been marked as completed',
-        {
+      const createdNotification = await createNotification({
+        userId: recipent,
+        workspaceId: task.workspace_id,
+        type: 'task:completed',
+        message: 'Task has been marked as completed',
+        metaData: {
           actorId: user.id,
           taskId: task.id,
         },
-      );
+      });
 
       if (!createdNotification) {
         throw ApiError.internal(
@@ -785,13 +785,13 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     project.lead_id &&
     project.lead_id !== user.id
   ) {
-    const createdNotification = await createNotification(
-      project.lead_id,
-      project.workspace_id,
-      'project:task_added',
-      `${user.fullName} added task to '${project.name}'`,
-      { actorId: user.id, projectId: project.id },
-    );
+    const createdNotification = await createNotification({
+      userId: project.lead_id,
+      workspaceId: project.workspace_id,
+      type: 'project:task_added',
+      message: `${user.fullName} added task to '${project.name}'`,
+      metaData: { actorId: user.id, projectId: project.id },
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(

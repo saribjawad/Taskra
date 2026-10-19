@@ -559,15 +559,16 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 
   // Notify sender
   if (invitation.sent_by) {
-    const createdNotification = await createNotification(
-      invitation.sent_by,
-      invitation.workspace_id,
-      'invite:accepted',
-      `The invite you sent to ${user.email} has been accepted`,
-      {
+    const createdNotification = await createNotification({
+      userId: invitation.sent_by,
+
+      workspaceId: invitation.workspace_id,
+      type: 'invite:accepted',
+      message: `The invite you sent to ${user.email} has been accepted`,
+      metaData: {
         actorId: user.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(
@@ -628,15 +629,15 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
 
   // Notify sender
   if (invitation.sent_by) {
-    const createdNotification = await createNotification(
-      invitation.sent_by,
-      invitation.workspace_id,
-      'invite:declined',
-      `The invite you sent to ${user.email} has been declined`,
-      {
+    const createdNotification = await createNotification({
+      userId: invitation.sent_by,
+      workspaceId: invitation.workspace_id,
+      type: 'invite:declined',
+      message: `The invite you sent to ${user.email} has been declined`,
+      metaData: {
         actorId: user.id,
       },
-    );
+    });
 
     if (!createdNotification) {
       throw ApiError.internal(

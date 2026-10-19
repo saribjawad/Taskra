@@ -49,12 +49,12 @@ export const CreateMilestone = async (req: Request, res: Response) => {
   }
 
   // Create project activity
-  const createdProjectActivity = await createProjectActivity(
-    project.id,
-    user.id,
-    `${user.email} added ${createdProjectMilestone.name} milestone`,
-    'milestone_added',
-  );
+  const createdProjectActivity = await createProjectActivity({
+    projectId: project.id,
+    userId: user.id,
+    description: `${user.email} added ${createdProjectMilestone.name} milestone`,
+    type: 'milestone_added',
+  });
 
   if (!createdProjectActivity) {
     throw ApiError.internal(
@@ -123,12 +123,12 @@ export const UpdateMilestones = async (req: Request, res: Response) => {
         description = `${user.email} updated target date to ${payload[field]}`;
       }
 
-      const createdProjectActivity = await createProjectActivity(
-        project.id,
-        user.id,
+      const createdProjectActivity = await createProjectActivity({
+        projectId: project.id,
+        userId: user.id,
         description,
-        activityType as ProjectActivityType,
-      );
+        type: activityType as ProjectActivityType,
+      });
 
       if (!createdProjectActivity) {
         throw ApiError.internal(
@@ -172,12 +172,12 @@ export const DeleteMilestones = async (req: Request, res: Response) => {
   }
 
   // Create project activity
-  const createdProjectActivity = await createProjectActivity(
-    project.id,
-    user.id,
-    `${user.email} removed ${projectMilestone.name} milestone`,
-    'milestone_removed',
-  );
+  const createdProjectActivity = await createProjectActivity({
+    projectId: project.id,
+    userId: user.id,
+    description: `${user.email} removed ${projectMilestone.name} milestone`,
+    type: 'milestone_removed',
+  });
 
   if (!createdProjectActivity) {
     throw ApiError.internal(

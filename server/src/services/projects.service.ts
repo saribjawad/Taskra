@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import {
   Project,
@@ -113,26 +114,30 @@ export const getProjectsByWorkspaceId = async (
   return result.rows;
 };
 
-export const createProject = async (payload: {
-  name: string;
-  short_summary?: string;
-  description?: string;
-  priority: ProjectPriorityType;
-  status: ProjectStatusType;
-  lead_id?: string;
-  workspace_id: string;
-  start_date?: Date;
-  target_date?: Date;
-}): Promise<Project> => {
+export const createProject = async (
+  payload: {
+    name: string;
+    short_summary?: string;
+    description?: string;
+    priority: ProjectPriorityType;
+    status: ProjectStatusType;
+    lead_id?: string;
+    workspace_id: string;
+    start_date?: Date;
+    target_date?: Date;
+  },
+  txClient?: PoolClient,
+): Promise<Project> => {
   const keys = Object.keys(payload);
   const values = Object.values(payload);
 
-  const result = await dbPool.query(
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
       INSERT INTO projects (
       ${keys.map((k, i) => `${k}${i + 1 < keys.length ? ',' : ''}`).join(' ')}
       )
-      VALUES 
+      VALUES
       (${keys.map((_, i) => `$${i + 1}${i + 1 < keys.length ? ',' : ''}`).join(' ')})
       RETURNING *
      `,
@@ -154,13 +159,15 @@ export const updateProject = async (
     start_date?: Date;
     target_date?: Date;
   },
+  txClient?: PoolClient,
 ) => {
   const keys = Object.keys(payload);
   const values = Object.values(payload);
 
-  const result = await dbPool.query(
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
-    UPDATE projects 
+    UPDATE projects
     SET ${keys.map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)}
     WHERE id = $${keys.length + 1}`,
     [...values, id],

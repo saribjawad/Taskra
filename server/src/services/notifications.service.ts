@@ -1,5 +1,44 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { Notification, NotificationType } from '../models/notifications.model';
+
+export async function createNotificationNew(
+  payload: {
+    userId: string;
+    workspaceId: string;
+    type: NotificationType;
+    message: string;
+    metaData?: {
+      actorId?: string;
+      taskId?: string;
+      projectId?: string;
+    };
+  },
+  txClient?: PoolClient,
+): Promise<Notification> {
+  const { message, type, userId, workspaceId, metaData } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
+    `
+    INSERT INTO notifications
+    (user_id, actor_id, task_id, project_id, workspace_id, type, message)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+    `,
+    [
+      userId,
+      metaData?.actorId ?? null,
+      metaData?.taskId ?? null,
+      metaData?.projectId ?? null,
+      workspaceId,
+      type,
+      message,
+    ],
+  );
+
+  return result.rows[0];
+}
 
 /**
  * Create notifications in database
@@ -14,17 +53,23 @@ import { Notification, NotificationType } from '../models/notifications.model';
  * @returns The created notifications
  */
 export async function createNotification(
-  userId: string,
-  workspaceId: string,
-  type: NotificationType,
-  message: string,
-  metaData?: {
-    actorId?: string;
-    taskId?: string;
-    projectId?: string;
+  payload: {
+    userId: string;
+    workspaceId: string;
+    type: NotificationType;
+    message: string;
+    metaData?: {
+      actorId?: string;
+      taskId?: string;
+      projectId?: string;
+    };
   },
+  txClient?: PoolClient,
 ): Promise<Notification> {
-  const result = await dbPool.query(
+  const { message, type, userId, workspaceId, metaData } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     INSERT INTO notifications
     (user_id, actor_id, task_id, project_id, workspace_id, type, message)
@@ -68,7 +113,7 @@ export async function getNotificationsByUserAndWorkspaceId(
     SELECT * FROM notifications
     WHERE user_id = $1 AND workspace_id = $2
     AND (
-          $3::timestamptz IS NULL 
+          $3::timestamptz IS NULL
           OR (created_at, id) < ($3::timestamptz, $4::uuid)
         )
     ORDER BY created_at DESC, id DESC

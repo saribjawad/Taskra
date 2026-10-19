@@ -67,7 +67,7 @@ const schema = z.object({
     'cancelled',
   ]),
   priority: z.enum(['urgent', 'high', 'medium', 'low', 'no_priority']),
-  leadId: z.uuid('Choose a project lead'),
+  leadId: z.uuid('Choose a project lead').optional(),
   startDate: z.date().optional(),
   targetDate: z.date().optional(),
 })
@@ -111,7 +111,7 @@ export default function CreateProjectDialog({
       description: '',
       status: 'backlog',
       priority: 'no_priority',
-      leadId: '',
+      leadId: undefined,
     },
   })
   const busy = isPending || isSubmitting

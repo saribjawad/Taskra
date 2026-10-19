@@ -1,29 +1,35 @@
-import { meta } from 'zod/v4/core';
 import { dbPool } from '../db';
 import {
   ProjectActivityType,
   ProjectActivity,
   ProjectActivityWithComments,
 } from '../models/projectActivity.model';
+import { PoolClient } from 'pg';
 
 export const createProjectActivity = async (
-  projectId: string,
-  userId: string,
-  description: string,
-  type: ProjectActivityType,
-  metadata: {
-    field: string;
-    from: string;
-    to: string;
-  } | null = null,
+  payload: {
+    projectId: string;
+    userId: string;
+    description: string;
+    type: ProjectActivityType;
+    metadata?: {
+      field: string;
+      from: string;
+      to: string;
+    };
+  },
+  txClient?: PoolClient,
 ): Promise<ProjectActivity> => {
-  const results = await dbPool.query(
+  const { description, projectId, type, userId, metadata } = payload;
+
+  const db = txClient || dbPool;
+  const results = await db.query(
     `
     INSERT INTO project_activity (project_id, user_id, description, type, metadata)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING*
     `,
-    [projectId, userId, description, type, metadata],
+    [projectId, userId, description, type, metadata ?? null],
   );
 
   return results.rows[0];
@@ -55,7 +61,7 @@ export const getProjectActivity = async (
 
       UNION ALL
 
-      SELECT 
+      SELECT
           a.id,
           a.project_id,
           a.user_id,
@@ -72,7 +78,7 @@ export const getProjectActivity = async (
       ) WHERE project_id = $1
       AND (
           $2::timestamptz IS NULL
-          OR (created_at, id) < ($2::timestamptz, $3::uuid) 
+          OR (created_at, id) < ($2::timestamptz, $3::uuid)
           )
         ORDER BY created_at DESC, id DESC
           LIMIT $4
