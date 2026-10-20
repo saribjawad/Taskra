@@ -16,20 +16,14 @@ import {
   deleteTask,
   findTaskByIdAndWorkspaceId,
   getTasks,
-  markTaskAsComplete,
-  updateTask,
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   getAttachmentByIdAndTaskId,
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
-import {
-  createTaskActivity,
-  getTaskActivitiesByTaskId,
-} from '../services/taskActivity.service';
+import { getTaskActivitiesByTaskId } from '../services/taskActivity.service';
 import { TaskActivityType } from '../models/taskActivity.model';
-import { Task } from '../models/task.model';
 import { notifyMemberInWorkspace } from '../websockets/init';
 import { getWorkspaceMember } from '../services/workspace.service';
 import { createNotification } from '../services/notifications.service';
@@ -37,10 +31,22 @@ import { isObjectEmpty } from '../utils/isObjectEmpty';
 import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
 import { getProjectMilestonesWithIdAndProjectId } from '../services/projectMilestones.service';
 import {
+  connectTaskToProjectWorkflow,
   createTaskWorkflow,
+  markTaskAsCompletedWorkflow,
   updateTaskWorkflow,
 } from '../transactions/tasks.transactions';
 import logger from '../utils/logger';
+
+async function requireTask(taskId: string, workspaceId: string) {
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  return task;
+}
 
 // ==================================================================================
 // Task Controllers
@@ -158,11 +164,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   const { clearFields, removedAttachmentIds } = body;
 
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
-
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, user.activeWorkspace);
 
   const { assignee: assigneeId, reporter: reporterId } = body;
 
@@ -292,76 +294,30 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
   const user = req.user;
   const { taskId } = MarkTaskAsCompletedParamsSchema.parse(req.params);
 
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
+  const task = await requireTask(taskId, user.activeWorkspace);
 
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
-  const currentDate = new Date();
-  const count = await markTaskAsComplete(taskId, currentDate);
-
-  if (!count || count <= 0) {
-    throw ApiError.internal(
-      'Something went wrong while marking the task as complete',
-    );
-  }
-
-  const taskActivity = await createTaskActivity({
-    taskId,
-    userId: user.id,
-    type: 'task_completed',
-    description: `${user.fullName} marked the task as completed`,
+  const notificationRecipients = await markTaskAsCompletedWorkflow({
+    task,
+    user,
+    completedDate: new Date(),
   });
 
-  if (!taskActivity) {
-    throw ApiError.internal(
-      'Something went wrong while creating the task activity',
-    );
-  }
-
   // Notify the assignee and the reporter - Don't notify if the assignee or reporter himself is the actor
-  const notificationRecipents = new Set([task.assignee, task.reporter]);
-
-  for (const recipent of notificationRecipents) {
-    if (recipent && recipent !== user.id) {
-      const createdNotification = await createNotification({
-        userId: recipent,
-        workspaceId: task.workspace_id,
-        type: 'task:completed',
-        message: 'Task has been marked as completed',
-        metaData: {
-          actorId: user.id,
-          taskId: task.id,
-        },
-      });
-
-      if (!createdNotification) {
-        throw ApiError.internal(
-          'Something went wrong while creating notification',
-        );
-      }
-
-      notifyMemberInWorkspace(recipent, task.workspace_id, {
-        type: 'task:completed',
-        message: 'Task has been marked as completed',
-        metaData: {
-          taskId: task.id,
-          actorId: user.id,
-        },
-      });
-    }
+  for (const recipient of notificationRecipients) {
+    notifyMemberInWorkspace(recipient, task.workspace_id, {
+      type: 'task:completed',
+      message: 'Task has been marked as completed',
+      metaData: {
+        taskId: task.id,
+        actorId: user.id,
+      },
+    });
   }
 
   res.status(200).json(new ApiResponse(200, 'Task marked as completed'));
 };
 
 export const GetTasks = async (req: Request, res: Response) => {
-  /*
-  TODO: Update into accordingly
-   cursor pagination
-   caching counts
-  */
-
   const userId = req.user.id;
   const workspaceId = req.user.activeWorkspace;
   const parsedQueries = GetTaskQuerySchema.parse(req.query);
@@ -404,11 +360,7 @@ export const GetTask = async (req: Request, res: Response) => {
   const parsedParam = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParam;
 
-  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
-
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, workspaceId);
 
   // Get assignee & reporter details
   const assignee = await findUserById(task.assignee);
@@ -454,15 +406,8 @@ export const DeleteTask = async (req: Request, res: Response) => {
   const parsedParams = TaskParamsSchema.parse(req.params);
   const { taskId } = parsedParams;
 
-  // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
-
-  // Throw error 404 if not found
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
-
-  const rowsDeleted = await deleteTask(taskId);
+  const task = await requireTask(taskId, workspaceId);
+  const rowsDeleted = await deleteTask(task.id);
 
   if (!rowsDeleted || rowsDeleted <= 0) {
     throw ApiError.internal('Something went wrong while deleting the task');
@@ -478,14 +423,10 @@ export const GetTaskActivity = async (req: Request, res: Response) => {
   const { taskId } = GetTaskActivityParamsSchema.parse(req.params);
   const { cursorId, cursorTime } = GetTaskActivityQuerySchema.parse(req.query);
 
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
-
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, user.activeWorkspace);
 
   const taskActivities = await getTaskActivitiesByTaskId(
-    taskId,
+    task.id,
     LIMIT + 1,
     cursorId,
     cursorTime,
@@ -551,11 +492,7 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     req.body,
   );
 
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
-
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, user.activeWorkspace);
 
   let project = null;
   let milestone = null;
@@ -587,16 +524,7 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
     task.project_id !== projectId ||
     task.project_milestone_id !== nextMilestoneId;
 
-  // Clear both associations together when the user selects "No project".
-  const updatedRowsCount = await updateTask(task.id, {
-    project_id: projectId,
-    project_milestone_id: nextMilestoneId,
-  });
-
-  if (!updatedRowsCount || updatedRowsCount <= 0) {
-    throw ApiError.internal('Something went wrong while updating tasks');
-  }
-
+  let activity: { type: TaskActivityType; description: string } | undefined;
   if (associationChanged) {
     let activityType: TaskActivityType;
     let description: string;
@@ -612,41 +540,39 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       description = `${user.fullName} connected '${task.title}' to project '${project!.name}'`;
     }
 
-    const activity = await createTaskActivity({
-      taskId: task.id,
-      userId: user.id,
+    activity = {
       type: activityType,
       description,
-    });
-
-    if (!activity) {
-      throw ApiError.internal(
-        'Something went wrong while creating task activity',
-      );
-    }
+    };
   }
 
-  // Notify the destination project's lead when a task is newly connected.
-  if (
+  const shouldNotifyProjectLead = Boolean(
     project &&
     task.project_id !== project.id &&
     project.lead_id &&
-    project.lead_id !== user.id
-  ) {
-    const createdNotification = await createNotification({
-      userId: project.lead_id,
-      workspaceId: project.workspace_id,
-      type: 'project:task_added',
-      message: `${user.fullName} added task to '${project.name}'`,
-      metaData: { actorId: user.id, projectId: project.id },
-    });
+    project.lead_id !== user.id,
+  );
 
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
+  await connectTaskToProjectWorkflow({
+    task,
+    user,
+    projectId,
+    milestoneId: nextMilestoneId,
+    activity,
+    ...(shouldNotifyProjectLead && project?.lead_id
+      ? {
+          notification: {
+            userId: project.lead_id,
+            workspaceId: project.workspace_id,
+            projectId: project.id,
+            message: `${user.fullName} added task to '${project.name}'`,
+          },
+        }
+      : {}),
+  });
 
+  // Send the real-time event only after the database transaction commits.
+  if (shouldNotifyProjectLead && project?.lead_id) {
     notifyMemberInWorkspace(project.lead_id, project.workspace_id, {
       type: 'project:task_added',
       message: `${user.fullName} added '${task.title}' to '${project.name}'`,

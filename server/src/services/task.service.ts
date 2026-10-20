@@ -162,8 +162,13 @@ export const updateTask = async (
  * @param completedDate - Date of task completed at
  * @returns Count of updated row
  */
-export const markTaskAsComplete = async (id: string, completedDate: Date) => {
-  const results = await dbPool.query(
+export const markTaskAsComplete = async (
+  id: string,
+  completedDate: Date,
+  txClient?: PoolClient,
+) => {
+  const db = txClient || dbPool;
+  const results = await db.query(
     `
     UPDATE tasks
     SET status = 'done', completed_date = $1

@@ -11,7 +11,7 @@ import { deleteAttachmentById } from '../services/attachment.service';
 import { createNotification } from '../services/notifications.service';
 import { createTask } from '../services/task.service';
 import { createTaskActivity } from '../services/taskActivity.service';
-import { updateTask } from '../services/task.service';
+import { markTaskAsComplete, updateTask } from '../services/task.service';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { Task } from '../models/task.model';
@@ -370,4 +370,100 @@ export const updateTaskWorkflow = async (data: UpdateTaskWorkflowInput) => {
 
     throw error;
   }
+};
+
+export const markTaskAsCompletedWorkflow = async (data: {
+  task: Task;
+  user: { id: string; fullName: string };
+  completedDate: Date;
+}) => {
+  const { task, user, completedDate } = data;
+  const recipients = new Set([task.assignee, task.reporter]);
+
+  return executeTranscation(async (txClient) => {
+    await markTaskAsComplete(task.id, completedDate, txClient);
+
+    await createTaskActivity(
+      {
+        taskId: task.id,
+        userId: user.id,
+        type: 'task_completed',
+        description: `${user.fullName} marked the task as completed`,
+      },
+      txClient,
+    );
+
+    for (const recipient of recipients) {
+      if (!recipient || recipient === user.id) continue;
+      await createNotification(
+        {
+          userId: recipient,
+          workspaceId: task.workspace_id,
+          type: 'task:completed',
+          message: 'Task has been marked as completed',
+          metaData: {
+            actorId: user.id,
+            taskId: task.id,
+          },
+        },
+        txClient,
+      );
+    }
+
+    return [...recipients].filter(
+      (recipient) => recipient && recipient !== user.id,
+    );
+  });
+};
+
+export const connectTaskToProjectWorkflow = async (data: {
+  task: Task;
+  user: { id: string };
+  projectId: string | null;
+  milestoneId: string | null;
+  activity?: { type: TaskActivityType; description: string };
+  notification?: {
+    userId: string;
+    workspaceId: string;
+    projectId: string;
+    message: string;
+  };
+}) => {
+  const { task, user, projectId, milestoneId, activity, notification } = data;
+
+  return executeTranscation(async (txClient) => {
+    await updateTask(
+      task.id,
+      {
+        project_id: projectId,
+        project_milestone_id: milestoneId,
+      },
+      txClient,
+    );
+
+    if (activity) {
+      await createTaskActivity(
+        {
+          taskId: task.id,
+          userId: user.id,
+          type: activity.type,
+          description: activity.description,
+        },
+        txClient,
+      );
+    }
+
+    if (notification) {
+      await createNotification(
+        {
+          userId: notification.userId,
+          workspaceId: notification.workspaceId,
+          type: 'project:task_added',
+          message: notification.message,
+          metaData: { actorId: user.id, projectId: notification.projectId },
+        },
+        txClient,
+      );
+    }
+  });
 };
