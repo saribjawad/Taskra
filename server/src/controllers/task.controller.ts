@@ -13,7 +13,6 @@ import {
 import { findUserById } from '../services/user.service';
 import { ApiError } from '../utils/ApiErrors';
 import {
-  createTask,
   deleteTask,
   findTaskByIdAndWorkspaceId,
   getTasks,
@@ -21,15 +20,10 @@ import {
   updateTask,
 } from '../services/task.service';
 import { ApiResponse } from '../utils/ApiResponse';
-import { findCommentsByTaskId } from '../services/comment.service';
-import { deleteFileFromS3, FILE_TYPE, uploadFileToS3 } from '../config/s3';
 import {
-  createAttachment,
-  deleteAttachmentById,
   getAttachmentByIdAndTaskId,
   getAttachmentsByTaskId,
 } from '../services/attachment.service';
-import { v4 as uuidv4 } from 'uuid';
 import {
   createTaskActivity,
   getTaskActivitiesByTaskId,
@@ -42,6 +36,11 @@ import { createNotification } from '../services/notifications.service';
 import { isObjectEmpty } from '../utils/isObjectEmpty';
 import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
 import { getProjectMilestonesWithIdAndProjectId } from '../services/projectMilestones.service';
+import {
+  createTaskWorkflow,
+  updateTaskWorkflow,
+} from '../transactions/tasks.transactions';
+import logger from '../utils/logger';
 
 // ==================================================================================
 // Task Controllers
@@ -73,7 +72,6 @@ export const CreateTask = async (req: Request, res: Response) => {
   let reporterMember;
 
   // If the assigne exists query the user
-
   if (assigneeId) {
     assigneeMember = await getWorkspaceMember(assigneeId, activeWorkspace);
     if (!assigneeMember) {
@@ -88,122 +86,63 @@ export const CreateTask = async (req: Request, res: Response) => {
     }
   }
 
-  const task = await createTask(
-    title,
-    description,
-    status,
-    priority,
-    label,
-    activeWorkspace,
-    user.id,
-    startDate,
-    dueDate,
-    assigneeMember ? assigneeMember.user_id : null,
-    reporterMember ? reporterMember.user_id : null,
-  );
-
-  if (!task) {
-    throw ApiError.internal('Something went wrong while creating the task');
-  }
-
-  // Upload new attachments files to s3 bucket and save in DB
   const files = Object.values(req.files ?? {}).flat();
 
-  await Promise.all(
-    files.map(async (f) => {
-      const storageId = `attachment/${f.originalname}-${uuidv4()}`;
-
-      // Upload the file to s3
-      await uploadFileToS3(f.mimetype as FILE_TYPE, storageId, f.buffer);
-
-      // Save the attachment in DB
-      await createAttachment(
-        task.id,
-        f.originalname,
-        f.size,
-        f.mimetype,
-        storageId,
-      );
-    }),
-  );
-
-  // Create task activity
-  const taskActivity = await createTaskActivity(
-    task.id,
-    user.id,
-    'task_created',
-    `${user.fullName} created the task.`,
-  );
-
-  if (!taskActivity) {
-    throw ApiError.internal(
-      'Something went wrong while creating task activity',
-    );
-  }
-
-  // Notify the assignee if the actor himself is not the assignee
+  const { task } = await createTaskWorkflow({
+    user: user,
+    assigneeMember,
+    reporterMember,
+    files,
+    payload: {
+      title,
+      description,
+      status,
+      priority,
+      label,
+      activeWorkspace,
+      userId: user.id,
+      startDate,
+      dueDate,
+      assignee: assigneeMember ? assigneeMember.user_id : null,
+      reporter: reporterMember ? reporterMember.user_id : null,
+    },
+  });
 
   if (assigneeMember && assigneeMember.user_id !== user.id) {
-    const createdNotification = await createNotification({
-      userId: assigneeMember.user_id,
-      workspaceId: task.workspace_id,
-      type: 'task:assigned',
-      message: 'A task has been assigned to you',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
+    try {
+      notifyMemberInWorkspace(assigneeMember.user_id, task.workspace_id, {
+        type: 'task:assigned',
+        message: 'A task has been assigned to you',
+        metaData: {
+          actorId: user.id,
+          taskId: task.id,
+        },
+      });
+    } catch (e) {
+      logger.error('Failed to send real-time notification to assignee', e);
     }
-
-    notifyMemberInWorkspace(assigneeMember.user_id, task.workspace_id, {
-      type: 'task:assigned',
-      message: 'A task has been assigned to you',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
   }
-  // Notify the reporter if the actor himself is not the reporter
+
   if (
     reporterMember &&
     reporterMember.user_id !== user.id &&
     reporterMember.user_id !== assigneeMember?.user_id
   ) {
-    const createdNotification = await createNotification({
-      userId: reporterMember.user_id,
-      workspaceId: task.workspace_id,
-      type: 'task:reporter_assigned',
-      message: 'You were assigned as the reporter of a task',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
+    try {
+      notifyMemberInWorkspace(reporterMember.user_id, task.workspace_id, {
+        type: 'task:reporter_assigned',
+        message: 'You were assigned as the reporter of a task',
+        metaData: {
+          actorId: user.id,
+          taskId: task.id,
+        },
+      });
+    } catch (e) {
+      logger.error('Failed to send real-time notification to reporter', e);
     }
-
-    notifyMemberInWorkspace(reporterMember.user_id, task.workspace_id, {
-      type: 'task:reporter_assigned',
-      message: 'You were assigned as the reporter of a task',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
   }
 
-  res.status(201).json(new ApiResponse(201, 'Task created'));
+  res.status(201).json(new ApiResponse(201, 'Task created', task));
 };
 
 export const UpdateTask = async (req: Request, res: Response) => {
@@ -286,114 +225,40 @@ export const UpdateTask = async (req: Request, res: Response) => {
     payload[field] = null;
   });
 
-  // Check if the payload is empty
-  if (!isObjectEmpty(payload)) {
-    const count = await updateTask(taskId, payload);
-
-    if (!count || count <= 0) {
-      throw ApiError.internal('Something went wrong while update the task');
-    }
-
-    const activityMap = {
-      title: 'title_changed',
-      status: 'status_changed',
-      priority: 'priority_changed',
-      assignee: 'assignee_changed',
-      reporter: 'reporter_changed',
-    };
-
-    //  Create task activity
-    for (const [field, activityValue] of Object.entries(activityMap)) {
-      if (
-        payload[field] !== undefined &&
-        payload[field] !== task[field as keyof Task]
-      ) {
-        const nextValue = payload[field];
-
-        let description = `${user.fullName} changed ${field} to '${nextValue ?? 'none'}'`;
-
-        // Manually add assignee/reporter email
-        if (field === 'assignee' && payload['assignee'] !== null) {
-          description = `${user.fullName} changed the assignee to ${assigneeUser?.full_name}`;
-        }
-        if (field === 'reporter' && payload['reporter'] !== null) {
-          description = `${user.fullName} changed the reporter to ${reporterUser?.full_name}`;
-        }
-
-        await createTaskActivity(
-          task.id,
-          user.id,
-          activityValue as TaskActivityType,
-          description,
-          {
-            field: field,
-            from: String(task[field as keyof Task] ?? ''),
-            to: String(nextValue ?? ''),
-          },
-        );
-      }
-    }
-  }
-
-  // Remove attachments which user have removed
-  await Promise.all(
-    removedAttachmentIds.map(async (a, i) => {
-      const attachment = await getAttachmentByIdAndTaskId(a, task.id);
-
-      await deleteFileFromS3(attachment.storage_id);
-
-      await deleteAttachmentById(attachment.id);
-    }),
-  );
-
-  // Upload new attachments files to s3 bucket and save in DB
   const files = Object.values(req.files ?? {}).flat();
-
-  await Promise.all(
-    files.map(async (f) => {
-      const storageId = `attachment/${f.originalname}-${uuidv4()}`;
-
-      // Upload the file to s3
-      await uploadFileToS3(f.mimetype as FILE_TYPE, storageId, f.buffer);
-
-      // Save the attachment in DB
-      await createAttachment(
+  const removedAttachments = await Promise.all(
+    removedAttachmentIds.map(async (attachmentId) => {
+      const attachment = await getAttachmentByIdAndTaskId(
+        attachmentId,
         task.id,
-        f.originalname,
-        f.size,
-        f.mimetype,
-        storageId,
       );
 
-      // Create task activity
-      await createTaskActivity(
-        task.id,
-        user.id,
-        'attachment_added',
-        `${user.fullName} attached an attachment '${f.originalname}'`,
-      );
+      if (!attachment) {
+        throw ApiError.notFound('Attachment not found');
+      }
+
+      return attachment;
     }),
   );
+
+  if (
+    !isObjectEmpty(payload) ||
+    files.length > 0 ||
+    removedAttachments.length > 0
+  ) {
+    await updateTaskWorkflow({
+      user,
+      task,
+      payload,
+      assigneeUser,
+      reporterUser,
+      files,
+      removedAttachments,
+    });
+  }
 
   // Notify the assignee if the actor himself is not the assignee
   if (assigneeUser && assigneeUser.id !== user.id) {
-    const createdNotification = await createNotification({
-      userId: assigneeUser.id,
-      workspaceId: task.workspace_id,
-      type: 'task:assigned',
-      message: 'A task has been assigned to you',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
-
     notifyMemberInWorkspace(assigneeUser.id, task.workspace_id, {
       type: 'task:assigned',
       message: 'A task has been assigned to you',
@@ -403,29 +268,13 @@ export const UpdateTask = async (req: Request, res: Response) => {
       },
     });
   }
+
   // Notify the reporter if the actor himself is not the reporter
   if (
     reporterUser &&
     reporterUser.id !== user.id &&
     reporterUser.id !== assigneeUser?.id
   ) {
-    const createdNotification = await createNotification({
-      userId: reporterUser.id,
-      workspaceId: task.workspace_id,
-      type: 'task:reporter_assigned',
-      message: 'You were assigned as the reporter of a task',
-      metaData: {
-        actorId: user.id,
-        taskId: task.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
-
     notifyMemberInWorkspace(reporterUser.id, task.workspace_id, {
       type: 'task:reporter_assigned',
       message: 'You were assigned as the reporter of a task',
@@ -449,7 +298,6 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
     throw ApiError.notFound('Task not found');
   }
   const currentDate = new Date();
-
   const count = await markTaskAsComplete(taskId, currentDate);
 
   if (!count || count <= 0) {
@@ -458,12 +306,12 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
     );
   }
 
-  const taskActivity = await createTaskActivity(
+  const taskActivity = await createTaskActivity({
     taskId,
-    user.id,
-    'task_completed',
-    `${user.fullName} marked the task as completed`,
-  );
+    userId: user.id,
+    type: 'task_completed',
+    description: `${user.fullName} marked the task as completed`,
+  });
 
   if (!taskActivity) {
     throw ApiError.internal(
@@ -764,12 +612,12 @@ export const ConnectTaskToProject = async (req: Request, res: Response) => {
       description = `${user.fullName} connected '${task.title}' to project '${project!.name}'`;
     }
 
-    const activity = await createTaskActivity(
-      task.id,
-      user.id,
-      activityType,
+    const activity = await createTaskActivity({
+      taskId: task.id,
+      userId: user.id,
+      type: activityType,
       description,
-    );
+    });
 
     if (!activity) {
       throw ApiError.internal(

@@ -11,5 +11,5 @@ export async function getMe(): Promise<{
 }> {
   const resp = await api.get('/users/me')
 
-  return resp.data.data
+  return resp.data.data || null
 }

@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import {
   Task,
@@ -48,19 +49,37 @@ export const findTaskByIdAndWorkspaceId = async (
  * @returns The created task
  */
 export const createTask = async (
-  title: string,
-  description: string,
-  status: string,
-  priority: string,
-  label: string,
-  workspaceId: string,
-  userId: string,
-  startDate: Date | undefined,
-  dueDate: Date | undefined,
-  assignee: string | null,
-  reporter: string | null,
+  payload: {
+    title: string;
+    description: string;
+    status: TaskStatusType;
+    priority: TaskPriorityType;
+    label: TaskLabelType;
+    workspaceId: string;
+    userId: string;
+    startDate: Date | undefined;
+    dueDate: Date | undefined;
+    assignee: string | null;
+    reporter: string | null;
+  },
+  txClient?: PoolClient,
 ): Promise<Task> => {
-  const result = await dbPool.query(
+  const {
+    assignee,
+    description,
+    dueDate,
+    label,
+    priority,
+    reporter,
+    startDate,
+    status,
+    title,
+    userId,
+    workspaceId,
+  } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator, reporter, start_date, due_date)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -116,11 +135,13 @@ export const updateTask = async (
     project_id?: string | null;
     project_milestone_id?: string | null;
   },
+  txClient?: PoolClient,
 ) => {
   const keys = Object.keys(data);
   const values = Object.values(data);
+  const db = txClient || dbPool;
 
-  const result = await dbPool.query(
+  const result = await db.query(
     `
     UPDATE tasks
     SET ${keys

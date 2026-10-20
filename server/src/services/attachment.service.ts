@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { Attachment, AttachmentsMimeTypes } from '../models/attachments.model';
 
@@ -12,13 +13,19 @@ import { Attachment, AttachmentsMimeTypes } from '../models/attachments.model';
  * @returns The created comment
  */
 export const createAttachment = async (
-  taskId: string,
-  name: string,
-  size: number,
-  mimeType: AttachmentsMimeTypes,
-  storageId: string,
+  payload: {
+    taskId: string;
+    name: string;
+    size: number;
+    mimeType: AttachmentsMimeTypes;
+    storageId: string;
+  },
+  txClient?: PoolClient,
 ) => {
-  const result = await dbPool.query(
+  const { mimeType, name, size, storageId, taskId } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     INSERT INTO attachments (
       task_id,
@@ -105,11 +112,14 @@ export const getAttachmentByIdAndTaskId = async (
  */
 export const deleteAttachmentById = async (
   attachmentId: string,
+  txClient?: PoolClient,
 ): Promise<Attachment> => {
-  const result = await dbPool.query(
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     DELETE FROM attachments
     WHERE id = $1
+    RETURNING *
     `,
     [attachmentId],
   );

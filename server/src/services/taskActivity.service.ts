@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import {
   TaskActivityType,
@@ -10,23 +11,29 @@ import {
  * @returns The created task activity
  */
 export const createTaskActivity = async (
-  taskId: string,
-  userId: string,
-  type: TaskActivityType,
-  description: string,
-  metadata: {
-    field: string;
-    from: string;
-    to: string;
-  } | null = null,
+  payload: {
+    taskId: string;
+    userId: string;
+    type: TaskActivityType;
+    description: string;
+    metadata?: {
+      field: string;
+      from: string;
+      to: string;
+    };
+  },
+  txClient?: PoolClient,
 ) => {
-  const result = await dbPool.query(
+  const { description, metadata, taskId, type, userId } = payload;
+  const db = txClient || dbPool;
+
+  const result = await db.query(
     `
     INSERT INTO task_activity (task_id, user_id, type, description, metadata)
     VALUES ($1, $2, $3, $4, $5)
     RETURNING *
     `,
-    [taskId, userId, type, description, metadata],
+    [taskId, userId, type, description, metadata ?? null],
   );
 
   return result.rows[0];
@@ -53,7 +60,7 @@ export const getTaskActivitiesByTaskId = async (
   const result = await dbPool.query(
     `
     SELECT *, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS created_at_cursor
-     FROM 
+     FROM
      (
         SELECT
           c.id,
@@ -69,10 +76,10 @@ export const getTaskActivitiesByTaskId = async (
           c.created_at
         FROM comments AS c
         INNER JOIN users AS u ON u.id = c.user_id
-     
+
         UNION ALL
 
-      SELECT 
+      SELECT
           a.id,
           a.task_id,
           a.user_id,
