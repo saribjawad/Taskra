@@ -1,4 +1,4 @@
-import { type ReactElement, type SetStateAction } from 'react'
+import type { ReactElement, SetStateAction } from 'react'
 import {
   Dialog,
   DialogClose,
