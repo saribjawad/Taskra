@@ -4,7 +4,7 @@ import {
   FolderOpen,
   House,
   Plus,
-  Store,
+  Users,
   CircleDotDashed,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -67,7 +67,7 @@ export function TeamNav() {
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
                 <SidebarMenuButton tooltip={team.name}>
-                  <Store className="text-purple-500" />
+                  <Users className="text-purple-500" />
                   <span>{team.name}</span>
                   <ChevronDown className="ml-auto size-3.5 transition-transform data-[state=closed]:-rotate-90" />
                 </SidebarMenuButton>

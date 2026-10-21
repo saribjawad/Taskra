@@ -16,14 +16,9 @@ import {
 import MyNav from './my-nav'
 import { SidebarHeaderMenu } from './sidebar-header-menu'
 import { TeamNav } from './team-nav'
+import { useAuth } from '#/context/auth/auth-hook'
 
-// This is sample data.
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
-  },
   myNav: [
     {
       title: 'Dashboard',
@@ -51,6 +46,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -62,7 +59,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamNav />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: user?.fullName || user?.username || 'Account',
+            email: user?.email || '',
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
