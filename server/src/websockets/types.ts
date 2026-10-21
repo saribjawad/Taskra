@@ -22,7 +22,10 @@ export type SendMessagePayloadType = {
   type: 'message:send';
   payload: {
     conversationId: string;
-    message: Message;
+    message: Message & {
+      author?: { id: string; username: string; fullName: string };
+    };
+    conversation?: { isGroup: boolean; title: string | null };
   };
 };
 

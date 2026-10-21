@@ -5,7 +5,11 @@ export interface WebsocketContextValue {
   activeUserIds: string[]
   isConnected: boolean
   joinConversation: (conversationId: string) => void
-  sendChatMessage: (conversationId: string, message: ChatMessage) => void
+  sendChatMessage: (
+    conversationId: string,
+    message: ChatMessage,
+    conversation: { isGroup: boolean; title: string | null },
+  ) => void
 }
 
 export const WebsocketContext = createContext<WebsocketContextValue | null>(

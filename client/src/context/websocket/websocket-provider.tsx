@@ -8,6 +8,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { NotificationType } from '#/type/notification'
 import type { ChatMessage } from '#/type/conversation'
 import { addConversationMessageToCache } from '#/lib/query-cache/conversation'
+import { notificationQueryKey } from '#/hooks/notification.hooks'
+import { MessageSquareText } from 'lucide-react'
 
 export type MessageType = NotificationType
 
@@ -35,19 +37,29 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const joinConversation = useCallback((conversationId: string) => {
-    sendSocketAction({
-      type: 'conversation:new',
-      payload: { conversationId },
-    })
-  }, [sendSocketAction])
+  const joinConversation = useCallback(
+    (conversationId: string) => {
+      sendSocketAction({
+        type: 'conversation:new',
+        payload: { conversationId },
+      })
+    },
+    [sendSocketAction],
+  )
 
-  const sendChatMessage = useCallback((conversationId: string, message: ChatMessage) => {
-    sendSocketAction({
-      type: 'message:send',
-      payload: { conversationId, message },
-    })
-  }, [sendSocketAction])
+  const sendChatMessage = useCallback(
+    (
+      conversationId: string,
+      message: ChatMessage,
+      conversation: { isGroup: boolean; title: string | null },
+    ) => {
+      sendSocketAction({
+        type: 'message:send',
+        payload: { conversationId, message, conversation },
+      })
+    },
+    [sendSocketAction],
+  )
 
   useEffect(() => {
     let isCurrentConnection = true
@@ -112,12 +124,30 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
       if (payload.type === 'message:new') {
         const conversationId = payload.payload?.conversationId
         const message = payload.payload?.message as ChatMessage | undefined
+        const conversation = payload.payload?.conversation as
+          | { isGroup?: boolean; title?: string | null }
+          | undefined
         if (
           typeof conversationId === 'string' &&
           message &&
           typeof message.id === 'string' &&
           typeof message.content === 'string'
         ) {
+          const isOnChatInboxPage =
+            window.location.pathname.includes('/inbox/chats')
+          if (message.author_id !== user.id && !isOnChatInboxPage) {
+            const sender = message.author
+              ? message.author.fullName || message.author.username
+              : 'Someone'
+            const source = conversation?.isGroup
+              ? conversation.title || 'a group chat'
+              : sender
+
+            toast(`You received a message from ${source}`, {
+              description: message.content,
+              icon: <MessageSquareText className="size-4" />,
+            })
+          }
           addConversationMessageToCache(
             queryClient,
             activeWorkspace,
@@ -137,6 +167,10 @@ export function WebsocketProvider({ children }: { children: ReactNode }) {
         typeof message !== 'string'
       )
         return
+
+      void queryClient.invalidateQueries({
+        queryKey: notificationQueryKey(activeWorkspace),
+      })
 
       switch (type) {
         case 'task:completed':

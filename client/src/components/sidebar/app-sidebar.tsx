@@ -17,6 +17,7 @@ import MyNav from './my-nav'
 import { SidebarHeaderMenu } from './sidebar-header-menu'
 import { TeamNav } from './team-nav'
 import { useAuth } from '#/context/auth/auth-hook'
+import { useGetUserNotifications } from '#/hooks/notification.hooks'
 
 const data = {
   myNav: [
@@ -47,6 +48,14 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth()
+  const notificationsQuery = useGetUserNotifications()
+  const unreadCount =
+    notificationsQuery.data?.pages[0]?.notifications.filter(
+      (notification) => !notification.seen,
+    ).length ?? 0
+  const myNavItems = data.myNav.map((item) =>
+    item.title === 'Inbox' ? { ...item, badgeCount: unreadCount } : item,
+  )
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -54,7 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarHeaderMenu />
       </SidebarHeader>
       <SidebarContent>
-        <MyNav items={data.myNav} />
+        <MyNav items={myNavItems} />
         <MyNav label="Workspace" items={data.workspaceNav} />
         <TeamNav />
       </SidebarContent>

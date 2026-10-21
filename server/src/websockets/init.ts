@@ -208,6 +208,7 @@ export function initWebSocket(server: Server) {
                 payload: {
                   conversationId: payload.conversationId,
                   message: payload.message,
+                  conversation: payload.conversation,
                 },
               }),
             );

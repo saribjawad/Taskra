@@ -84,7 +84,25 @@ function ChatsPage() {
     try {
       const message = await sendMessage(content)
       // Broadcast only after the API has saved the message.
-      sendChatMessage(selectedId, message)
+      if (selectedConversation) {
+        sendChatMessage(
+          selectedId,
+          {
+            ...message,
+            author: user
+              ? {
+                  id: user.id,
+                  username: user.username,
+                  fullName: user.fullName,
+                }
+              : undefined,
+          },
+          {
+            isGroup: selectedConversation.isGroup,
+            title: selectedConversation.title,
+          },
+        )
+      }
     } catch {
       setDraft(content)
       toast.error('Message could not be sent')
@@ -168,17 +186,18 @@ function ChatsPage() {
         conversations={conversations}
         onCreated={({ id, participants, isGroup, title }) => {
           // Add the empty conversation locally so it can open before its first message.
-          const groupParticipants = isGroup && user
-            ? [
-                ...participants,
-                {
-                  id: user.id,
-                  username: user.username,
-                  full_name: user.fullName,
-                  member: 'admin' as const,
-                },
-              ]
-            : participants
+          const groupParticipants =
+            isGroup && user
+              ? [
+                  ...participants,
+                  {
+                    id: user.id,
+                    username: user.username,
+                    full_name: user.fullName,
+                    member: 'admin' as const,
+                  },
+                ]
+              : participants
 
           addConversationToCache(queryClient, workspaceId, {
             id,
