@@ -14,6 +14,11 @@ import {
 import { Input } from '#/components/ui/input'
 import { Skeleton } from '#/components/ui/skeleton'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '#/components/ui/tooltip'
+import {
   useAddTeamMembers,
   useGetTeamMembers,
   useRemoveTeamMember,
@@ -134,7 +139,9 @@ function AddMembersDialog({
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
                 >
                   <Avatar size="sm">
-                    <AvatarFallback>{getInitials(person.username)}</AvatarFallback>
+                    <AvatarFallback>
+                      {getInitials(person.username)}
+                    </AvatarFallback>
                   </Avatar>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">
@@ -156,7 +163,7 @@ function AddMembersDialog({
             </p>
           )}
         </div>
-        <DialogFooter className="border-t px-4 py-3 sm:justify-between">
+        <DialogFooter className="mx-0 mb-0 border-t px-4 py-3 sm:justify-between">
           <span className="mr-auto text-xs text-muted-foreground">
             {selected.length} selected
           </span>
@@ -217,8 +224,9 @@ export function TeamMembersPanel({
         <div>
           <h1 className="text-lg font-semibold">Members</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {members.length} {members.length === 1 ? 'person has' : 'people have'}{' '}
-            access to {team.name}.
+            {members.length}{' '}
+            {members.length === 1 ? 'person has' : 'people have'} access to{' '}
+            {team.name}.
           </p>
         </div>
         <AddMembersDialog
@@ -252,47 +260,69 @@ export function TeamMembersPanel({
           ))
         ) : isError ? (
           <div role="alert" className="py-10 text-center text-sm">
-            <p className="text-muted-foreground">Unable to load team members.</p>
+            <p className="text-muted-foreground">
+              Unable to load team members.
+            </p>
             <Button variant="link" size="sm" onClick={() => void refetch()}>
               Try again
             </Button>
           </div>
         ) : visibleMembers.length ? (
-          visibleMembers.map((member) => (
-            <div
-              key={member.teamMemberId}
-              className="flex items-center justify-between gap-4 py-3"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <Avatar>
-                  <AvatarFallback>
-                    {getInitials(member.fullName || member.username)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {member.fullName || member.username}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {member.email}
-                  </p>
-                </div>
-              </div>
+          visibleMembers.map((member) => {
+            const isLastMember = members.length === 1
+            const removeButton = (
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={isRemoving}
+                disabled={isRemoving || isLastMember}
                 onClick={() => removeMember(member.id)}
                 className="shrink-0 text-muted-foreground hover:text-destructive"
               >
                 <Trash2 />
                 Remove from team
               </Button>
-              {isRemoving && removingMemberId === member.id && (
-                <span className="sr-only">Removing {member.username}</span>
-              )}
-            </div>
-          ))
+            )
+
+            return (
+              <div
+                key={member.teamMemberId}
+                className="flex items-center justify-between gap-4 py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <Avatar>
+                    <AvatarFallback>
+                      {getInitials(member.fullName || member.username)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {member.fullName || member.username}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {member.email}
+                    </p>
+                  </div>
+                </div>
+                {isLastMember ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0} className="inline-flex shrink-0">
+                        {removeButton}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      The last member can’t be removed from the team.
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  removeButton
+                )}
+                {isRemoving && removingMemberId === member.id && (
+                  <span className="sr-only">Removing {member.username}</span>
+                )}
+              </div>
+            )
+          })
         ) : (
           <p className="py-10 text-center text-sm text-muted-foreground">
             {search ? 'No members match that search.' : 'No team members yet.'}

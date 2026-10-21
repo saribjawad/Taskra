@@ -14,6 +14,10 @@ export async function createTeam(values: {
   await api.post('/teams', values)
 }
 
+export async function deleteTeam(teamId: string): Promise<void> {
+  await api.delete(`/teams/${teamId}`)
+}
+
 export async function getTeamLinks(teamId: string): Promise<TeamLink[]> {
   const response = await api.get(`/teams/${teamId}/link`)
   return response.data.data ?? []

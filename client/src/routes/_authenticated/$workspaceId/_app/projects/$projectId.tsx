@@ -5,8 +5,8 @@ import {
   Box,
   ChevronRight,
   Link2,
-  MoreHorizontal,
   PanelRight,
+  Pencil,
   Trash2,
 } from 'lucide-react'
 import { isAxiosError } from 'axios'
@@ -22,12 +22,7 @@ import ProjectActivity, {
 } from '#/components/projects/ProjectActivity'
 import ProjectTasks from '#/components/projects/ProjectTasks'
 import ProjectInformation from '#/components/projects/ProjectInformation'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '#/components/ui/dropdown-menu'
+import EditProjectDialog from '#/components/projects/EditProjectDialog'
 import {
   Dialog,
   DialogContent,
@@ -62,6 +57,7 @@ export const Route = createFileRoute(
 function ProjectDetailPage() {
   const [propertiesOpen, setPropertiesOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
   const projectContentRef = useRef<HTMLDivElement>(null)
 
   // A panel opened on mobile must close when the fixed desktop sidebar appears.
@@ -148,26 +144,6 @@ function ProjectDetailPage() {
           >
             <Link2 className="size-4" />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Project actions"
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onSelect={() => setDeleteDialogOpen(true)}
-              >
-                <Trash2 className="size-4" />
-                Delete project
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </header>
 
@@ -206,6 +182,15 @@ function ProjectDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {project && (
+        <EditProjectDialog
+          project={project}
+          workspaceId={workspaceId}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+        />
+      )}
 
       {/* Loading and access errors */}
       {wrongWorkspace ? (
@@ -322,13 +307,36 @@ function ProjectDetailPage() {
             >
               <div className="mx-auto max-w-4xl min-w-0 px-4 pb-14 pt-8 sm:px-8 lg:px-10 lg:pt-12">
                 {/* Project identity remains visible when switching sections. */}
-                <div className="mb-8">
-                  <span className="mb-4 inline-flex rounded-lg bg-emerald-500/10 p-2.5 text-emerald-600 dark:text-emerald-400">
-                    <Box className="size-6" />
-                  </span>
-                  <h1 className="wrap-break-words text-2xl font-semibold tracking-tight">
-                    {project.name}
-                  </h1>
+                <div className="mb-8 flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <Box className="size-5" />
+                    </span>
+                    <h1 className="min-w-0 wrap-break-words text-2xl font-semibold tracking-tight">
+                      {project.name}
+                    </h1>
+                  </div>
+                  {view === 'overview' && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditDialogOpen(true)}
+                      >
+                        <Pencil />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Delete project"
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 {view === 'overview' && <ProjectOverview project={project} />}
                 {view === 'activity' && (

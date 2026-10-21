@@ -468,15 +468,7 @@ function RouteComponent() {
                           task={{
                             id: task.id,
                             description: task.description,
-                            label: task.label,
-                            priority: task.priority,
-                            status: task.status,
                             title: task.title,
-                            assignee: task.assignee ?? undefined,
-                            reporter: task.reporter ?? undefined,
-                            completed_date: task.completed_date,
-                            due_date: task.due_date,
-                            start_date: task.start_date,
                             attachments: task.attachments ?? [],
                           }}
                           isDialogOpen={isEditDialogOpen}

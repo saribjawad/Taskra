@@ -8,6 +8,7 @@ import '../../styles.css'
 
 interface TaskDescriptionViewerProps {
   value: string
+  className?: string
 }
 
 function isEmptyContent(blocks?: Block[]) {
@@ -18,7 +19,10 @@ function isEmptyContent(blocks?: Block[]) {
   })
 }
 
-function TaskDescriptionViewer({ value }: TaskDescriptionViewerProps) {
+function TaskDescriptionViewer({
+  value,
+  className,
+}: TaskDescriptionViewerProps) {
   const initialContent = useMemo<Block[] | undefined>(() => {
     if (!value) return undefined
     try {
@@ -44,6 +48,7 @@ function TaskDescriptionViewer({ value }: TaskDescriptionViewerProps) {
 
   return (
     <BlockNoteView
+      className={className}
       theme="dark"
       editor={editor}
       editable={false}
