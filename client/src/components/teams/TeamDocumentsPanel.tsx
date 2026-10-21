@@ -1,12 +1,23 @@
+import { useState } from 'react'
 import { FileText } from 'lucide-react'
 import { Button } from '#/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
 import { Skeleton } from '#/components/ui/skeleton'
 import { useGetTeamDocuments } from '#/hooks/team.hooks'
-import type { Team } from '#/type/team'
+import type { Team, TeamDocument } from '#/type/team'
 import { AddTeamDocumentDialog } from './TeamResourceDialogs'
 import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
 
 export function TeamDocumentsPanel({ team }: { team: Team }) {
+  const [selectedDocument, setSelectedDocument] = useState<TeamDocument | null>(
+    null,
+  )
   const {
     data: documents,
     isPending,
@@ -48,21 +59,17 @@ export function TeamDocumentsPanel({ team }: { team: Team }) {
           </div>
         ) : documents?.length ? (
           documents.map((document) => (
-            <article key={document.id} className="flex gap-3 py-4">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <FileText className="size-4" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="truncate text-sm font-medium">
-                  {document.name}
-                </h2>
-                {document.content && (
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    <TaskDescriptionViewer value={document.content} />
-                  </div>
-                )}
-              </div>
-            </article>
+            <button
+              key={document.id}
+              type="button"
+              onClick={() => setSelectedDocument(document)}
+              className="flex w-full items-center gap-3 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <FileText className="size-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium">
+                {document.name}
+              </span>
+            </button>
           ))
         ) : (
           <div className="py-14 text-center">
@@ -74,6 +81,33 @@ export function TeamDocumentsPanel({ team }: { team: Team }) {
           </div>
         )}
       </div>
+
+      <Dialog
+        open={selectedDocument !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDocument(null)
+        }}
+      >
+        <DialogContent className="flex h-[85vh] max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+          <DialogHeader className="border-b px-6 py-5 pr-12">
+            <DialogTitle className="truncate text-base">
+              {selectedDocument?.name}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Team document content
+            </DialogDescription>
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-hidden px-6 py-5 [&_.bn-editor]:px-0">
+            {selectedDocument && (
+              <TaskDescriptionViewer
+                key={selectedDocument.id}
+                value={selectedDocument.content ?? ''}
+                className="h-full [&_.bn-container]:h-full [&_.bn-editor]:!h-full [&_.bn-editor]:!min-h-0 [&_.bn-editor]:!max-h-none [&_.bn-editor]:overflow-y-auto"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

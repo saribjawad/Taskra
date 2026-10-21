@@ -6,14 +6,19 @@ import { Skeleton } from '#/components/ui/skeleton'
 import { useGetTeamLinks, useGetTeamMembers } from '#/hooks/team.hooks'
 import { getInitials } from '#/lib/utils'
 import type { Team } from '#/type/team'
+import { DeleteTeamDialog } from './DeleteTeamDialog'
 import { AddTeamLinkDialog } from './TeamResourceDialogs'
 
 export function TeamOverview({
   team,
   workspaceId,
+  isLastTeam,
+  onDeleted,
 }: {
   team: Team
   workspaceId: string
+  isLastTeam: boolean
+  onDeleted: () => void
 }) {
   const { data: links, isPending, isError, refetch } = useGetTeamLinks(team.id)
   const { data: members = [] } = useGetTeamMembers(team.id)
@@ -22,11 +27,19 @@ export function TeamOverview({
     <div className="mx-auto grid w-full max-w-5xl gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-16">
       <section className="min-w-0">
         <div className="mb-10">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-purple-500/15 text-purple-400">
-              <Users className="size-5" />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-purple-500/15 text-purple-400">
+                <Users className="size-5" />
+              </div>
+              <h1 className="truncate text-xl font-semibold">{team.name}</h1>
             </div>
-            <h1 className="text-xl font-semibold">{team.name}</h1>
+            <DeleteTeamDialog
+              team={team}
+              workspaceId={workspaceId}
+              isLastTeam={isLastTeam}
+              onDeleted={onDeleted}
+            />
           </div>
           <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">
             {team.description || 'Add a description…'}

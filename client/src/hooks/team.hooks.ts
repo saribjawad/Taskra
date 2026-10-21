@@ -4,6 +4,7 @@ import {
   createTeam,
   createTeamDocument,
   createTeamLink,
+  deleteTeam,
   getTeamDocuments,
   getTeamLinks,
   getTeamMembers,
@@ -11,6 +12,7 @@ import {
   removeTeamMember,
 } from '#/service/team.service'
 import { toast } from 'sonner'
+import { isAxiosError } from 'axios'
 
 export function useGetTeams(workspaceId: string) {
   return useQuery({
@@ -33,6 +35,28 @@ export function useCreateTeam(workspaceId: string) {
       toast.success('Team created')
     },
     onError: () => toast.error('Could not create team'),
+  })
+}
+
+export function useDeleteTeam(workspaceId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (teamId: string) => deleteTeam(teamId),
+    onSuccess: (_, teamId) => {
+      void queryClient.invalidateQueries({ queryKey: ['teams', workspaceId] })
+      queryClient.removeQueries({ queryKey: ['team-links', teamId] })
+      queryClient.removeQueries({ queryKey: ['team-documents', teamId] })
+      queryClient.removeQueries({ queryKey: ['team-members', teamId] })
+      toast.success('Team deleted')
+    },
+    onError: (error) => {
+      const message = isAxiosError(error)
+        ? error.response?.data?.message
+        : undefined
+      toast.error(
+        typeof message === 'string' ? message : 'Could not delete team',
+      )
+    },
   })
 }
 

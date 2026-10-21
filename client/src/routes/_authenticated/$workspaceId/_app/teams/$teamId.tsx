@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { FileText, Store, Users } from 'lucide-react'
+import { FileText, Users } from 'lucide-react'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
@@ -27,6 +27,7 @@ export const Route = createFileRoute(
 function TeamPage() {
   const { workspaceId, teamId } = Route.useParams()
   const { tab } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const {
     data: teams = [],
     isPending,
@@ -40,7 +41,7 @@ function TeamPage() {
       <header className="shrink-0 border-b">
         <div className="flex min-h-12 items-center gap-2 px-4 sm:px-6">
           <SidebarTrigger className="mr-1 md:hidden" />
-          <Store className="size-4 shrink-0 text-purple-500" />
+          <Users className="size-4 shrink-0 text-purple-500" />
           <h1 className="truncate text-sm font-medium">
             {team?.name ?? 'Team'}
           </h1>
@@ -51,12 +52,7 @@ function TeamPage() {
         >
           {teamTabs.map((value) => {
             const label = value[0].toUpperCase() + value.slice(1)
-            const Icon =
-              value === 'documents'
-                ? FileText
-                : value === 'members'
-                  ? Users
-                  : Store
+            const Icon = value === 'documents' ? FileText : Users
 
             return (
               <Link
@@ -113,7 +109,18 @@ function TeamPage() {
         ) : tab === 'issues' ? (
           <TeamIssuesPanel team={team} workspaceId={workspaceId} />
         ) : (
-          <TeamOverview team={team} workspaceId={workspaceId} />
+          <TeamOverview
+            team={team}
+            workspaceId={workspaceId}
+            isLastTeam={teams.length <= 1}
+            onDeleted={() => {
+              void navigate({
+                to: '/$workspaceId/projects',
+                params: { workspaceId },
+                search: { page: 1, limit: 10 },
+              })
+            }}
+          />
         )}
       </div>
     </main>
