@@ -19,6 +19,10 @@ import { createConversationParticipant } from '../services/conversationParticipa
 import { getWorkspaceMembers } from '../services/workspace.service';
 import { ConversationParticipantMemberType } from '../models/conversationParticipants.model';
 
+// ==================================================================================
+// Conversations Controllers
+// ==================================================================================
+
 export const CreateConversation = async (req: Request, res: Response) => {
   const user = req.user;
   const { participants, isGroup, title } = CreateConversationBodySchema.parse(
@@ -125,7 +129,8 @@ export const GetUsersConversations = async (req: Request, res: Response) => {
   const conversationIds = pageUserConversations.map((c) => c.id);
 
   // If there are, get the conversation recipients and attach to the conversations
-  const conversationRecipients = await getConversationParticipants(conversationIds);
+  const conversationRecipients =
+    await getConversationParticipants(conversationIds);
 
   const formatedConversations = pageUserConversations.map((c) => ({
     id: c.id,

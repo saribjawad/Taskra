@@ -19,6 +19,10 @@ import { createProjectActivity } from '../services/projectActivity.service';
 import { ProjectMilestone } from '../models/projectMilestones.model';
 import { ProjectActivityType } from '../models/projectActivity.model';
 
+// ==================================================================================
+// Helpers
+// ==================================================================================
+
 async function requireProject(projectId: string, workspaceId: string) {
   const project = await getProjectByIdAndWorkspaceId(projectId, workspaceId);
 

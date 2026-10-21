@@ -31,6 +31,10 @@ import {
   UpdateTeamLinkParamsSchema,
 } from '../schemas/teamResources.schema';
 
+// ==================================================================================
+// Helpers
+// ==================================================================================
+
 const requireTeam = async (teamId: string, workspaceId: string) => {
   const team = await getTeamByIdAndWorkspaceId(teamId, workspaceId);
   if (!team) throw ApiError.notFound('Team not found');

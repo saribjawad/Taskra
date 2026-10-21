@@ -27,6 +27,10 @@ import {
 } from '../services/teams.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
 
+// ==================================================================================
+// Team Controllers
+// ==================================================================================
+
 export const CreateTeam = async (req: Request, res: Response) => {
   const user = req.user;
   const { identifier, name, description } = CreateTeamBodySchema.parse(

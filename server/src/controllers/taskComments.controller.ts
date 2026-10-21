@@ -16,6 +16,10 @@ import {
 } from '../services/comment.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
 
+// ==================================================================================
+// Helpers
+// ==================================================================================
+
 async function requireTask(taskId: string, workspaceId: string) {
   const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
 

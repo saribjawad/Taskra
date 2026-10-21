@@ -11,6 +11,10 @@ import {
 import { NotificationIdParamsSchema } from '../schemas/notifications.schema';
 import { ApiError } from '../utils/ApiErrors';
 
+// ==================================================================================
+// Notifications Controllers
+// ==================================================================================
+
 export const GetUserNotifications = async (req: Request, res: Response) => {
   const LIMIT = 10;
 

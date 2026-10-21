@@ -12,6 +12,10 @@ import { ApiError } from '../utils/ApiErrors';
 import { getConversationParticipantByUserId } from '../services/conversationParticipants.service';
 import { createMessage } from '../services/mesages.service';
 
+// ==================================================================================
+// Messages Controllers
+// ==================================================================================
+
 export const SendMessage = async (req: Request, res: Response) => {
   const user = req.user;
   const { conversationId } = SendMessageParamSchema.parse(req.params);

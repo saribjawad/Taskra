@@ -39,7 +39,7 @@ import { generateAccessToken, generateRefreshToken } from '../utils/token';
 import { getWorkspaceMember } from '../services/workspace.service';
 
 // ==================================================================================
-// Controllers
+// Auth Controllers
 // ==================================================================================
 
 /**

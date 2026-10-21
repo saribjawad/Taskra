@@ -63,6 +63,10 @@ import {
   declineWorkspaceInviteFlow,
 } from '../transactions/workspace.transactions';
 
+// ==================================================================================
+// Workspace Controllers
+// ==================================================================================
+
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
 

@@ -15,6 +15,10 @@ import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
 import { ApiError } from '../utils/ApiErrors';
 import { ApiResponse } from '../utils/ApiResponse';
 
+// ==================================================================================
+// Helpers
+// ==================================================================================
+
 async function requireProject(projectId: string, workspaceId: string) {
   const project = await getProjectByIdAndWorkspaceId(projectId, workspaceId);
 

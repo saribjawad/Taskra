@@ -4,6 +4,10 @@ import { findUserById, updateUser } from '../services/user.service';
 import { UpdateUserSchema } from '../schemas/user.schema';
 import { ApiError } from '../utils/ApiErrors';
 
+// ==================================================================================
+// User Controllers
+// ==================================================================================
+
 export const GetCurrentUser = async (req: Request, res: Response) => {
   const user = req.user;
 

@@ -47,6 +47,10 @@ import {
   updateProjectWorkflow,
 } from '../transactions/project.transactions';
 
+// ==================================================================================
+// Helpers
+// ==================================================================================
+
 async function requireProject(projectId: string, workspaceId: string) {
   const project = await getProjectByIdAndWorkspaceId(projectId, workspaceId);
 
