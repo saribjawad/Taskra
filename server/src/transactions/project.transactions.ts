@@ -160,6 +160,10 @@ export const updateProjectWorkflow = async (
           description = `${user.fullName} changed lead to ${leadUser?.full_name}`;
         }
 
+        if (field === 'description') {
+          description = `${user.fullName} updated the description`;
+        }
+
         await createProjectActivity(
           {
             projectId: project.id,

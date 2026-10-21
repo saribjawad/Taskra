@@ -169,7 +169,7 @@ export const updateProject = async (
   const result = await db.query(
     `
     UPDATE projects
-    SET ${keys.map((k, i) => `${k} = $${i + 1}${i + 1 < keys.length ? ',' : ''}`)}
+    SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')}
     WHERE id = $${keys.length + 1}`,
     [...values, id],
   );
