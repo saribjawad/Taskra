@@ -1,0 +1,13 @@
+-- Up Migration
+ALTER TABLE tasks
+ALTER COLUMN team_id SET NOT NULL;
+
+ALTER TABLE projects
+ALTER COLUMN team_id SET NOT NULL;
+
+-- Down Migration
+ALTER TABLE tasks
+ALTER COLUMN team_id DROP NOT NULL;
+
+ALTER TABLE projects
+ALTER COLUMN team_id DROP NOT NULL;
