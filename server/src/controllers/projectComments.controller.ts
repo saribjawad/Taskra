@@ -22,6 +22,10 @@ async function requireProject(projectId: string, workspaceId: string) {
   return project;
 }
 
+// ==================================================================================
+// Project Comment Controllers
+// ==================================================================================
+
 export const CreateProjectComment = async (req: Request, res: Response) => {
   const user = req.user;
 

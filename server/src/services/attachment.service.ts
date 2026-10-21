@@ -65,7 +65,7 @@ export const getAttachmentsByTaskId = async (
 /**
  * Get task attachment by ID
  *
- * @param attachmentId - Attachment uuid
+ * @param payload - Attachment ID
  * @returns Attachments
  */
 export const getAttachmentById = async (
@@ -111,9 +111,10 @@ export const getAttachmentByIdAndTaskId = async (
  * @returns Attachments
  */
 export const deleteAttachmentById = async (
-  attachmentId: string,
+  payload: { id: string },
   txClient?: PoolClient,
 ): Promise<Attachment> => {
+  const { id } = payload;
   const db = txClient || dbPool;
   const result = await db.query(
     `
@@ -121,7 +122,7 @@ export const deleteAttachmentById = async (
     WHERE id = $1
     RETURNING *
     `,
-    [attachmentId],
+    [id],
   );
 
   return result.rows[0];

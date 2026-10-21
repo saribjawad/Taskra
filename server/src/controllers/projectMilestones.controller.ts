@@ -19,6 +19,20 @@ import { createProjectActivity } from '../services/projectActivity.service';
 import { ProjectMilestone } from '../models/projectMilestones.model';
 import { ProjectActivityType } from '../models/projectActivity.model';
 
+async function requireProject(projectId: string, workspaceId: string) {
+  const project = await getProjectByIdAndWorkspaceId(projectId, workspaceId);
+
+  if (!project) {
+    throw ApiError.notFound('Project not found');
+  }
+
+  return project;
+}
+
+// ==================================================================================
+// Project Milestone Controllers
+// ==================================================================================
+
 export const CreateMilestone = async (req: Request, res: Response) => {
   const user = req.user;
   const { projectId } = CreateProjectMilestonesParamsSchema.parse(req.params);
@@ -26,14 +40,7 @@ export const CreateMilestone = async (req: Request, res: Response) => {
   const { name, description, targetDate } =
     CreateProjectMilestonesBodySchema.parse(req.body);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const createdProjectMilestone = await createProjectMilestones(
     project.id,
@@ -74,14 +81,7 @@ export const UpdateMilestones = async (req: Request, res: Response) => {
   const { name, description, targetDate } =
     UpdateProjectMilestonesBodySchema.parse(req.body);
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const projectMilestone = await getProjectMilestonesWithIdAndProjectId(
     milestoneId,
@@ -147,14 +147,7 @@ export const DeleteMilestones = async (req: Request, res: Response) => {
     req.params,
   );
 
-  const project = await getProjectByIdAndWorkspaceId(
-    projectId,
-    user.activeWorkspace,
-  );
-
-  if (!project) {
-    throw ApiError.notFound('Project not found');
-  }
+  const project = await requireProject(projectId, user.activeWorkspace);
 
   const projectMilestone = await getProjectMilestonesWithIdAndProjectId(
     milestoneId,

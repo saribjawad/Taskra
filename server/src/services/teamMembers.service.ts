@@ -1,8 +1,18 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { TeamMemberWithUserDetails } from '../models/teamMembers.model';
 
-export const createTeamMember = async (userId: string, teamId: string) => {
-  const results = await dbPool.query(
+export const createTeamMember = async (
+  payload: {
+    userId: string;
+    teamId: string;
+  },
+  txClient?: PoolClient,
+) => {
+  const { teamId, userId } = payload;
+
+  const db = txClient || dbPool;
+  const results = await db.query(
     `
       INSERT INTO team_members (user_id, team_id)
       VALUES ($1, $2)

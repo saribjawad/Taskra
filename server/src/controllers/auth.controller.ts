@@ -133,7 +133,8 @@ export const SignUpUser = async (req: Request, res: Response) => {
     const hashedPassword = await hashPassword(password);
 
     // Update user with new password and username
-    await updateUser(userWithEmailExist.id, {
+    await updateUser({
+      id: userWithEmailExist.id,
       email,
       username,
       full_name: fullName,
@@ -286,7 +287,8 @@ export const VerifyEmail = async (req: Request, res: Response) => {
   }
 
   // Mark user as verified
-  await updateUser(user.id, {
+  await updateUser({
+    id: user.id,
     is_verified: true,
   });
 
@@ -399,7 +401,8 @@ export const ResetPassword = async (req: Request, res: Response) => {
 
   const hashedPassword = await hashPassword(newPassword);
 
-  const updatedUser = await updateUser(passwordResetToken.user_id, {
+  const updatedUser = await updateUser({
+    id: passwordResetToken.user_id,
     hashed_password: hashedPassword,
   });
 

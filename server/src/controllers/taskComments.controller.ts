@@ -16,30 +16,31 @@ import {
 } from '../services/comment.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
 
+async function requireTask(taskId: string, workspaceId: string) {
+  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
+
+  if (!task) {
+    throw ApiError.notFound('Task not found');
+  }
+
+  return task;
+}
+
 // ==================================================================================
-// Comment Controllers
+// Task Comment Controllers
 // ==================================================================================
 
 export const CreateComment = async (req: Request, res: Response) => {
   const user = req.user;
 
-  const parsedParams = CommentParamSchema.parse(req.params);
+  const { taskId } = CommentParamSchema.parse(req.params);
 
-  const { taskId } = parsedParams;
+  const { content } = CreateCommentSchema.parse(req.body);
 
-  const parsedBody = CreateCommentSchema.parse(req.body);
-  const { content } = parsedBody;
-
-  // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
-
-  // Throw error 404 if not found
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, user.activeWorkspace);
 
   // Create the comment
-  const comment = await createComment(taskId, user.id, content);
+  const comment = await createComment(task.id, user.id, content);
 
   if (!comment) {
     throw ApiError.internal('Something went wrong while creating comment');
@@ -73,13 +74,7 @@ export const UpdateComment = async (req: Request, res: Response) => {
   const parsedBody = UpdateCommentSchema.parse(req.body);
   const { content } = parsedBody;
 
-  // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, workspaceId);
-
-  // Throw error 404 if not found
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  await requireTask(taskId, workspaceId);
 
   // Check if commentId is valid
   const comment = await findCommentById(commentId);
@@ -105,13 +100,7 @@ export const DeleteComment = async (req: Request, res: Response) => {
   const parsedParams = UpdateCommentParamSchema.parse(req.params);
   const { taskId, commentId } = parsedParams;
 
-  // Check if taskId is valid
-  const task = await findTaskByIdAndWorkspaceId(taskId, user.activeWorkspace);
-
-  // Throw error 404 if not found
-  if (!task) {
-    throw ApiError.notFound('Task not found');
-  }
+  const task = await requireTask(taskId, user.activeWorkspace);
 
   // Check if commentId is valid
   const comment = await findCommentById(commentId);

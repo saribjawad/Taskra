@@ -1,13 +1,21 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { Team } from '../models/teams.model';
+import { DeletePublicAccessBlock$ } from '@aws-sdk/client-s3';
 
 export const createTeam = async (
-  workspaceId: string,
-  name: string,
-  identifier: string,
-  description?: string,
+  payload: {
+    workspaceId: string;
+    name: string;
+    identifier: string;
+    description?: string;
+  },
+  txClient?: PoolClient,
 ): Promise<Team> => {
-  const results = await dbPool.query(
+  const { identifier, name, workspaceId, description } = payload;
+
+  const db = txClient || dbPool;
+  const results = await db.query(
     `
       INSERT INTO teams (name, identifier, description, workspace_id)
       VALUES ($1, $2, $3, $4)

@@ -89,9 +89,10 @@ export const getProjectMembersWithUserDetail = async (
 };
 
 export const getProjectMembersByProjectId = async (
-  projectId: string,
+  payload: { projectId: string },
   txClient?: PoolClient,
 ): Promise<ProjectMember[]> => {
+  const { projectId } = payload;
   const db = txClient || dbPool;
   const results = await db.query(
     `

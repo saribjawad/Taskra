@@ -105,24 +105,12 @@ export const createTask = async (
 /**
  * Update task in database
  *
- * @param id - Task ID
- * @param data - Object containing fields to update
- * @param data.title - Task title
- * @param data.description - Task description
- * @param data.status - Task status
- * @param data.priority - Task priority
- * @param data.label - Task label
- * @param data.assignee - Task assignee
- * @param data.reporter - Task reporter
- * @param data.start_date - Task start date
- * @param data.due_date - Task due date
- * @param data.project_id - Project ID
- * @param data.project_milestone_id - Project milestone ID
+ * @param payload - Task ID and fields to update
  * @returns Count of updated rows
  */
 export const updateTask = async (
-  id: string,
-  data: {
+  payload: {
+    id: string;
     title?: string;
     description?: string;
     assignee?: string | null;
@@ -137,6 +125,7 @@ export const updateTask = async (
   },
   txClient?: PoolClient,
 ) => {
+  const { id, ...data } = payload;
   const keys = Object.keys(data);
   const values = Object.values(data);
   const db = txClient || dbPool;
@@ -158,15 +147,14 @@ export const updateTask = async (
 /**
  * Mark task as completed in database
  *
- * @param id - Task ID
- * @param completedDate - Date of task completed at
+ * @param payload - Task ID and completion date
  * @returns Count of updated row
  */
 export const markTaskAsComplete = async (
-  id: string,
-  completedDate: Date,
+  payload: { id: string; completedDate: Date },
   txClient?: PoolClient,
 ) => {
+  const { id, completedDate } = payload;
   const db = txClient || dbPool;
   const results = await db.query(
     `

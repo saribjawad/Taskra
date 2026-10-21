@@ -28,7 +28,8 @@ export const UpdateUser = async (req: Request, res: Response) => {
 
   const { username } = parsedBody;
 
-  const updatedRowCount = await updateUser(userId, {
+  const updatedRowCount = await updateUser({
+    id: userId,
     username,
   });
 

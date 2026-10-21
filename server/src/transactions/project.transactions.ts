@@ -132,7 +132,7 @@ export const updateProjectWorkflow = async (
 
   await executeTranscation(async (txClient) => {
     // Update the project
-    await updateProject(project.id, payload, txClient);
+    await updateProject({ id: project.id, ...payload }, txClient);
 
     // Create project activities
     const activityMap: Record<keyof typeof payload, ProjectActivityType> = {
@@ -202,9 +202,9 @@ export const updateProjectWorkflow = async (
       payload.status === 'completed' &&
       project.status !== payload.status
     ) {
-      const members = (await getProjectMembersByProjectId(project.id)).map(
-        (m) => m.user_id,
-      );
+      const members = (
+        await getProjectMembersByProjectId({ projectId: project.id }, txClient)
+      ).map((m) => m.user_id);
 
       const currentLeadId =
         (payload.lead_id as string | undefined) ?? project.lead_id;

@@ -182,7 +182,7 @@ interface UpdateTaskWorkflowInput {
     fullName: string;
   };
   task: Task;
-  payload: Parameters<typeof updateTask>[1];
+  payload: Omit<Parameters<typeof updateTask>[0], 'id'>;
   assigneeUser?: User;
   reporterUser?: User;
   files: Array<{
@@ -235,7 +235,7 @@ export const updateTaskWorkflow = async (data: UpdateTaskWorkflowInput) => {
 
     const result = await executeTranscation(async (txClient) => {
       const updatedRows = Object.keys(payload).length
-        ? await updateTask(task.id, payload, txClient)
+        ? await updateTask({ id: task.id, ...payload }, txClient)
         : 0;
 
       for (const [field, type] of Object.entries(activityMap)) {
@@ -336,7 +336,7 @@ export const updateTaskWorkflow = async (data: UpdateTaskWorkflowInput) => {
 
       // Remove the attachments from DB removed by user
       for (const attachment of removedAttachments) {
-        await deleteAttachmentById(attachment.id, txClient);
+        await deleteAttachmentById({ id: attachment.id }, txClient);
       }
 
       return updatedRows;
@@ -381,7 +381,7 @@ export const markTaskAsCompletedWorkflow = async (data: {
   const recipients = new Set([task.assignee, task.reporter]);
 
   return executeTranscation(async (txClient) => {
-    await markTaskAsComplete(task.id, completedDate, txClient);
+    await markTaskAsComplete({ id: task.id, completedDate }, txClient);
 
     await createTaskActivity(
       {
@@ -433,8 +433,8 @@ export const connectTaskToProjectWorkflow = async (data: {
 
   return executeTranscation(async (txClient) => {
     await updateTask(
-      task.id,
       {
+        id: task.id,
         project_id: projectId,
         project_milestone_id: milestoneId,
       },

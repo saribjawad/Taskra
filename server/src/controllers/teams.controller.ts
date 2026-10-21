@@ -33,19 +33,22 @@ export const CreateTeam = async (req: Request, res: Response) => {
     req.body,
   );
 
-  const createdTeam = await createTeam(
-    user.activeWorkspace,
+  const createdTeam = await createTeam({
+    workspaceId: user.activeWorkspace,
     name,
     identifier,
     description,
-  );
+  });
 
   if (!createdTeam) {
     throw ApiError.internal('Something went wrong while creating the team');
   }
 
   // Create team member
-  const createdTeamMember = await createTeamMember(user.id, createdTeam.id);
+  const createdTeamMember = await createTeamMember({
+    userId: user.id,
+    teamId: createdTeam.id,
+  });
 
   if (!createdTeamMember) {
     throw ApiError.internal(

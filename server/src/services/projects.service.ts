@@ -148,8 +148,8 @@ export const createProject = async (
 };
 
 export const updateProject = async (
-  id: string,
   payload: {
+    id: string;
     name?: string;
     short_summary?: string;
     description?: string;
@@ -161,8 +161,9 @@ export const updateProject = async (
   },
   txClient?: PoolClient,
 ) => {
-  const keys = Object.keys(payload);
-  const values = Object.values(payload);
+  const { id, ...data } = payload;
+  const keys = Object.keys(data);
+  const values = Object.values(data);
 
   const db = txClient || dbPool;
   const result = await db.query(

@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { User } from '../models/user.model';
 
@@ -105,17 +106,12 @@ const removeRefreshToken = async (email: string) => {
 /**
  * Update the user in database
  *
- * @param id - User ID
- * @param data - Object containing the fields to update
- * @param data.email - The user's email address (optional)
- * @param data.username - The user's unique username (optional)
- * @param data.is_verified - The user's verification status (optional)
- * @param data.hashed_password - The user's hash password (optional)
+ * @param payload - User ID and fields to update
  * @returns The updated row count
  */
 const updateUser = async (
-  id: string,
-  data: {
+  payload: {
+    id: string;
     email?: string;
     username?: string;
     full_name?: string;
@@ -123,11 +119,14 @@ const updateUser = async (
     hashed_password?: string;
     active_workspace?: string;
   },
+  txClient?: PoolClient,
 ) => {
+  const { id, ...data } = payload;
   const keys = Object.keys(data);
   const values = Object.values(data);
 
-  const result = await dbPool.query(
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     UPDATE users
     SET ${keys

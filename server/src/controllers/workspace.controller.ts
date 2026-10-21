@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { ApiResponse } from '../utils/ApiResponse';
 import {
   createWorkspace,
-  createWorkspaceMember,
   deleteWorkspace,
   deleteWorkspaceMember,
   getUserWorkspaces,
@@ -48,7 +47,6 @@ import {
 import { sendInviteToWorkspace } from '../lib/resend';
 import { env } from '../config/env';
 import { WorkspaceMemberRole } from '../models/workspace.model';
-import { createNotification } from '../services/notifications.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
 import {
   getCompletionTrend,
@@ -59,6 +57,11 @@ import {
 } from '../services/dashboard.service';
 import { createTeam } from '../services/teams.service';
 import { createTeamMember } from '../services/teamMembers.service';
+import {
+  acceptWorkspaceInviteFlow,
+  createWorkspaceWorkflow,
+  declineWorkspaceInviteFlow,
+} from '../transactions/workspace.transactions';
 
 export const GetUserWorkspaces = async (req: Request, res: Response) => {
   const userId = req.user.id;
@@ -84,7 +87,8 @@ export const SwitchWorkspace = async (req: Request, res: Response) => {
     throw new ApiError(403, 'You are not a member of this workspace');
   }
 
-  const updatedRowCount = await updateUser(user.id, {
+  const updatedRowCount = await updateUser({
+    id: user.id,
     active_workspace: workspaceId,
   });
 
@@ -124,72 +128,23 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
   const user = req.user;
   const { name } = CreateWorkspaceSchema.parse(req.body);
 
-  const createdWorkspace = await createWorkspace(name);
-
-  if (!createdWorkspace) {
-    throw ApiError.internal('Something went wrong while creating workspace');
-  }
-
-  // Update the user's active workspace
-  const updatedUser = await updateUser(user.id, {
-    active_workspace: createdWorkspace.id,
+  const { workspace, workspaceMember } = await createWorkspaceWorkflow({
+    user,
+    workspaceName: name,
   });
-
-  if (!updatedUser || updatedUser <= 0) {
-    throw ApiError.internal('Something went wrong while updating user.');
-  }
-
-  // Create the workspace member
-  const createdWorkspaceMember = await createWorkspaceMember(
-    user.id,
-    createdWorkspace.id,
-    'owner',
-  );
-
-  if (!createdWorkspaceMember) {
-    throw ApiError.internal(
-      'Something went wrong while creating workspace member',
-    );
-  }
-
-  // Create Team and Team member
-
-  // Capatilize first letter
-  const firstName = name.split(' ')[0];
-  const capitalFirstLetter = firstName[0].toUpperCase();
-  const teamName = capitalFirstLetter + firstName.slice(1);
-
-  // Team identifier
-  const identifier = teamName.slice(0, 3).toUpperCase();
-
-  const createdTeam = await createTeam(
-    createdWorkspace.id,
-    teamName,
-    identifier,
-  );
-
-  if (!createdTeam) {
-    throw ApiError.internal('Something went wrong while creating team');
-  }
-
-  const createdTeamMember = await createTeamMember(user.id, createdTeam.id);
-
-  if (!createdTeamMember) {
-    throw ApiError.internal('Something went wrong while creating team member');
-  }
 
   const accessToken = generateAccessToken(
     user.id,
     user.email,
-    createdWorkspace.id,
-    createdWorkspaceMember.role,
+    workspace.id,
+    workspaceMember.role,
     user.fullName,
   );
   const refreshToken = await generateRefreshToken(
     user.id,
     user.email,
-    createdWorkspace.id,
-    createdWorkspaceMember.role,
+    workspace.id,
+    workspaceMember.role,
     user.fullName,
   );
 
@@ -203,7 +158,7 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
 
   res.status(201).json(
     new ApiResponse(200, 'Workspace created', {
-      workspaceId: createdWorkspace.id,
+      workspaceId: workspace.id,
     }),
   );
 };
@@ -259,7 +214,8 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
 
   const newActiveWorkspaceId = userWorkspaces[0].id;
 
-  const updatedUser = await updateUser(user.id, {
+  const updatedUser = await updateUser({
+    id: user.id,
     active_workspace: newActiveWorkspaceId,
   });
 
@@ -489,7 +445,10 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 
   if (invitation.expires_at < new Date()) {
     // Update invitation status to 'expired'
-    await updateInvitationStatus(invitation.id, 'expired');
+    await updateInvitationStatus({
+      id: invitation.id,
+      status: 'expired',
+    });
     return res
       .status(200)
       .json(new ApiResponse(200, 'Invitation has been expired'));
@@ -501,38 +460,7 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     throw ApiError.notFound('Workspace not found');
   }
 
-  // Add user to workspace
-  const member = await createWorkspaceMember(
-    user.id,
-    invitation.workspace_id,
-    invitation.role,
-  );
-
-  if (!member) {
-    throw ApiError.internal(
-      'Something went wrong while creating the workspace member',
-    );
-  }
-
-  // Update the status to 'accepted'
-  const updatedRows = await updateInvitationStatus(invitation.id, 'accepted');
-
-  if (!updatedRows || updatedRows < 1) {
-    throw ApiError.internal(
-      'Something went wrong while updating the invitation status',
-    );
-  }
-
-  // Update the user's active workspace
-  const updatedUser = await updateUser(userId, {
-    active_workspace: member.workspace_id,
-  });
-
-  if (!updatedUser || updatedUser < 1) {
-    throw ApiError.internal(
-      "Something went wrong while updating user's active workspace",
-    );
-  }
+  const member = await acceptWorkspaceInviteFlow({ invitation, user });
 
   const accessToken = generateAccessToken(
     user.id,
@@ -557,25 +485,8 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
     path: '/api/v1/refresh-access-token',
   });
 
-  // Notify sender
+  // Send the real-time notification after the transaction commits.
   if (invitation.sent_by) {
-    const createdNotification = await createNotification({
-      userId: invitation.sent_by,
-
-      workspaceId: invitation.workspace_id,
-      type: 'invite:accepted',
-      message: `The invite you sent to ${user.email} has been accepted`,
-      metaData: {
-        actorId: user.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
-
     notifyMemberInWorkspace(invitation.sent_by, invitation.workspace_id, {
       type: 'invite:accepted',
       message: `The invite you sent to ${user.email} has been accepted`,
@@ -612,39 +523,22 @@ export const DeclineWorkspaceInvite = async (req: Request, res: Response) => {
 
   if (invitation.expires_at < new Date()) {
     // Update invitation status to 'expired'
-    await updateInvitationStatus(invitation.id, 'expired');
+    await updateInvitationStatus({
+      id: invitation.id,
+      status: 'expired',
+    });
     return res
       .status(200)
       .json(new ApiResponse(200, 'Invitation has been expired'));
   }
 
-  // Update the status to 'declined'
-  const updatedRows = await updateInvitationStatus(invitation.id, 'declined');
-
-  if (!updatedRows || updatedRows < 1) {
-    throw ApiError.internal(
-      'Something went wrong while updating the invitation status',
-    );
-  }
+  await declineWorkspaceInviteFlow({
+    invitation,
+    user,
+  });
 
   // Notify sender
   if (invitation.sent_by) {
-    const createdNotification = await createNotification({
-      userId: invitation.sent_by,
-      workspaceId: invitation.workspace_id,
-      type: 'invite:declined',
-      message: `The invite you sent to ${user.email} has been declined`,
-      metaData: {
-        actorId: user.id,
-      },
-    });
-
-    if (!createdNotification) {
-      throw ApiError.internal(
-        'Something went wrong while creating notification',
-      );
-    }
-
     notifyMemberInWorkspace(invitation.sent_by, invitation.workspace_id, {
       type: 'invite:declined',
       message: `The invite you sent to ${user.email} has been declined`,
@@ -685,7 +579,10 @@ export const RevokeWorkspaceInvite = async (req: Request, res: Response) => {
   }
 
   // Update the status to 'revoked'
-  const updatedRows = await updateInvitationStatus(invitation.id, 'revoked');
+  const updatedRows = await updateInvitationStatus({
+    id: invitation.id,
+    status: 'revoked',
+  });
 
   if (!updatedRows || updatedRows < 1) {
     throw ApiError.internal(
@@ -890,7 +787,10 @@ export const VerifyWorkspaceInvitation = async (
   if (invitation.expires_at < new Date()) {
     // update the status of invitation to 'expired'
     if (invitation.status !== 'expired') {
-      await updateInvitationStatus(invitation.id, 'expired');
+      await updateInvitationStatus({
+        id: invitation.id,
+        status: 'expired',
+      });
     }
 
     throw ApiError.forbidden('Invitation has been expired');

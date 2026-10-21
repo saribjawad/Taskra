@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { Invitation, InvitationStatus } from '../models/invitation.model';
 import { WorkspaceMemberRole } from '../models/workspace.model';
@@ -100,10 +101,16 @@ export async function renewInvitation(
 }
 
 export async function updateInvitationStatus(
-  id: string,
-  status: InvitationStatus,
+  payload: {
+    id: string;
+    status: InvitationStatus;
+  },
+  txClient?: PoolClient,
 ) {
-  const result = await dbPool.query(
+  const { id, status } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `UPDATE invitations
     SET status = $2
     WHERE id = $1`,

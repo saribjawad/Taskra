@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import {
   Workspace,
@@ -15,7 +16,7 @@ import { WorkspaceMember } from '../models/workspace.model';
 const getWorkspaceById = async (workspaceId: string): Promise<Workspace> => {
   const result = await dbPool.query(
     `
-    SELECT * FROM workspace 
+    SELECT * FROM workspace
     WHERE id = $1
     `,
     [workspaceId],
@@ -104,8 +105,14 @@ const getWorkspaceMember = async (
  * @param name - Workspace name
  * @returns the workspace created
  */
-const createWorkspace = async (name: string): Promise<Workspace> => {
-  const result = await dbPool.query(
+const createWorkspace = async (
+  payload: { name: string },
+  txClient?: PoolClient,
+): Promise<Workspace> => {
+  const { name } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     INSERT INTO workspace (name)
     VALUES ($1)
@@ -143,11 +150,17 @@ const deleteWorkspace = async (workspaceId: string) => {
  * @returns the workspace member created
  */
 const createWorkspaceMember = async (
-  userId: string,
-  workspaceId: string,
-  role: WorkspaceMemberRole,
+  payload: {
+    userId: string;
+    workspaceId: string;
+    role: WorkspaceMemberRole;
+  },
+  txClient?: PoolClient,
 ): Promise<WorkspaceMember> => {
-  const result = await dbPool.query(
+  const { role, userId, workspaceId } = payload;
+
+  const db = txClient || dbPool;
+  const result = await db.query(
     `
     INSERT INTO workspace_members (user_id, workspace_id, role)
     VALUES ($1, $2, $3)

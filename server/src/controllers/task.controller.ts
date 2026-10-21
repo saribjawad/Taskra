@@ -26,7 +26,6 @@ import { getTaskActivitiesByTaskId } from '../services/taskActivity.service';
 import { TaskActivityType } from '../models/taskActivity.model';
 import { notifyMemberInWorkspace } from '../websockets/init';
 import { getWorkspaceMember } from '../services/workspace.service';
-import { createNotification } from '../services/notifications.service';
 import { isObjectEmpty } from '../utils/isObjectEmpty';
 import { getProjectByIdAndWorkspaceId } from '../services/projects.service';
 import { getProjectMilestonesWithIdAndProjectId } from '../services/projectMilestones.service';
