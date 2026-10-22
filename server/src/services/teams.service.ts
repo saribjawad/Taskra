@@ -41,6 +41,23 @@ export const getTeamsByWorkspaceId = async (
   return results.rows;
 };
 
+export const getTeamsByWorkspaceIdAndMemberId = async (
+  workspaceId: string,
+  userId: string,
+): Promise<Team[]> => {
+  const results = await dbPool.query(
+    `
+      SELECT teams.* FROM teams
+      JOIN team_members ON team_members.team_id = teams.id
+      WHERE teams.workspace_id = $1 AND team_members.user_id = $2
+      ORDER BY teams.created_at ASC, teams.id ASC
+    `,
+    [workspaceId, userId],
+  );
+
+  return results.rows;
+};
+
 export const getTeamByIdAndWorkspaceId = async (
   teamId: string,
   workspaceId: string,

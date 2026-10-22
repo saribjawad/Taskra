@@ -308,6 +308,21 @@ export const RemoveMemberFromWorkspace = async (
     );
   }
 
+  const userWorkspaces = await getUserWorkspaces(user.id);
+
+  const newActiveWorkspaceId = userWorkspaces[0]?.id;
+
+  const updatedUser = await updateUser({
+    id: user.id,
+    active_workspace: newActiveWorkspaceId ?? null,
+  });
+
+  if (!updatedUser) {
+    throw ApiError.internal(
+      'Something went wrong while updating user active workspace',
+    );
+  }
+
   res.status(200).json(new ApiResponse(200, 'Workspace member deleted'));
 };
 
@@ -723,7 +738,10 @@ export const GetWorkspaceDashboard = async (req: Request, res: Response) => {
   const membership = await getWorkspaceMember(userId, workspaceId);
 
   if (!membership) {
-    throw ApiError.forbidden('You are not a member of this workspace');
+    throw ApiError.forbidden(
+      'You have been removed from this workspace. Please contact the workspace owner if you think this is a mistake.',
+      'WORKSPACE_ACCESS_REMOVED',
+    );
   }
 
   const [

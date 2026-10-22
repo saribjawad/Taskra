@@ -47,6 +47,7 @@ import {
   updateProjectWorkflow,
 } from '../transactions/project.transactions';
 import { getTeamByIdAndWorkspaceId } from '../services/teams.service';
+import { requireTeamWriteAccess } from '../utils/requireTeamWriteAccess';
 
 // ==================================================================================
 // Helpers
@@ -108,6 +109,7 @@ export const CreateProject = async (req: Request, res: Response) => {
   if (!team) {
     throw ApiError.notFound('Team not found');
   }
+  await requireTeamWriteAccess(user.id, user.role, team.id);
 
   let leadUser;
   if (parsedBody.leadId) {
@@ -162,7 +164,12 @@ export const CreateProject = async (req: Request, res: Response) => {
     }
   }
 
-  res.status(201).json(new ApiResponse(201, 'Project created', project));
+  res.status(201).json(
+    new ApiResponse(201, 'Project created', {
+      ...project,
+      team: { id: team.id, name: team.name },
+    }),
+  );
 };
 
 export const UpdateProject = async (req: Request, res: Response) => {
@@ -390,6 +397,7 @@ export const GetProjectTasks = async (req: Request, res: Response) => {
     status: n.status,
     priority: n.priority,
     label: n.label,
+    team: n.team,
     workspaceId: n.workspace_id,
     projectId: n.project_id,
     milestoneId: n.project_milestone_id,

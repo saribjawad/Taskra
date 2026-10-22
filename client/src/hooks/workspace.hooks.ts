@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import type { AxiosError } from 'axios'
 import { toast } from 'sonner'
+import { resetWorkspaceRemovalRedirect } from '#/lib/api'
 
 export const useGetUserWorkspace = () => {
   return useQuery({
@@ -99,6 +100,7 @@ export const useSwitchWorkspace = () => {
   return useMutation({
     mutationFn: (workspaceId: string) => switchWorkspace(workspaceId),
     onSuccess: async (data) => {
+      resetWorkspaceRemovalRedirect()
       query.setQueryData(['me'], await getMe())
       // Mark caches stale without fetching the old page with the new session.
       await query.invalidateQueries({ refetchType: 'none' })
@@ -124,6 +126,7 @@ export const useCreateWorkspace = () => {
       console.error('error inside the on error', serverErrorMessage)
     },
     onSuccess: async (data) => {
+      resetWorkspaceRemovalRedirect()
       query.setQueryData(['me'], await getMe())
 
       navigate({

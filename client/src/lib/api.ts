@@ -1,8 +1,9 @@
 import { queryClient, router } from '#/main'
-import axios, {
-  type AxiosError,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
+import axios from 'axios'
+import type {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
 } from 'axios'
 
 export const api = axios.create({
@@ -25,6 +26,12 @@ type RetriableRequestConfig = InternalAxiosRequestConfig & {
 }
 
 let isRefreshing = false
+let isRedirectingAfterWorkspaceRemoval = false
+
+export const resetWorkspaceRemovalRedirect = () => {
+  isRedirectingAfterWorkspaceRemoval = false
+}
+
 let reqQueue: {
   resolve: (value: AxiosResponse | PromiseLike<AxiosResponse>) => void
   reject: (reason?: unknown) => void
@@ -49,6 +56,22 @@ api.interceptors.response.use(
   (response) => response,
   async function (error: AxiosError) {
     const originalRequest = error.config as RetriableRequestConfig | undefined
+
+    const isRemovedFromWorkspace = error.response?.status === 403
+
+    if (isRemovedFromWorkspace && !isRedirectingAfterWorkspaceRemoval) {
+      isRedirectingAfterWorkspaceRemoval = true
+      await queryClient.cancelQueries()
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== 'me',
+      })
+
+      if (window.location.pathname !== '/workspace-removed') {
+        await router.navigate({ to: '/workspace-removed', replace: true })
+      }
+
+      return Promise.reject(error)
+    }
 
     if (
       error.response?.status === 401 &&

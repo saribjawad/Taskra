@@ -17,6 +17,7 @@ export interface Project {
   lead_id: string | null
   workspace_id: string
   team_id: string
+  team: { id: string; name: string }
   start_date: string | null
   target_date: string | null
   created_at: string
@@ -48,6 +49,7 @@ export interface ProjectTask {
   workspaceId: string
   projectId: string | null
   milestoneId: string | null
+  team: { id: string; name: string }
   createdAt: string
   updatedAt: string
 }

@@ -62,6 +62,7 @@ export function ErrorHandlerMiddleware(
       statusCode: err.statusCode,
       success: false,
       message: err.message,
+      ...(err.code ? { code: err.code } : {}),
       errors: err.errors ?? [],
     });
   }

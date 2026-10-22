@@ -29,6 +29,10 @@ export type Task = {
   completed_date: Date | null;
   workspace_id: string;
   team_id: string;
+  team?: {
+    id: string;
+    name: string;
+  };
   project_id: string | null;
   project_milestone_id: string | null;
   updated_at: Date;

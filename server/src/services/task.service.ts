@@ -202,13 +202,15 @@ export const getTasks = async (
     case 'all':
       result = await dbPool.query(
         `
-      SELECT * FROM tasks
+      SELECT tasks.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+      FROM tasks
+      JOIN teams ON teams.id = tasks.team_id
       WHERE ($3::text IS NULL OR status = $3)
       AND ($4::text IS NULL OR label = $4)
       AND ($5::text IS NULL OR priority = $5)
       AND ($6::text IS NULL OR title ILIKE $6)
-      AND ($7::uuid IS NULL OR workspace_id = $7)
-      ORDER BY created_at DESC
+      AND ($7::uuid IS NULL OR tasks.workspace_id = $7)
+      ORDER BY tasks.created_at DESC, tasks.id DESC
       LIMIT $1
       OFFSET $2
     `,
@@ -220,14 +222,16 @@ export const getTasks = async (
     case 'created':
       result = await dbPool.query(
         `
-      SELECT * FROM tasks
+      SELECT tasks.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+      FROM tasks
+      JOIN teams ON teams.id = tasks.team_id
       WHERE ($3::text IS NULL OR status = $3)
       AND ($4::text IS NULL OR label = $4)
       AND ($5::text IS NULL OR priority = $5)
       AND ($6::text IS NULL OR title ILIKE $6)
-      AND ($7::uuid IS NULL OR workspace_id = $7)
+      AND ($7::uuid IS NULL OR tasks.workspace_id = $7)
       AND ($8::uuid IS NULL OR creator = $8)
-      ORDER BY created_at DESC
+      ORDER BY tasks.created_at DESC, tasks.id DESC
       LIMIT $1
       OFFSET $2
     `,
@@ -239,14 +243,16 @@ export const getTasks = async (
     case 'assigned':
       result = await dbPool.query(
         `
-      SELECT * FROM tasks
+      SELECT tasks.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+      FROM tasks
+      JOIN teams ON teams.id = tasks.team_id
       WHERE ($3::text IS NULL OR status = $3)
       AND ($4::text IS NULL OR label = $4)
       AND ($5::text IS NULL OR priority = $5)
       AND ($6::text IS NULL OR title ILIKE $6)
-      AND ($7::uuid IS NULL OR workspace_id = $7)
+      AND ($7::uuid IS NULL OR tasks.workspace_id = $7)
       AND ($8::uuid IS NULL OR assignee = $8)
-      ORDER BY created_at DESC
+      ORDER BY tasks.created_at DESC, tasks.id DESC
       LIMIT $1
       OFFSET $2
     `,
@@ -268,13 +274,15 @@ export const getTasksByTeamId = async (
 ) => {
   const result = await dbPool.query(
     `
-    SELECT * FROM tasks
+    SELECT tasks.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+    FROM tasks
+    JOIN teams ON teams.id = tasks.team_id
     WHERE team_id = $1
       AND ($4::text IS NULL OR status = $4)
       AND ($5::text IS NULL OR label = $5)
       AND ($6::text IS NULL OR priority = $6)
       AND ($7::text IS NULL OR title ILIKE $7)
-    ORDER BY created_at DESC, id DESC
+    ORDER BY tasks.created_at DESC, tasks.id DESC
     LIMIT $2 OFFSET $3
     `,
     [
@@ -326,18 +334,20 @@ export const getTasksByProjectId = async (
 ): Promise<(Task & { cursor_time: string })[]> => {
   const result = await dbPool.query(
     `
-    SELECT tasks.*, tasks.created_at::text AS cursor_time
+    SELECT tasks.*, json_build_object('id', teams.id, 'name', teams.name) AS team,
+      tasks.created_at::text AS cursor_time
     FROM tasks
-    WHERE project_id = $1
+    JOIN teams ON teams.id = tasks.team_id
+    WHERE tasks.project_id = $1
     AND ($2::uuid IS NULL OR project_milestone_id = $2)
     AND ($3::text IS NULL OR status::text = $3)
     AND ($4::text IS NULL OR priority::text = $4)
     AND ($5::text IS NULL OR label::text = $5)
     AND (
         $6::timestamptz IS NULL
-        OR (created_at, id) < ($6::timestamptz, $7::uuid)
+        OR (tasks.created_at, tasks.id) < ($6::timestamptz, $7::uuid)
       )
-    ORDER BY created_at DESC, id DESC
+    ORDER BY tasks.created_at DESC, tasks.id DESC
     LIMIT $8
     `,
     [

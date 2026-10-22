@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
+import type { ReactNode } from 'react'
 import type { Matcher } from 'react-day-picker'
 import ProjectMemberPicker from './ProjectMemberPicker'
 import ProjectLeadPicker from './ProjectLeadPicker'
@@ -24,6 +25,7 @@ import {
 } from '#/components/ui/popover'
 import { useUpdateProject } from '#/hooks/project.hooks'
 import { formatProjectDate, projectStatuses } from './project-presentation'
+import { TeamOverviewLink } from '#/components/teams/TeamOverviewLink'
 
 const priorityIcons = {
   low: SignalLow,
@@ -76,6 +78,12 @@ export default function ProjectProperties({
         Properties
       </h2>
       <dl className="text-xs leading-5">
+        <Property label="Team">
+          <TeamOverviewLink
+            team={project.team}
+            workspaceId={project.workspace_id}
+          />
+        </Property>
         {/* Project status and priority */}
         <Property label="Status">
           <PropertyPicker

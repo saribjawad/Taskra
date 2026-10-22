@@ -37,6 +37,7 @@ export const getProjectWithLeadDetails = async (
           p.status,
           p.workspace_id,
           p.team_id,
+          json_build_object('id', t.id, 'name', t.name) AS team,
           p.start_date,
           p.target_date,
           p.updated_at,
@@ -45,6 +46,7 @@ export const getProjectWithLeadDetails = async (
       FROM
           projects AS p
           LEFT JOIN users AS u ON p.lead_id = u.id
+          JOIN teams AS t ON p.team_id = t.id
       WHERE
           p.id = $1
           AND p.workspace_id = $2;
@@ -103,9 +105,11 @@ export const getProjectsByWorkspaceId = async (
 ): Promise<Project[]> => {
   const result = await dbPool.query(
     `
-    SELECT * FROM projects
-    WHERE workspace_id = $1
-    ORDER BY created_at DESC
+    SELECT projects.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+    FROM projects
+    JOIN teams ON teams.id = projects.team_id
+    WHERE projects.workspace_id = $1
+    ORDER BY projects.created_at DESC, projects.id DESC
     LIMIT $2
     OFFSET $3
     `,
@@ -122,9 +126,11 @@ export const getProjectsByTeamId = async (
 ): Promise<Project[]> => {
   const result = await dbPool.query(
     `
-    SELECT * FROM projects
-    WHERE team_id = $1
-    ORDER BY created_at DESC, id DESC
+    SELECT projects.*, json_build_object('id', teams.id, 'name', teams.name) AS team
+    FROM projects
+    JOIN teams ON teams.id = projects.team_id
+    WHERE projects.team_id = $1
+    ORDER BY projects.created_at DESC, projects.id DESC
     LIMIT $2 OFFSET $3
     `,
     [teamId, limit, offset],

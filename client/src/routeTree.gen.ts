@@ -18,6 +18,7 @@ import { Route as PublicSignInRouteImport } from './routes/_public/sign-in'
 import { Route as PublicResetPasswordRouteImport } from './routes/_public/reset-password'
 import { Route as PublicInviteRouteImport } from './routes/_public/invite'
 import { Route as PublicForgotPasswordRouteImport } from './routes/_public/forgot-password'
+import { Route as AuthenticatedWorkspaceRemovedRouteImport } from './routes/_authenticated/workspace-removed'
 import { Route as AuthenticatedCreateWorkspaceRouteImport } from './routes/_authenticated/create-workspace'
 import { Route as AuthenticatedWorkspaceIdRouteRouteImport } from './routes/_authenticated/$workspaceId/route'
 import { Route as AuthenticatedWorkspaceIdIndexRouteImport } from './routes/_authenticated/$workspaceId/index'
@@ -83,6 +84,12 @@ const PublicForgotPasswordRoute = PublicForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => PublicRoute,
 } as any)
+const AuthenticatedWorkspaceRemovedRoute =
+  AuthenticatedWorkspaceRemovedRouteImport.update({
+    id: '/workspace-removed',
+    path: '/workspace-removed',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCreateWorkspaceRoute =
   AuthenticatedCreateWorkspaceRouteImport.update({
     id: '/create-workspace',
@@ -213,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/workspace-removed': typeof AuthenticatedWorkspaceRemovedRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/invite': typeof PublicInviteRoute
   '/reset-password': typeof PublicResetPasswordRoute
@@ -241,6 +249,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/workspace-removed': typeof AuthenticatedWorkspaceRemovedRoute
   '/forgot-password': typeof PublicForgotPasswordRoute
   '/invite': typeof PublicInviteRoute
   '/reset-password': typeof PublicResetPasswordRoute
@@ -269,6 +278,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/_authenticated/$workspaceId': typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   '/_authenticated/create-workspace': typeof AuthenticatedCreateWorkspaceRoute
+  '/_authenticated/workspace-removed': typeof AuthenticatedWorkspaceRemovedRoute
   '/_public/forgot-password': typeof PublicForgotPasswordRoute
   '/_public/invite': typeof PublicInviteRoute
   '/_public/reset-password': typeof PublicResetPasswordRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$workspaceId'
     | '/create-workspace'
+    | '/workspace-removed'
     | '/forgot-password'
     | '/invite'
     | '/reset-password'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/create-workspace'
+    | '/workspace-removed'
     | '/forgot-password'
     | '/invite'
     | '/reset-password'
@@ -357,6 +369,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/_authenticated/$workspaceId'
     | '/_authenticated/create-workspace'
+    | '/_authenticated/workspace-removed'
     | '/_public/forgot-password'
     | '/_public/invite'
     | '/_public/reset-password'
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/forgot-password'
       preLoaderRoute: typeof PublicForgotPasswordRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_authenticated/workspace-removed': {
+      id: '/_authenticated/workspace-removed'
+      path: '/workspace-removed'
+      fullPath: '/workspace-removed'
+      preLoaderRoute: typeof AuthenticatedWorkspaceRemovedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/create-workspace': {
       id: '/_authenticated/create-workspace'
@@ -724,6 +744,7 @@ const AuthenticatedWorkspaceIdRouteRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedWorkspaceIdRouteRoute: typeof AuthenticatedWorkspaceIdRouteRouteWithChildren
   AuthenticatedCreateWorkspaceRoute: typeof AuthenticatedCreateWorkspaceRoute
+  AuthenticatedWorkspaceRemovedRoute: typeof AuthenticatedWorkspaceRemovedRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
@@ -731,6 +752,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedWorkspaceIdRouteRoute:
     AuthenticatedWorkspaceIdRouteRouteWithChildren,
   AuthenticatedCreateWorkspaceRoute: AuthenticatedCreateWorkspaceRoute,
+  AuthenticatedWorkspaceRemovedRoute: AuthenticatedWorkspaceRemovedRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

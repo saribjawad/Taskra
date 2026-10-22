@@ -37,6 +37,7 @@ import {
 } from '../transactions/tasks.transactions';
 import logger from '../utils/logger';
 import { getTeamByIdAndWorkspaceId } from '../services/teams.service';
+import { requireTeamWriteAccess } from '../utils/requireTeamWriteAccess';
 
 // ==================================================================================
 // Helpers
@@ -83,6 +84,7 @@ export const CreateTask = async (req: Request, res: Response) => {
   if (!team) {
     throw ApiError.notFound('Team not found');
   }
+  await requireTeamWriteAccess(user.id, user.role, team.id);
 
   let assigneeMember;
   let reporterMember;
@@ -159,7 +161,12 @@ export const CreateTask = async (req: Request, res: Response) => {
     }
   }
 
-  res.status(201).json(new ApiResponse(201, 'Task created', task));
+  res.status(201).json(
+    new ApiResponse(201, 'Task created', {
+      ...task,
+      team: { id: team.id, name: team.name },
+    }),
+  );
 };
 
 export const UpdateTask = async (req: Request, res: Response) => {
@@ -372,6 +379,7 @@ export const GetTask = async (req: Request, res: Response) => {
   const { taskId } = parsedParam;
 
   const task = await requireTask(taskId, workspaceId);
+  const team = await getTeamByIdAndWorkspaceId(task.team_id, workspaceId);
 
   // Get assignee & reporter details
   const assignee = await findUserById(task.assignee);
@@ -383,6 +391,7 @@ export const GetTask = async (req: Request, res: Response) => {
   return res.status(200).json(
     new ApiResponse(200, 'success', {
       ...task,
+      team: { id: team.id, name: team.name },
       attachments: attachments,
       // In case of no assignee
       ...(assignee
@@ -414,10 +423,15 @@ export const GetTask = async (req: Request, res: Response) => {
 export const GetTaskTeamProject = async (req: Request, res: Response) => {
   const { taskId } = TaskParamsSchema.parse(req.params);
   const task = await requireTask(taskId, req.user.activeWorkspace);
+  const team = await getTeamByIdAndWorkspaceId(
+    task.team_id,
+    req.user.activeWorkspace,
+  );
 
   res.status(200).json(
     new ApiResponse(200, 'Task team and project fetched', {
       teamId: task.team_id,
+      team: { id: team.id, name: team.name },
       projectId: task.project_id,
     }),
   );

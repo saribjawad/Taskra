@@ -11,6 +11,10 @@ export type ProjectWithLead = Omit<Project, 'lead_id'> & {
     username: string;
     email: string;
   } | null;
+  team: {
+    id: string;
+    name: string;
+  };
 };
 
 export interface Project {

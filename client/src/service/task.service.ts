@@ -66,6 +66,7 @@ type Attachments = {
 export interface GetTaskResponse {
   id: string
   team_id: string
+  team: { id: string; name: string }
   project_id: string | null
   project_milestone_id: string | null
   title: string

@@ -23,6 +23,7 @@ import {
   getTeamDocumentCount,
   getTeamLinkCount,
   getTeamsCountByWorkspaceId,
+  getTeamsByWorkspaceIdAndMemberId,
   getTeamsByWorkspaceId,
 } from '../services/teams.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
@@ -192,7 +193,13 @@ export const DeleteTeam = async (req: Request, res: Response) => {
 
 export const GetWorkspaceTeams = async (req: Request, res: Response) => {
   const user = req.user;
-  const teams = await getTeamsByWorkspaceId(user.activeWorkspace);
+  const teams =
+    user.role === 'owner' || user.role === 'admin'
+      ? await getTeamsByWorkspaceId(user.activeWorkspace)
+      : await getTeamsByWorkspaceIdAndMemberId(
+          user.activeWorkspace,
+          user.id,
+        );
 
   const formatedTeams = teams?.map((t) => ({
     id: t.id,
