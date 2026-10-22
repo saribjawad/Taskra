@@ -34,6 +34,7 @@ interface CreateProjectWorkflowInput {
     priority: ProjectPriorityType;
     status: ProjectStatusType;
     workspace_id: string;
+    team_id: string;
     description?: string;
     lead_id?: string;
     short_summary?: string;

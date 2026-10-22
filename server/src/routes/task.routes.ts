@@ -4,6 +4,7 @@ import {
   CreateTask,
   DeleteTask,
   GetTask,
+  GetTaskTeamProject,
   GetTaskActivity,
   GetTasks,
   MarkTaskAsCompleted,
@@ -81,6 +82,12 @@ taskRouter
   .get(
     RequiredRoles(['owner', 'admin', 'member', 'viewer']),
     asyncHandler(GetTaskActivity),
+  );
+taskRouter
+  .route('/:taskId/team-project')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetTaskTeamProject),
   );
 taskRouter
   .route('/:taskId/completed')

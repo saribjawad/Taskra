@@ -22,6 +22,7 @@ export interface Project {
   status: ProjectStatusType;
   lead_id: string | null;
   workspace_id: string;
+  team_id: string;
   start_date: Date | null;
   target_date: Date | null;
   updated_at: Date;

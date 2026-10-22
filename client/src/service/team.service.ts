@@ -1,5 +1,7 @@
 import { api } from '#/lib/api'
 import type { Team, TeamDocument, TeamLink, TeamMember } from '#/type/team'
+import type { GetTasksResponse, GetTasksParams } from '#/service/task.service'
+import type { GetProjectsResponse } from '#/service/project.service'
 
 export async function getTeams(): Promise<Team[]> {
   const response = await api.get('/teams')
@@ -62,4 +64,23 @@ export async function addTeamMembers(teamId: string, memberIds: string[]) {
 
 export async function removeTeamMember(teamId: string, memberId: string) {
   await api.delete(`/teams/${teamId}/member/${memberId}`)
+}
+
+export async function getTeamTasks(
+  teamId: string,
+  params: Omit<GetTasksParams, 'filter'>,
+): Promise<GetTasksResponse> {
+  const response = await api.get(`/teams/${teamId}/tasks`, { params })
+  return response.data.data
+}
+
+export async function getTeamProjects(
+  teamId: string,
+  page: number,
+  limit: number,
+): Promise<GetProjectsResponse> {
+  const response = await api.get(`/teams/${teamId}/projects`, {
+    params: { page, limit },
+  })
+  return response.data.data
 }

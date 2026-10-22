@@ -7,6 +7,8 @@ import {
   CreateTeam,
   DeleteTeam,
   GetTeamMembers,
+  GetTeamProjects,
+  GetTeamTasks,
   GetWorkspaceTeams,
   RemoveTeamMember,
 } from '../controllers/teams.controller';
@@ -32,6 +34,8 @@ teamRouter
   .post(asyncHandler(CreateTeam))
   .get(asyncHandler(GetWorkspaceTeams));
 teamRouter.route('/:teamId').delete(asyncHandler(DeleteTeam));
+teamRouter.route('/:teamId/tasks').get(asyncHandler(GetTeamTasks));
+teamRouter.route('/:teamId/projects').get(asyncHandler(GetTeamProjects));
 
 teamRouter
   .route('/:teamId/member')

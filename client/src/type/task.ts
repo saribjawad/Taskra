@@ -27,6 +27,7 @@ export interface Task {
   due_date: Date | null
   completed_date: Date | null
   workspace_id: string
+  team_id: string
   updated_at: Date
   created_at: Date
 }

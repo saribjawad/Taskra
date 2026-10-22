@@ -1,14 +1,11 @@
-import {
-  useState,
-  type Dispatch,
-  type ReactElement,
-  type SetStateAction,
-} from 'react'
+import { useEffect, useState } from 'react'
+import type { Dispatch, ReactElement, SetStateAction } from 'react'
+import { useParams } from '@tanstack/react-router'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import z from 'zod'
 import { isAxiosError } from 'axios'
-import { Maximize2, Minimize2, X } from 'lucide-react'
+import { ChevronRight, Maximize2, Minimize2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -42,6 +39,8 @@ import { PRIORITY_ITEMS } from '#/constants'
 import { useCreateProject } from '#/hooks/project.hooks'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { useAuth } from '#/context/auth/auth-hook'
+import { useGetTeams } from '#/hooks/team.hooks'
+import { TeamPicker } from '#/components/teams/TeamPicker'
 
 const statusItems = [
   { value: 'backlog', label: 'Backlog' },
@@ -52,6 +51,7 @@ const statusItems = [
 ]
 
 const schema = z.object({
+  teamId: z.uuid('Choose a team'),
   name: z
     .string()
     .trim()
@@ -88,7 +88,16 @@ export default function CreateProjectDialog({
   trigger: ReactElement
 }) {
   const [expanded, setExpanded] = useState(false)
+  const routeParams = useParams({ strict: false }) as {
+    teamId?: string
+  }
   const { user } = useAuth()
+  const {
+    data: teams = [],
+    isPending: isTeamsPending,
+    isError: isTeamsError,
+    refetch: refetchTeams,
+  } = useGetTeams(workspaceId)
   const {
     data: members,
     isPending: loadingMembers,
@@ -101,11 +110,14 @@ export default function CreateProjectDialog({
     control,
     handleSubmit,
     reset,
+    getValues,
+    setValue,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
+      teamId: '',
       name: '',
       shortSummary: '',
       description: '',
@@ -114,6 +126,17 @@ export default function CreateProjectDialog({
       leadId: undefined,
     },
   })
+
+  useEffect(() => {
+    if (!isDialogOpen || !teams.length) return
+    const currentTeamId = getValues('teamId')
+    if (teams.some((team) => team.id === currentTeamId)) return
+
+    const preferredTeam = teams.find((team) => team.id === routeParams.teamId)
+    setValue('teamId', preferredTeam?.id ?? teams[0].id, {
+      shouldValidate: true,
+    })
+  }, [getValues, isDialogOpen, routeParams.teamId, setValue, teams])
   const busy = isPending || isSubmitting
   const wrongWorkspace = user?.activeWorkspace !== workspaceId
 
@@ -161,7 +184,22 @@ export default function CreateProjectDialog({
       >
         <DialogHeader>
           <div className="flex w-full items-center justify-between">
-            <DialogTitle>New project</DialogTitle>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Controller
+                name="teamId"
+                control={control}
+                render={({ field }) => (
+                  <TeamPicker
+                    teams={teams}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={busy || isTeamsPending || isTeamsError}
+                  />
+                )}
+              />
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+              <DialogTitle>New project</DialogTitle>
+            </div>
             <div className="flex items-center">
               <Button
                 disabled={busy}
@@ -191,6 +229,24 @@ export default function CreateProjectDialog({
           onSubmit={handleSubmit(submit)}
           className="flex flex-1 min-h-0 flex-col"
         >
+          {isTeamsError && (
+            <div role="alert" className="text-sm text-destructive">
+              Unable to load teams.{' '}
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => void refetchTeams()}
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+          {!isTeamsPending && !isTeamsError && !teams.length && (
+            <p className="text-sm text-muted-foreground">
+              Create a team before adding a project.
+            </p>
+          )}
           <FieldGroup className="overflow-y-auto">
             {/* Name and summary */}
             {(['name', 'shortSummary'] as const).map((name) => (
@@ -402,6 +458,9 @@ export default function CreateProjectDialog({
               type="submit"
               disabled={
                 busy ||
+                isTeamsPending ||
+                isTeamsError ||
+                !teams.length ||
                 wrongWorkspace ||
                 loadingMembers ||
                 membersError ||

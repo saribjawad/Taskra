@@ -1,4 +1,6 @@
 import z from 'zod';
+import { Priority } from './common.schema';
+import { TaskLabel, TaskStatus } from './task.schema';
 
 export const CreateTeamBodySchema = z.object({
   name: z
@@ -23,4 +25,18 @@ export const TeamMemberParamsSchema = TeamIdParamsSchema.extend({
 
 export const CreateTeamMemberBodySchema = z.object({
   memberIds: z.array(z.uuid('Invalid member UUID')).min(1),
+});
+
+export const GetTeamTasksQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: TaskStatus.optional(),
+  priority: Priority.optional(),
+  label: TaskLabel.optional(),
+  search: z.string().trim().optional(),
+});
+
+export const GetTeamProjectsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(50),
 });

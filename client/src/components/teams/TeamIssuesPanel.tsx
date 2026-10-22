@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '#/components/ui/select'
 import { Skeleton } from '#/components/ui/skeleton'
-import { getTasks } from '#/service/task.service'
+import { getTeamTasks } from '#/service/team.service'
 import type { TaskLabelType, TaskPriorityType, TaskStatusType } from '#/type'
 import type { Team } from '#/type/team'
 
@@ -32,7 +32,6 @@ export function TeamIssuesPanel({
   const [label, setLabel] = useState<TaskLabelType | undefined>()
   const search = useDeferredValue(searchText.trim())
   const sentinelRef = useRef<HTMLDivElement>(null)
-  // Use the workspace tasks endpoint until a team-specific tasks API exists.
   const {
     data,
     isPending,
@@ -43,7 +42,7 @@ export function TeamIssuesPanel({
     refetch,
   } = useInfiniteQuery({
     queryKey: [
-      'team-issues',
+      'team-tasks',
       workspaceId,
       team.id,
       search,
@@ -53,10 +52,9 @@ export function TeamIssuesPanel({
     ],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
-      getTasks({
+      getTeamTasks(team.id, {
         page: pageParam,
         limit: pageSize,
-        filter: 'all',
         search: search || undefined,
         status,
         priority,
@@ -96,9 +94,9 @@ export function TeamIssuesPanel({
   return (
     <section className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8">
       <div className="mb-6">
-        <h1 className="text-lg font-semibold">{team.name} issues</h1>
+        <h1 className="text-lg font-semibold">{team.name} tasks</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tasks in this workspace.
+          Tasks assigned to this team.
         </p>
       </div>
 
@@ -108,8 +106,8 @@ export function TeamIssuesPanel({
           <Input
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
-            placeholder="Search issues"
-            aria-label="Search team issues"
+            placeholder="Search tasks"
+            aria-label="Search team tasks"
             className="h-9 pl-8"
           />
         </div>
@@ -148,7 +146,7 @@ export function TeamIssuesPanel({
       {isPending ? (
         <div
           role="status"
-          aria-label="Loading team issues"
+          aria-label="Loading team tasks"
           className="divide-y divide-border/60"
         >
           {Array.from({ length: 5 }, (_, index) => (
@@ -161,7 +159,7 @@ export function TeamIssuesPanel({
       ) : isError ? (
         <div role="alert" className="py-10 text-center">
           <p className="text-sm text-muted-foreground">
-            Unable to load issues.
+            Unable to load team tasks.
           </p>
           <Button variant="link" size="sm" onClick={() => void refetch()}>
             Try again
@@ -208,14 +206,14 @@ export function TeamIssuesPanel({
         </ul>
       ) : hasNextPage ? (
         <div className="border-y border-border/60 py-10 text-center text-sm text-muted-foreground">
-          Looking for team issues…
+          Looking for team tasks…
         </div>
       ) : (
         <div className="flex min-h-64 flex-col items-center justify-center text-center">
           <CircleDotDashed className="mb-4 size-6 text-muted-foreground" />
-          <h2 className="text-sm font-medium">No team issues found</h2>
+          <h2 className="text-sm font-medium">No tasks in this team</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Tasks in this workspace will appear here.
+            Tasks created for this team will appear here.
           </p>
         </div>
       )}
@@ -227,7 +225,7 @@ export function TeamIssuesPanel({
           role="status"
           className="py-4 text-center text-xs text-muted-foreground"
         >
-          Loading more issues…
+          Loading more tasks…
         </p>
       )}
     </section>

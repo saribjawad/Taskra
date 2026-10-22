@@ -26,6 +26,12 @@ import {
   getTeamsByWorkspaceId,
 } from '../services/teams.service';
 import { getWorkspaceMembers } from '../services/workspace.service';
+import {
+  GetTeamProjectsQuerySchema,
+  GetTeamTasksQuerySchema,
+} from '../schemas/teams.schema';
+import { getTasksByTeamId } from '../services/task.service';
+import { getProjectsByTeamId } from '../services/projects.service';
 
 // ==================================================================================
 // Team Controllers
@@ -198,4 +204,57 @@ export const GetWorkspaceTeams = async (req: Request, res: Response) => {
   }));
 
   res.status(200).json(new ApiResponse(200, 'Workspace teams', formatedTeams));
+};
+
+export const GetTeamTasks = async (req: Request, res: Response) => {
+  const { teamId } = TeamIdParamsSchema.parse(req.params);
+  const { page, limit, status, priority, label, search } =
+    GetTeamTasksQuerySchema.parse(req.query);
+  const team = await getTeamByIdAndWorkspaceId(
+    teamId,
+    req.user.activeWorkspace,
+  );
+  if (!team) throw ApiError.notFound('Team not found');
+
+  const tasks = await getTasksByTeamId(
+    team.id,
+    limit + 1,
+    (page - 1) * limit,
+    status,
+    label,
+    priority,
+    search,
+  );
+  const hasNextPage = tasks.length > limit;
+
+  res.status(200).json(
+    new ApiResponse(200, 'Team tasks fetched', {
+      metadata: { hasNextPage, page, limit, offset: (page - 1) * limit },
+      tasks: tasks.slice(0, limit),
+    }),
+  );
+};
+
+export const GetTeamProjects = async (req: Request, res: Response) => {
+  const { teamId } = TeamIdParamsSchema.parse(req.params);
+  const { page, limit } = GetTeamProjectsQuerySchema.parse(req.query);
+  const team = await getTeamByIdAndWorkspaceId(
+    teamId,
+    req.user.activeWorkspace,
+  );
+  if (!team) throw ApiError.notFound('Team not found');
+
+  const projects = await getProjectsByTeamId(
+    team.id,
+    limit + 1,
+    (page - 1) * limit,
+  );
+  const hasNextPage = projects.length > limit;
+
+  res.status(200).json(
+    new ApiResponse(200, 'Team projects fetched', {
+      metadata: { hasNextPage, page, limit, offset: (page - 1) * limit },
+      projects: projects.slice(0, limit),
+    }),
+  );
 };

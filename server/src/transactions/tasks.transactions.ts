@@ -36,6 +36,7 @@ interface CreateTaskWorkflowInput {
     priority: TaskPriorityType;
     label: TaskLabelType;
     activeWorkspace: string;
+    teamId: string;
     userId: string;
     startDate: Date | undefined;
     dueDate: Date | undefined;
@@ -62,6 +63,7 @@ export const createTaskWorkflow = async (data: CreateTaskWorkflowInput) => {
           priority: payload.priority,
           label: payload.label,
           workspaceId: payload.activeWorkspace,
+          teamId: payload.teamId,
           userId: payload.userId,
           startDate: payload.startDate,
           dueDate: payload.dueDate,

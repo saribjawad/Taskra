@@ -48,6 +48,7 @@ export const GetProjectsQuerySchema = z.object({
 });
 
 export const CreateProjectSchema = z.object({
+  teamId: z.uuid('Invalid team UUID'),
   name: z
     .string('Invalid Name')
     .min(1, 'Name is required')

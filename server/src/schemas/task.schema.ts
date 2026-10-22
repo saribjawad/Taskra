@@ -51,6 +51,7 @@ export const CreateTaskSchema = z
         .string('Invalid title')
         .min(1, 'Title is required')
         .max(250, 'Title cannot be more than 250 words'),
+      teamId: z.uuid('Invalid team UUID'),
       description: z.string('Invalid description'),
       status: TaskStatus,
       priority: Priority,

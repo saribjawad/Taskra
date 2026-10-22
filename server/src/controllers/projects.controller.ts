@@ -46,6 +46,7 @@ import {
   removeProjectMemberWorkflow,
   updateProjectWorkflow,
 } from '../transactions/project.transactions';
+import { getTeamByIdAndWorkspaceId } from '../services/teams.service';
 
 // ==================================================================================
 // Helpers
@@ -100,6 +101,14 @@ export const CreateProject = async (req: Request, res: Response) => {
   const user = req.user;
   const parsedBody = CreateProjectSchema.parse(req.body);
 
+  const team = await getTeamByIdAndWorkspaceId(
+    parsedBody.teamId,
+    user.activeWorkspace,
+  );
+  if (!team) {
+    throw ApiError.notFound('Team not found');
+  }
+
   let leadUser;
   if (parsedBody.leadId) {
     leadUser = await findUserById(parsedBody.leadId);
@@ -128,6 +137,7 @@ export const CreateProject = async (req: Request, res: Response) => {
       priority: parsedBody.priority,
       status: parsedBody.status,
       workspace_id: user.activeWorkspace,
+      team_id: team.id,
       description: parsedBody.description,
       lead_id: leadUser ? leadUser.id : undefined,
       short_summary: parsedBody.shortSummary,

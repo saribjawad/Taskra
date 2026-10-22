@@ -1,6 +1,6 @@
 import { Link as RouterLink } from '@tanstack/react-router'
 import { FolderOpen } from 'lucide-react'
-import { useGetProjects } from '#/hooks/project.hooks'
+import { useGetTeamProjects } from '#/hooks/team.hooks'
 import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import { PRIORITY_ITEMS } from '#/constants'
@@ -19,10 +19,8 @@ export function TeamProjectsPanel({
   team: Team
   workspaceId: string
 }) {
-  // The team-specific projects endpoint is not available yet, so use the
-  // existing workspace projects API while this view is being built out.
-  const { data, isPending, isError, refetch } = useGetProjects(
-    workspaceId,
+  const { data, isPending, isError, refetch } = useGetTeamProjects(
+    team.id,
     1,
     50,
   )
@@ -33,8 +31,7 @@ export function TeamProjectsPanel({
       <div className="mb-6">
         <h1 className="text-lg font-semibold">{team.name} projects</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Projects in this workspace. Team filtering will be available when the
-          team projects API is ready.
+          Projects assigned to this team.
         </p>
       </div>
 
@@ -64,7 +61,7 @@ export function TeamProjectsPanel({
           <FolderOpen className="mb-4 size-6 text-muted-foreground" />
           <h2 className="text-sm font-medium">No projects yet</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Projects created in this workspace will appear here.
+            Projects created for this team will appear here.
           </p>
         </div>
       ) : (

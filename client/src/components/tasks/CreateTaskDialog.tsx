@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { ReactElement, SetStateAction } from 'react'
 import {
   Dialog,
@@ -9,7 +10,7 @@ import {
   DialogTrigger,
 } from '../ui/dialog'
 import { Button } from '../ui/button'
-import { Maximize2, X } from 'lucide-react'
+import { ChevronRight, Maximize2, X } from 'lucide-react'
 import z from 'zod'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,6 +33,8 @@ import { attachmentsSchema } from '#/schema/attachment.schema'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { useParams } from '@tanstack/react-router'
 import DateField from '../fields/DateField'
+import { useGetTeams } from '#/hooks/team.hooks'
+import { TeamPicker } from '#/components/teams/TeamPicker'
 
 interface CreateTaskDialogProps {
   isDialogOpen: boolean
@@ -51,6 +54,7 @@ const Label = z.enum(['bug', 'feature', 'improvement'], 'Invalid label')
 
 const CreateTaskFormSchema = z
   .object({
+    teamId: z.uuid('Choose a team'),
     title: z
       .string('Invalid title')
       .min(1, 'Title is required')
@@ -103,27 +107,49 @@ function CreateTaskDialog({
   isDialogOpen,
   setIsDialogOpen,
 }: CreateTaskDialogProps) {
-  const params = useParams({ strict: false }) as { workspaceId: string }
+  const params = useParams({ strict: false }) as {
+    workspaceId: string
+    teamId?: string
+  }
 
   // Mutation and queries
   const { mutateAsync: createTask, isPending } = useCreateTask()
   const { data: workspaceUsers } = useGetWorkspaceUsers(params.workspaceId)
+  const {
+    data: teams = [],
+    isPending: isTeamsPending,
+    isError: isTeamsError,
+    refetch: refetchTeams,
+  } = useGetTeams(params.workspaceId)
 
-  const { handleSubmit, control, reset, trigger } = useForm({
-    resolver: zodResolver(CreateTaskFormSchema),
-    defaultValues: {
-      title: '',
-      description: '',
-      assignee: '',
-      reporter: '',
-      label: 'feature',
-      priority: 'medium',
-      status: 'todo',
-      attachments: [],
-      startDate: undefined,
-      dueDate: undefined,
-    },
-  })
+  const { handleSubmit, control, reset, trigger, getValues, setValue } =
+    useForm({
+      resolver: zodResolver(CreateTaskFormSchema),
+      defaultValues: {
+        title: '',
+        teamId: '',
+        description: '',
+        assignee: '',
+        reporter: '',
+        label: 'feature',
+        priority: 'medium',
+        status: 'todo',
+        attachments: [],
+        startDate: undefined,
+        dueDate: undefined,
+      },
+    })
+
+  useEffect(() => {
+    if (!isDialogOpen || !teams.length) return
+    const currentTeamId = getValues('teamId')
+    if (teams.some((team) => team.id === currentTeamId)) return
+
+    const preferredTeam = teams.find((team) => team.id === params.teamId)
+    setValue('teamId', preferredTeam?.id ?? teams[0].id, {
+      shouldValidate: true,
+    })
+  }, [getValues, isDialogOpen, params.teamId, setValue, teams])
 
   async function onSubmit(data: CreateTaskFormPayload) {
     await createTask({
@@ -147,9 +173,24 @@ function CreateTaskDialog({
       >
         {/* Header */}
         <DialogHeader>
-          <div className="w-full  flex items-center justify-between">
+          <div className="w-full flex items-center justify-between">
             {/* Title */}
-            <DialogTitle>New task</DialogTitle>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Controller
+                name="teamId"
+                control={control}
+                render={({ field }) => (
+                  <TeamPicker
+                    teams={teams}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={isPending || isTeamsPending || isTeamsError}
+                  />
+                )}
+              />
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+              <DialogTitle>New task</DialogTitle>
+            </div>
 
             {/* Button */}
             <div>
@@ -181,6 +222,24 @@ function CreateTaskDialog({
           className="flex flex-col flex-1 min-h-0"
         >
           <FieldGroup className="overflow-y-auto">
+            {isTeamsError && (
+              <div role="alert" className="text-sm text-destructive">
+                Unable to load teams.{' '}
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={() => void refetchTeams()}
+                >
+                  Retry
+                </Button>
+              </div>
+            )}
+            {!isTeamsPending && !isTeamsError && !teams.length && (
+              <p className="text-sm text-muted-foreground">
+                Create a team before adding a task.
+              </p>
+            )}
             <Controller
               name="title"
               control={control}
@@ -511,7 +570,12 @@ function CreateTaskDialog({
               </Button>
             </DialogClose>
 
-            <Button disabled={isPending} type="submit">
+            <Button
+              disabled={
+                isPending || isTeamsPending || isTeamsError || !teams.length
+              }
+              type="submit"
+            >
               {isPending && <Spinner />}
               Create task
             </Button>

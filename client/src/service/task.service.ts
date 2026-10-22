@@ -65,6 +65,7 @@ type Attachments = {
 
 export interface GetTaskResponse {
   id: string
+  team_id: string
   project_id: string | null
   project_milestone_id: string | null
   title: string
@@ -105,6 +106,7 @@ export async function getTaskById(taskId: string): Promise<GetTaskResponse> {
 }
 
 export interface CreateTaskParams {
+  teamId: string
   title: string
   description: string
   status: TaskStatusType
@@ -129,10 +131,12 @@ export async function createTask(params: CreateTaskParams): Promise<void> {
     reporter,
     dueDate,
     startDate,
+    teamId,
   } = params
 
   const formData = new FormData()
 
+  formData.append('teamId', teamId)
   formData.append('title', title)
   formData.append('description', description)
   formData.append('status', status)

@@ -36,6 +36,7 @@ import {
   updateTaskWorkflow,
 } from '../transactions/tasks.transactions';
 import logger from '../utils/logger';
+import { getTeamByIdAndWorkspaceId } from '../services/teams.service';
 
 // ==================================================================================
 // Helpers
@@ -67,6 +68,7 @@ export const CreateTask = async (req: Request, res: Response) => {
   const { body } = parsedBody;
   const {
     description,
+    teamId,
     label,
     priority,
     status,
@@ -76,6 +78,11 @@ export const CreateTask = async (req: Request, res: Response) => {
     assignee: assigneeId,
     reporter: reporterId,
   } = body;
+
+  const team = await getTeamByIdAndWorkspaceId(teamId, activeWorkspace);
+  if (!team) {
+    throw ApiError.notFound('Team not found');
+  }
 
   let assigneeMember;
   let reporterMember;
@@ -109,6 +116,7 @@ export const CreateTask = async (req: Request, res: Response) => {
       priority,
       label,
       activeWorkspace,
+      teamId: team.id,
       userId: user.id,
       startDate,
       dueDate,
@@ -399,6 +407,18 @@ export const GetTask = async (req: Request, res: Response) => {
         : {
             reporter: null,
           }),
+    }),
+  );
+};
+
+export const GetTaskTeamProject = async (req: Request, res: Response) => {
+  const { taskId } = TaskParamsSchema.parse(req.params);
+  const task = await requireTask(taskId, req.user.activeWorkspace);
+
+  res.status(200).json(
+    new ApiResponse(200, 'Task team and project fetched', {
+      teamId: task.team_id,
+      projectId: task.project_id,
     }),
   );
 };

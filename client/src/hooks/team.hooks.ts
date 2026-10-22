@@ -8,6 +8,7 @@ import {
   getTeamDocuments,
   getTeamLinks,
   getTeamMembers,
+  getTeamProjects,
   getTeams,
   removeTeamMember,
 } from '#/service/team.service'
@@ -47,6 +48,10 @@ export function useDeleteTeam(workspaceId: string) {
       queryClient.removeQueries({ queryKey: ['team-links', teamId] })
       queryClient.removeQueries({ queryKey: ['team-documents', teamId] })
       queryClient.removeQueries({ queryKey: ['team-members', teamId] })
+      queryClient.removeQueries({
+        queryKey: ['team-tasks', workspaceId, teamId],
+      })
+      queryClient.removeQueries({ queryKey: ['team-projects', teamId] })
       toast.success('Team deleted')
     },
     onError: (error) => {
@@ -106,6 +111,19 @@ export function useGetTeamMembers(teamId: string, enabled = true) {
   return useQuery({
     queryKey: ['team-members', teamId],
     queryFn: () => getTeamMembers(teamId),
+    enabled: Boolean(teamId) && enabled,
+  })
+}
+
+export function useGetTeamProjects(
+  teamId: string,
+  page: number,
+  limit: number,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ['team-projects', teamId, page, limit],
+    queryFn: () => getTeamProjects(teamId, page, limit),
     enabled: Boolean(teamId) && enabled,
   })
 }

@@ -56,6 +56,7 @@ export const createTask = async (
     priority: TaskPriorityType;
     label: TaskLabelType;
     workspaceId: string;
+    teamId: string;
     userId: string;
     startDate: Date | undefined;
     dueDate: Date | undefined;
@@ -74,6 +75,7 @@ export const createTask = async (
     startDate,
     status,
     title,
+    teamId,
     userId,
     workspaceId,
   } = payload;
@@ -81,8 +83,8 @@ export const createTask = async (
   const db = txClient || dbPool;
   const result = await db.query(
     `
-    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator, reporter, start_date, due_date)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    INSERT INTO tasks(title, description, status, priority, label, assignee, workspace_id, creator, reporter, start_date, due_date, team_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *`,
     [
       title,
@@ -96,6 +98,7 @@ export const createTask = async (
       reporter,
       startDate,
       dueDate,
+      teamId,
     ],
   );
 
@@ -252,6 +255,40 @@ export const getTasks = async (
 
       return result.rows;
   }
+};
+
+export const getTasksByTeamId = async (
+  teamId: string,
+  limit: number,
+  offset: number,
+  status?: TaskStatusType,
+  label?: TaskLabelType,
+  priority?: TaskPriorityType,
+  search?: string,
+) => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM tasks
+    WHERE team_id = $1
+      AND ($4::text IS NULL OR status = $4)
+      AND ($5::text IS NULL OR label = $5)
+      AND ($6::text IS NULL OR priority = $6)
+      AND ($7::text IS NULL OR title ILIKE $7)
+    ORDER BY created_at DESC, id DESC
+    LIMIT $2 OFFSET $3
+    `,
+    [
+      teamId,
+      limit,
+      offset,
+      status,
+      label,
+      priority,
+      search ? `%${search}%` : undefined,
+    ],
+  );
+
+  return result.rows as Task[];
 };
 
 /**

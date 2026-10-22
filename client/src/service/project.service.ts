@@ -30,6 +30,7 @@ export async function getProjects(
 }
 
 export interface CreateProjectPayload {
+  teamId: string
   name: string
   shortSummary?: string
   description?: string

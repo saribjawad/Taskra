@@ -36,6 +36,7 @@ export const getProjectWithLeadDetails = async (
           p.priority,
           p.status,
           p.workspace_id,
+          p.team_id,
           p.start_date,
           p.target_date,
           p.updated_at,
@@ -114,6 +115,24 @@ export const getProjectsByWorkspaceId = async (
   return result.rows;
 };
 
+export const getProjectsByTeamId = async (
+  teamId: string,
+  limit: number,
+  offset: number,
+): Promise<Project[]> => {
+  const result = await dbPool.query(
+    `
+    SELECT * FROM projects
+    WHERE team_id = $1
+    ORDER BY created_at DESC, id DESC
+    LIMIT $2 OFFSET $3
+    `,
+    [teamId, limit, offset],
+  );
+
+  return result.rows;
+};
+
 export const createProject = async (
   payload: {
     name: string;
@@ -123,6 +142,7 @@ export const createProject = async (
     status: ProjectStatusType;
     lead_id?: string;
     workspace_id: string;
+    team_id: string;
     start_date?: Date;
     target_date?: Date;
   },

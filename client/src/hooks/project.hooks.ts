@@ -48,6 +48,7 @@ export function useCreateProject(workspaceId: string) {
       void queryClient.invalidateQueries({
         queryKey: ['projects', workspaceId],
       })
+      void queryClient.invalidateQueries({ queryKey: ['team-projects'] })
     },
   })
 }
