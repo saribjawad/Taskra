@@ -17,14 +17,12 @@ import {
 } from '@/components/ui/sidebar'
 import {
   ChevronsUpDownIcon,
-  SparklesIcon,
   BadgeCheckIcon,
-  CreditCardIcon,
   BellIcon,
   LogOutIcon,
 } from 'lucide-react'
 import { Spinner } from '../ui/spinner'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useParams } from '@tanstack/react-router'
 import { getInitials } from '#/lib/utils'
 
 export function NavUser({
@@ -37,6 +35,7 @@ export function NavUser({
   }
 }) {
   const navigate = useNavigate()
+  const { workspaceId } = useParams({ strict: false })
   const { isMobile } = useSidebar()
   const { mutate: signOut, isPending: isSigningOut } = useSignOut()
 
@@ -89,21 +88,19 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <SparklesIcon />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
                 <BadgeCheckIcon />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  if (workspaceId) {
+                    navigate({
+                      to: '/$workspaceId/inbox/notifications',
+                      params: { workspaceId },
+                    })
+                  }
+                }}
+              >
                 <BellIcon />
                 Notifications
               </DropdownMenuItem>
