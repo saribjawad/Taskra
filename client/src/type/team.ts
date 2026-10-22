@@ -21,6 +21,7 @@ export interface TeamLink {
   teamId: string
   title: string
   url: string
+  createdBy: { id: string; name: string } | null
   createdAt: string
   updatedAt: string
 }
@@ -30,6 +31,7 @@ export interface TeamDocument {
   teamId: string
   name: string
   content: string | null
+  createdBy: { id: string; name: string } | null
   createdAt: string
   updatedAt: string
 }

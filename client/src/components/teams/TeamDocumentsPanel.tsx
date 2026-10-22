@@ -70,9 +70,14 @@ export function TeamDocumentsPanel({ team }: { team: Team }) {
               className="flex w-full items-center gap-3 py-4 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <FileText className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">
                 {document.name}
               </span>
+              {document.createdBy && (
+                <span className="max-w-[45%] shrink-0 truncate text-right text-xs text-muted-foreground">
+                  Created by {document.createdBy.name}
+                </span>
+              )}
             </button>
           ))
         ) : (

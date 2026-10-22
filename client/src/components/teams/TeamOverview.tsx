@@ -81,7 +81,14 @@ export function TeamOverview({
                 className="flex min-w-0 items-center gap-2.5 rounded-md px-2 py-3 text-sm transition-colors hover:bg-muted/50"
               >
                 <Link2 className="size-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{link.title}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="block truncate">{link.title}</span>
+                  {link.createdBy && (
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      Added by {link.createdBy.name}
+                    </span>
+                  )}
+                </span>
                 <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
               </a>
             ))
