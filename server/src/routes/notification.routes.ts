@@ -9,10 +9,12 @@ import {
   MarkNotificationAsSeen,
 } from '../controllers/notifications.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const notificationRouter = Router();
 
 notificationRouter.use(AuthMiddleware);
+notificationRouter.use(RequrieActiveWorkspace);
 
 notificationRouter.get(
   '/',

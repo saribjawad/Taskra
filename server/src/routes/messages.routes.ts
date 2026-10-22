@@ -3,9 +3,11 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { SendMessage } from '../controllers/messages.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const messageRouter = Router();
 messageRouter.use(AuthMiddleware);
+messageRouter.use(RequrieActiveWorkspace);
 
 messageRouter
   .route('/:conversationId/send')

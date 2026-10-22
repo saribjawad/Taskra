@@ -7,9 +7,11 @@ import {
   GetUsersConversations,
 } from '../controllers/conversations.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const conversationRouter = Router();
 conversationRouter.use(AuthMiddleware);
+conversationRouter.use(RequrieActiveWorkspace);
 
 conversationRouter
   .route('/')

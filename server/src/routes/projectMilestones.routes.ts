@@ -7,9 +7,11 @@ import {
   UpdateMilestones,
 } from '../controllers/projectMilestones.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const projectMilestonesRouter = Router();
 projectMilestonesRouter.use(AuthMiddleware);
+projectMilestonesRouter.use(RequrieActiveWorkspace);
 
 projectMilestonesRouter
   .route('/:projectId/milestone')

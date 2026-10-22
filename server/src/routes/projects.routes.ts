@@ -22,6 +22,7 @@ import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 
 const projectsRouter = Router();
 projectsRouter.use(AuthMiddleware);
+projectsRouter.use(RequrieActiveWorkspace);
 
 projectsRouter
   .route('/')

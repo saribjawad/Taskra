@@ -20,6 +20,7 @@ import {
 } from '../controllers/workspace.controller';
 import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 import { GetProjects } from '../controllers/projects.controller';
+import { RequrieActiveWorkspace } from '../middlewares/requiredActiveWorkspace.middleware';
 
 const workspaceRouter = Router();
 
@@ -30,6 +31,7 @@ workspaceRouter.get(
 );
 
 workspaceRouter.use(AuthMiddleware);
+workspaceRouter.use(RequrieActiveWorkspace);
 
 workspaceRouter
   .route('/')
