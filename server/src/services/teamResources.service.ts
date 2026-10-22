@@ -5,7 +5,14 @@ export const getTeamDocuments = async (
   teamId: string,
 ): Promise<TeamDocument[]> => {
   const results = await dbPool.query(
-    `SELECT * FROM team_documents WHERE team_id = $1 ORDER BY created_at ASC, id ASC`,
+    `
+      SELECT team_documents.*, users.full_name AS created_by_full_name,
+        users.username AS created_by_username
+      FROM team_documents
+      LEFT JOIN users ON users.id = team_documents.created_by
+      WHERE team_documents.team_id = $1
+      ORDER BY team_documents.created_at ASC, team_documents.id ASC
+    `,
     [teamId],
   );
 
@@ -17,7 +24,13 @@ export const getTeamDocument = async (
   teamId: string,
 ): Promise<TeamDocument> => {
   const results = await dbPool.query(
-    `SELECT * FROM team_documents WHERE id = $1 AND team_id = $2`,
+    `
+      SELECT team_documents.*, users.full_name AS created_by_full_name,
+        users.username AS created_by_username
+      FROM team_documents
+      LEFT JOIN users ON users.id = team_documents.created_by
+      WHERE team_documents.id = $1 AND team_documents.team_id = $2
+    `,
     [documentId, teamId],
   );
 
@@ -27,11 +40,12 @@ export const getTeamDocument = async (
 export const createTeamDocument = async (
   teamId: string,
   name: string,
-  content?: string,
+  content: string | undefined,
+  createdBy: string,
 ): Promise<TeamDocument> => {
   const results = await dbPool.query(
-    `INSERT INTO team_documents (team_id, name, content) VALUES ($1, $2, $3) RETURNING *`,
-    [teamId, name, content ?? null],
+    `INSERT INTO team_documents (team_id, name, content, created_by) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [teamId, name, content ?? null, createdBy],
   );
 
   return results.rows[0];
@@ -70,7 +84,14 @@ export const deleteTeamDocument = async (
 
 export const getTeamLinks = async (teamId: string): Promise<TeamLink[]> => {
   const results = await dbPool.query(
-    `SELECT * FROM team_links WHERE team_id = $1 ORDER BY created_at ASC, id ASC`,
+    `
+      SELECT team_links.*, users.full_name AS created_by_full_name,
+        users.username AS created_by_username
+      FROM team_links
+      LEFT JOIN users ON users.id = team_links.created_by
+      WHERE team_links.team_id = $1
+      ORDER BY team_links.created_at ASC, team_links.id ASC
+    `,
     [teamId],
   );
 
@@ -82,7 +103,13 @@ export const getTeamLink = async (
   teamId: string,
 ): Promise<TeamLink> => {
   const results = await dbPool.query(
-    `SELECT * FROM team_links WHERE id = $1 AND team_id = $2`,
+    `
+      SELECT team_links.*, users.full_name AS created_by_full_name,
+        users.username AS created_by_username
+      FROM team_links
+      LEFT JOIN users ON users.id = team_links.created_by
+      WHERE team_links.id = $1 AND team_links.team_id = $2
+    `,
     [linkId, teamId],
   );
 
@@ -93,10 +120,11 @@ export const createTeamLink = async (
   teamId: string,
   title: string,
   url: string,
+  createdBy: string,
 ): Promise<TeamLink> => {
   const results = await dbPool.query(
-    `INSERT INTO team_links (team_id, title, url) VALUES ($1, $2, $3) RETURNING *`,
-    [teamId, title, url],
+    `INSERT INTO team_links (team_id, title, url, created_by) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [teamId, title, url, createdBy],
   );
 
   return results.rows[0];

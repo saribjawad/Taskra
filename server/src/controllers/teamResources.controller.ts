@@ -46,6 +46,15 @@ const formatDocument = (
 ) => ({
   id: document.id,
   teamId: document.team_id,
+  createdBy: document.created_by
+    ? {
+        id: document.created_by,
+        name:
+          document.created_by_full_name ||
+          document.created_by_username ||
+          'Unknown user',
+      }
+    : null,
   name: document.name,
   content: document.content,
   createdAt: document.created_at,
@@ -55,6 +64,15 @@ const formatDocument = (
 const formatLink = (link: Awaited<ReturnType<typeof getTeamLink>>) => ({
   id: link.id,
   teamId: link.team_id,
+  createdBy: link.created_by
+    ? {
+        id: link.created_by,
+        name:
+          link.created_by_full_name ||
+          link.created_by_username ||
+          'Unknown user',
+      }
+    : null,
   title: link.title,
   url: link.url,
   createdAt: link.created_at,
@@ -71,20 +89,15 @@ export const GetTeamDocuments = async (req: Request, res: Response) => {
   const team = await requireTeam(teamId, user.activeWorkspace);
   const documents = await getTeamDocuments(team.id);
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      'Team documents fetched',
-      documents.map((document) => ({
-        id: document.id,
-        teamId: document.team_id,
-        name: document.name,
-        content: document.content,
-        createdAt: document.created_at,
-        updatedAt: document.updated_at,
-      })),
-    ),
-  );
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        'Team documents fetched',
+        documents.map(formatDocument),
+      ),
+    );
 };
 
 export const CreateTeamDocument = async (req: Request, res: Response) => {
@@ -92,7 +105,13 @@ export const CreateTeamDocument = async (req: Request, res: Response) => {
   const { teamId } = CreateTeamDocumentParamsSchema.parse(req.params);
   const { name, content } = CreateTeamDocumentBodySchema.parse(req.body);
   const team = await requireTeam(teamId, user.activeWorkspace);
-  const document = await createTeamDocument(team.id, name, content);
+  const createdDocument = await createTeamDocument(
+    team.id,
+    name,
+    content,
+    user.id,
+  );
+  const document = await getTeamDocument(createdDocument.id, team.id);
 
   res
     .status(201)
@@ -157,20 +176,9 @@ export const GetTeamLinks = async (req: Request, res: Response) => {
   const team = await requireTeam(teamId, user.activeWorkspace);
   const links = await getTeamLinks(team.id);
 
-  res.status(200).json(
-    new ApiResponse(
-      200,
-      'Team links fetched',
-      links.map((link) => ({
-        id: link.id,
-        teamId: link.team_id,
-        title: link.title,
-        url: link.url,
-        createdAt: link.created_at,
-        updatedAt: link.updated_at,
-      })),
-    ),
-  );
+  res
+    .status(200)
+    .json(new ApiResponse(200, 'Team links fetched', links.map(formatLink)));
 };
 
 export const CreateTeamLink = async (req: Request, res: Response) => {
@@ -178,7 +186,8 @@ export const CreateTeamLink = async (req: Request, res: Response) => {
   const { teamId } = CreateTeamLinkParamsSchema.parse(req.params);
   const { title, url } = CreateTeamLinkBodySchema.parse(req.body);
   const team = await requireTeam(teamId, user.activeWorkspace);
-  const link = await createTeamLink(team.id, title, url);
+  const createdLink = await createTeamLink(team.id, title, url, user.id);
+  const link = await getTeamLink(createdLink.id, team.id);
 
   res
     .status(201)
