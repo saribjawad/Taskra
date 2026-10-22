@@ -1,5 +1,13 @@
 import * as React from 'react'
-import { Bell, Palette, Settings, Shield, User, ArrowLeft } from 'lucide-react'
+import {
+  ArrowLeft,
+  Bell,
+  Palette,
+  Settings,
+  Shield,
+  User,
+  Users,
+} from 'lucide-react'
 import { Link, useParams } from '@tanstack/react-router'
 import {
   Sidebar,
@@ -9,38 +17,18 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
+  SidebarMenuBadge,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-const data = {
-  settings: [
-    {
-      title: 'General',
-      url: '#',
-      icon: <Settings />,
-    },
-    {
-      title: 'Profile',
-      url: '#',
-      icon: <User />,
-    },
-    {
-      title: 'Notifications',
-      url: '#',
-      icon: <Bell />,
-    },
-    {
-      title: 'Appearance',
-      url: '#',
-      icon: <Palette />,
-    },
-    {
-      title: 'Security',
-      url: '#',
-      icon: <Shield />,
-    },
-  ],
-}
+const settings = [
+  { title: 'Members', icon: <Users />, available: true },
+  { title: 'General', icon: <Settings /> },
+  { title: 'Profile', icon: <User /> },
+  { title: 'Notifications', icon: <Bell /> },
+  { title: 'Appearance', icon: <Palette /> },
+  { title: 'Security', icon: <Shield /> },
+]
 
 export function SettingSidebar({
   ...props
@@ -75,14 +63,25 @@ export function SettingSidebar({
 
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.settings.map((item) => (
+              {settings.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                  {item.available ? (
+                    <SidebarMenuButton asChild>
+                      <Link
+                        to="/$workspaceId/settings/members"
+                        params={{ workspaceId: params.workspaceId!! }}
+                      >
+                        {item.icon}
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  ) : (
+                    <SidebarMenuButton disabled>
                       {item.icon}
                       <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
+                      <SidebarMenuBadge>In progress</SidebarMenuBadge>
+                    </SidebarMenuButton>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
