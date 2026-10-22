@@ -6,17 +6,24 @@ import {
   DeleteMilestones,
   UpdateMilestones,
 } from '../controllers/projectMilestones.controller';
+import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 
 const projectMilestonesRouter = Router();
 projectMilestonesRouter.use(AuthMiddleware);
 
 projectMilestonesRouter
   .route('/:projectId/milestone')
-  .post(asyncHandler(CreateMilestone));
+  .post(RequiredRoles(['owner', 'admin']), asyncHandler(CreateMilestone));
 
 projectMilestonesRouter
   .route('/:projectId/milestone/:milestoneId')
-  .patch(asyncHandler(UpdateMilestones))
-  .delete(asyncHandler(DeleteMilestones));
+  .patch(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(UpdateMilestones),
+  )
+  .delete(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(DeleteMilestones),
+  );
 
 export default projectMilestonesRouter;

@@ -25,7 +25,8 @@ import {
 } from '#/components/ui/popover'
 import { useUpdateProject } from '#/hooks/project.hooks'
 import { formatProjectDate, projectStatuses } from './project-presentation'
-import { TeamOverviewLink } from '#/components/teams/TeamOverviewLink'
+import { TeamProperty } from '#/components/teams/TeamProperty'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 const priorityIcons = {
   low: SignalLow,
@@ -54,6 +55,9 @@ export default function ProjectProperties({
     (item) => item.value === project.priority,
   )?.label
   const PriorityIcon = priorityIcons[project.priority]
+  const { can } = useWorkspacePermissions()
+  const canUpdate = can('project:update')
+  const canManageMembers = can('project:members:update')
   const { mutateAsync: updateProject, isPending } = useUpdateProject(
     project.workspace_id,
     project.id,
@@ -79,16 +83,18 @@ export default function ProjectProperties({
       </h2>
       <dl className="text-xs leading-5">
         <Property label="Team">
-          <TeamOverviewLink
+          <TeamProperty
             team={project.team}
             workspaceId={project.workspace_id}
+            disabled={!canUpdate || isPending}
+            onChange={(teamId) => saveProject({ teamId })}
           />
         </Property>
         {/* Project status and priority */}
         <Property label="Status">
           <PropertyPicker
             label="Change status"
-            disabled={isPending}
+            disabled={!canUpdate || isPending}
             trigger={
               <span className="flex items-center gap-2">
                 <span className={cn('size-2 rounded-full', status.color)} />
@@ -113,7 +119,7 @@ export default function ProjectProperties({
         <Property label="Priority">
           <PropertyPicker
             label="Change priority"
-            disabled={isPending}
+            disabled={!canUpdate || isPending}
             trigger={
               <span className="flex items-center gap-2">
                 <PriorityIcon className="size-3.5 text-muted-foreground" />
@@ -140,19 +146,19 @@ export default function ProjectProperties({
         <Property label="Lead">
           <ProjectLeadPicker
             project={project}
-            disabled={isPending}
+            disabled={!canUpdate || isPending}
             onSelect={(leadId) => saveProject({ leadId })}
           />
         </Property>
         <Property label="Members">
-          <ProjectMemberPicker project={project} />
+          <ProjectMemberPicker project={project} disabled={!canManageMembers} />
         </Property>
         {/* Project timeline */}
         <Property label="Start date">
           <DatePicker
             label="Change start date"
             value={project.start_date}
-            disabled={isPending}
+            disabled={!canUpdate || isPending}
             latestDate={project.target_date}
             onChange={(date) =>
               void saveProject({ startDate: date.toISOString() })
@@ -163,7 +169,7 @@ export default function ProjectProperties({
           <DatePicker
             label="Change target date"
             value={project.target_date}
-            disabled={isPending}
+            disabled={!canUpdate || isPending}
             earliestDate={project.start_date}
             onChange={(date) =>
               void saveProject({ targetDate: date.toISOString() })

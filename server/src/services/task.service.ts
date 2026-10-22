@@ -121,6 +121,7 @@ export const updateTask = async (
     label?: TaskLabelType;
     priority?: TaskPriorityType;
     status?: TaskStatus;
+    team_id?: string;
     start_date?: Date;
     due_date?: Date;
     project_id?: string | null;

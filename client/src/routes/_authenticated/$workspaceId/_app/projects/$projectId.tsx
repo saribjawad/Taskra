@@ -15,6 +15,7 @@ import { Button } from '#/components/ui/button'
 import { Skeleton } from '#/components/ui/skeleton'
 import { SidebarTrigger } from '#/components/ui/sidebar'
 import { useAuth } from '#/context/auth/auth-hook'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import { useDeleteProject, useGetProject } from '#/hooks/project.hooks'
 import ProjectOverview from '#/components/projects/ProjectOverview'
 import ProjectActivity, {
@@ -76,6 +77,7 @@ function ProjectDetailPage() {
   const { view } = Route.useSearch()
   const navigate = Route.useNavigate()
   const { user } = useAuth()
+  const { can } = useWorkspacePermissions()
   const deleteProject = useDeleteProject(workspaceId, projectId)
 
   const {
@@ -316,27 +318,32 @@ function ProjectDetailPage() {
                       {project.name}
                     </h1>
                   </div>
-                  {view === 'overview' && (
-                    <div className="flex shrink-0 items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditDialogOpen(true)}
-                      >
-                        <Pencil />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Delete project"
-                        className="text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteDialogOpen(true)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </div>
-                  )}
+                  {view === 'overview' &&
+                    (can('project:update') || can('project:delete')) && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        {can('project:update') && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditDialogOpen(true)}
+                          >
+                            <Pencil />
+                            Edit
+                          </Button>
+                        )}
+                        {can('project:delete') && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label="Delete project"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => setDeleteDialogOpen(true)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        )}
+                      </div>
+                    )}
                 </div>
                 {view === 'overview' && <ProjectOverview project={project} />}
                 {view === 'activity' && (

@@ -88,6 +88,7 @@ export async function getProjectTasks(
 
 export type UpdateProjectPayload = Partial<
   Pick<Project, 'name' | 'status' | 'priority'> & {
+    teamId: string
     shortSummary: string
     description: string
     leadId: string

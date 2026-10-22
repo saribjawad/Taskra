@@ -141,6 +141,7 @@ export const UpdateTaskSchema = z
       status: TaskStatus.optional(),
       priority: Priority.optional(),
       label: TaskLabel.optional(),
+      teamId: z.uuid('Invalid team UUID').optional(),
       assignee: z.uuid('Invalid assignee UUID').optional(),
       reporter: z.uuid('Invalid reporter UUID').optional(),
       clearFields: z

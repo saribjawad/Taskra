@@ -10,6 +10,7 @@ import {
 import { useState } from 'react'
 import { useGetTeams } from '#/hooks/team.hooks'
 import { CreateTeamDialog } from '#/components/teams/CreateTeamDialog'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,19 +44,22 @@ export function TeamNav() {
   const activeSection =
     'tab' in search ? (search.tab as string | undefined) : undefined
   const { data: teams = [] } = useGetTeams(workspaceId)
+  const { can } = useWorkspacePermissions()
   const [openTeamId, setOpenTeamId] = useState<string | undefined>(activeTeamId)
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Your teams</SidebarGroupLabel>
-      <CreateTeamDialog
-        workspaceId={workspaceId}
-        trigger={
-          <SidebarGroupAction aria-label="Create team" title="Create team">
-            <Plus />
-          </SidebarGroupAction>
-        }
-      />
+      {can('team:create') && (
+        <CreateTeamDialog
+          workspaceId={workspaceId}
+          trigger={
+            <SidebarGroupAction aria-label="Create team" title="Create team">
+              <Plus />
+            </SidebarGroupAction>
+          }
+        />
+      )}
       <SidebarMenu>
         {teams.map((team) => (
           <Collapsible

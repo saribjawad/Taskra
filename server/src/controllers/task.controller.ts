@@ -184,6 +184,20 @@ export const UpdateTask = async (req: Request, res: Response) => {
 
   const task = await requireTask(taskId, user.activeWorkspace);
 
+  if (body.teamId !== undefined) {
+    if (user.role !== 'owner' && user.role !== 'admin') {
+      throw ApiError.forbidden(
+        'Only workspace admins and owners can change a task team',
+      );
+    }
+
+    const team = await getTeamByIdAndWorkspaceId(
+      body.teamId,
+      user.activeWorkspace,
+    );
+    if (!team) throw ApiError.notFound('Team not found');
+  }
+
   const { assignee: assigneeId, reporter: reporterId } = body;
 
   let assigneeUser;
@@ -231,6 +245,7 @@ export const UpdateTask = async (req: Request, res: Response) => {
   const fieldMap: Record<string, string> = {
     startDate: 'start_date',
     dueDate: 'due_date',
+    teamId: 'team_id',
   };
 
   const payload: Record<string, unknown> = {};

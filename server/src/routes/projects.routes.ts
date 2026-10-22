@@ -18,40 +18,75 @@ import {
   DeleteProjectComment,
   UpdateProjectComment,
 } from '../controllers/projectComments.controller';
+import { RequiredRoles } from '../middlewares/requiredRoles.middleware';
 
 const projectsRouter = Router();
 projectsRouter.use(AuthMiddleware);
 
-projectsRouter.route('/').post(asyncHandler(CreateProject));
+projectsRouter
+  .route('/')
+  .post(RequiredRoles(['owner', 'admin']), asyncHandler(CreateProject));
 
 projectsRouter
   .route('/:projectId')
-  .get(asyncHandler(GetProject))
-  .patch(asyncHandler(UpdateProject))
-  .delete(asyncHandler(DeleteProject));
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetProject),
+  )
+  .patch(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(UpdateProject),
+  )
+  .delete(RequiredRoles(['owner', 'admin']), asyncHandler(DeleteProject));
 
 projectsRouter
   .route('/:projectId/activity')
-  .get(asyncHandler(GetProjectActivity));
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetProjectActivity),
+  );
 
 projectsRouter
   .route('/:projectId/progress')
-  .get(asyncHandler(GetProjectProgress));
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetProjectProgress),
+  );
 
 projectsRouter
   .route('/:projectId/members')
-  .post(asyncHandler(AddProjectMembers))
-  .delete(asyncHandler(RemoveProjectMembers));
+  .post(RequiredRoles(['owner', 'admin']), asyncHandler(AddProjectMembers))
+  .delete(
+    RequiredRoles(['owner', 'admin']),
+    asyncHandler(RemoveProjectMembers),
+  );
 
-projectsRouter.route('/:projectId/tasks').get(asyncHandler(GetProjectTasks));
+projectsRouter
+  .route('/:projectId/tasks')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetProjectTasks),
+  );
 
 projectsRouter
   .route('/:projectId/comments')
-  .post(RequrieActiveWorkspace, asyncHandler(CreateProjectComment));
+  .post(
+    RequrieActiveWorkspace,
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(CreateProjectComment),
+  );
 
 projectsRouter
   .route('/:projectId/comments/:commentId')
-  .patch(RequrieActiveWorkspace, asyncHandler(UpdateProjectComment))
-  .delete(RequrieActiveWorkspace, asyncHandler(DeleteProjectComment));
+  .patch(
+    RequrieActiveWorkspace,
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(UpdateProjectComment),
+  )
+  .delete(
+    RequrieActiveWorkspace,
+    RequiredRoles(['owner', 'admin']),
+    asyncHandler(DeleteProjectComment),
+  );
 
 export default projectsRouter;

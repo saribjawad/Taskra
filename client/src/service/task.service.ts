@@ -177,6 +177,7 @@ export interface UpdateTaskPayload {
   status?: TaskStatusType
   priority?: TaskPriorityType
   label?: TaskLabelType
+  teamId?: string
   assignee?: string
   reporter?: string
   clearFields?: ('assignee' | 'reporter')[]

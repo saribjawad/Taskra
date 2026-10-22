@@ -13,11 +13,13 @@ import { useGetTeamDocuments } from '#/hooks/team.hooks'
 import type { Team, TeamDocument } from '#/type/team'
 import { AddTeamDocumentDialog } from './TeamResourceDialogs'
 import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 export function TeamDocumentsPanel({ team }: { team: Team }) {
   const [selectedDocument, setSelectedDocument] = useState<TeamDocument | null>(
     null,
   )
+  const { can } = useWorkspacePermissions()
   const {
     data: documents,
     isPending,
@@ -34,7 +36,9 @@ export function TeamDocumentsPanel({ team }: { team: Team }) {
             Documents shared with {team.name}.
           </p>
         </div>
-        <AddTeamDocumentDialog teamId={team.id} />
+        {can('team:resources:update') && (
+          <AddTeamDocumentDialog teamId={team.id} />
+        )}
       </div>
 
       <div className="mt-6 divide-y divide-border/60 border-y border-border/60">

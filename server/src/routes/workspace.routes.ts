@@ -33,7 +33,10 @@ workspaceRouter.use(AuthMiddleware);
 
 workspaceRouter
   .route('/')
-  .get(asyncHandler(GetUserWorkspaces))
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetUserWorkspaces),
+  )
   .post(asyncHandler(CreateWorkspace));
 
 workspaceRouter
@@ -52,7 +55,10 @@ workspaceRouter
 
 workspaceRouter
   .route('/:workspaceId/users')
-  .get(asyncHandler(GetWorkspaceUsers));
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetWorkspaceUsers),
+  );
 workspaceRouter
   .route('/:workspaceId/dashboard')
   .get(
@@ -66,10 +72,12 @@ workspaceRouter.get(
 );
 workspaceRouter.post(
   '/invite/:token/accept',
+  RequiredRoles(['owner', 'admin', 'member', 'viewer']),
   asyncHandler(AcceptWorkspaceInvite),
 );
 workspaceRouter.post(
   '/invite/:token/decline',
+  RequiredRoles(['owner', 'admin', 'member', 'viewer']),
   asyncHandler(DeclineWorkspaceInvite),
 );
 workspaceRouter.post(
@@ -82,6 +90,11 @@ workspaceRouter.post(
   RequiredRoles(['owner', 'admin']),
   asyncHandler(ResendWorkspaceInvite),
 );
-workspaceRouter.route('/:workspaceId/projects').get(asyncHandler(GetProjects));
+workspaceRouter
+  .route('/:workspaceId/projects')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetProjects),
+  );
 
 export default workspaceRouter;

@@ -96,6 +96,7 @@ export const useCreateTask = () => {
         },
       })
       queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
+      queryClient.invalidateQueries({ queryKey: ['team-tasks'] })
 
       // TODO: show the toast
       console.log('Successfully created the task')

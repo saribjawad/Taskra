@@ -180,6 +180,20 @@ export const UpdateProject = async (req: Request, res: Response) => {
 
   const project = await requireProject(projectId, user.activeWorkspace);
 
+  if (parsedBody.teamId !== undefined) {
+    if (user.role !== 'owner' && user.role !== 'admin') {
+      throw ApiError.forbidden(
+        'Only workspace admins and owners can change a project team',
+      );
+    }
+
+    const team = await getTeamByIdAndWorkspaceId(
+      parsedBody.teamId,
+      user.activeWorkspace,
+    );
+    if (!team) throw ApiError.notFound('Team not found');
+  }
+
   let leadUser;
   if (parsedBody.leadId) {
     leadUser = await findUserById(parsedBody.leadId);
@@ -206,6 +220,7 @@ export const UpdateProject = async (req: Request, res: Response) => {
       description: parsedBody.description,
       priority: parsedBody.priority,
       status: parsedBody.status,
+      team_id: parsedBody.teamId,
       lead_id: parsedBody.leadId,
       start_date: parsedBody.startDate,
       target_date: parsedBody.targetDate,

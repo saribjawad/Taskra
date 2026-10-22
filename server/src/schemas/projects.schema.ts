@@ -66,6 +66,7 @@ export const CreateProjectSchema = z.object({
 });
 
 export const UpdateProjectSchema = z.object({
+  teamId: z.uuid('Invalid team UUID').optional(),
   name: z
     .string('Invalid Name')
     .min(1, 'Name is required')

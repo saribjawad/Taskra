@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback } from '#/components/ui/avatar'
 import { LABEL_ITEMS, PRIORITY_ITEMS, STATUS_ITEMS } from '#/constants'
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { useUpdateTask } from '#/hooks/task.hook'
-import { TeamOverviewLink } from '#/components/teams/TeamOverviewLink'
+import { TeamProperty } from '#/components/teams/TeamProperty'
 import {
   avatarColor,
   cn,
@@ -215,7 +215,19 @@ export default function TaskProperties({
       <h2 className="mb-3 text-sm font-medium">Properties</h2>
       <dl>
         <Property label="Team">
-          <TeamOverviewLink team={task.team} workspaceId={workspaceId} />
+          <TeamProperty
+            team={task.team}
+            workspaceId={workspaceId}
+            disabled={locked}
+            onChange={async (teamId) => {
+              try {
+                await save({ teamId })
+                return true
+              } catch {
+                return false
+              }
+            }}
+          />
         </Property>
         {peopleProperty('assignee', 'Assignee')}
         {peopleProperty('reporter', 'Reporter')}

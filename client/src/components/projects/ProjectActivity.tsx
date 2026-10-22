@@ -294,7 +294,7 @@ export default function ProjectActivity({
                 compact={compact}
                 isAuthor={entry.userId === user?.id}
                 canEdit={can('comment:update')}
-                canDelete={can('comment:delete')}
+                canDelete={can('project:comment:delete')}
                 onEdit={() => {
                   setSelectedComment(entry)
                   setUpdateDialogOpen(true)

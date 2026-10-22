@@ -26,6 +26,7 @@ import {
 import { useGetWorkspaceUsers } from '#/hooks/workspace.hooks'
 import { getInitials } from '#/lib/utils'
 import type { Team } from '#/type/team'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 function AddMembersDialog({
   team,
@@ -195,6 +196,8 @@ export function TeamMembersPanel({
   team: Team
   workspaceId: string
 }) {
+  const { can } = useWorkspacePermissions()
+  const canManageMembers = can('team:members:update')
   const [search, setSearch] = useState('')
   const {
     data: members = [],
@@ -229,11 +232,13 @@ export function TeamMembersPanel({
             {team.name}.
           </p>
         </div>
-        <AddMembersDialog
-          team={team}
-          workspaceId={workspaceId}
-          currentMemberIds={memberIds}
-        />
+        {canManageMembers && (
+          <AddMembersDialog
+            team={team}
+            workspaceId={workspaceId}
+            currentMemberIds={memberIds}
+          />
+        )}
       </div>
 
       <div className="relative mt-6">
@@ -270,7 +275,7 @@ export function TeamMembersPanel({
         ) : visibleMembers.length ? (
           visibleMembers.map((member) => {
             const isLastMember = members.length === 1
-            const removeButton = (
+            const removeButton = canManageMembers && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -303,7 +308,7 @@ export function TeamMembersPanel({
                     </p>
                   </div>
                 </div>
-                {isLastMember ? (
+                {canManageMembers && isLastMember ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span tabIndex={0} className="inline-flex shrink-0">
@@ -314,9 +319,9 @@ export function TeamMembersPanel({
                       The last member can’t be removed from the team.
                     </TooltipContent>
                   </Tooltip>
-                ) : (
+                ) : canManageMembers ? (
                   removeButton
-                )}
+                ) : null}
                 {isRemoving && removingMemberId === member.id && (
                   <span className="sr-only">Removing {member.username}</span>
                 )}

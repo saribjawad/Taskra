@@ -181,6 +181,7 @@ export const updateProject = async (
     description?: string;
     priority?: ProjectPriorityType;
     status?: ProjectStatusType;
+    team_id?: string;
     lead_id?: string;
     start_date?: Date;
     target_date?: Date;

@@ -33,6 +33,7 @@ import { useProjectMilestoneActions } from '#/hooks/project.hooks'
 import type { ProjectDetail, ProjectMilestone } from '#/type/project'
 import { cn } from '#/lib/utils'
 import { formatProjectDate } from './project-presentation'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 function dateInputValue(value: string | null) {
   return value?.slice(0, 10) ?? ''
@@ -56,6 +57,9 @@ export default function ProjectMilestones({
   const [description, setDescription] = useState('')
   const [targetDate, setTargetDate] = useState('')
   const actions = useProjectMilestoneActions(project.workspace_id, project.id)
+  const { can } = useWorkspacePermissions()
+  const canCreate = can('project:milestone:create')
+  const canUpdate = can('project:milestone:update')
   const busy =
     actions.create.isPending ||
     actions.update.isPending ||
@@ -193,17 +197,19 @@ export default function ProjectMilestones({
         <h2 id={headingId} className="text-sm font-medium">
           Milestones
         </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Add milestone"
-          title="Add milestone"
-          disabled={busy || editing !== null}
-          onClick={() => startEditing('new')}
-        >
-          <Plus className="size-4" />
-        </Button>
+        {canCreate && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Add milestone"
+            title="Add milestone"
+            disabled={busy || editing !== null}
+            onClick={() => startEditing('new')}
+          >
+            <Plus className="size-4" />
+          </Button>
+        )}
       </div>
       <ul className="space-y-1">
         {project.milestones.map((milestone) => (
@@ -241,32 +247,34 @@ export default function ProjectMilestones({
                       <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
                     )}
                   </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        className="size-7 shrink-0"
-                        aria-label={`Options for ${milestone.name}`}
-                      >
-                        <Ellipsis className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-32">
-                      <DropdownMenuItem
-                        onSelect={() => startEditing(milestone)}
-                      >
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onSelect={() => setDeleteTarget(milestone)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {canUpdate && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="size-7 shrink-0"
+                          aria-label={`Options for ${milestone.name}`}
+                        >
+                          <Ellipsis className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-32">
+                        <DropdownMenuItem
+                          onSelect={() => startEditing(milestone)}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onSelect={() => setDeleteTarget(milestone)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
                 {expandedId === milestone.id && (
                   <p className="px-5 pb-3 text-xs leading-5 whitespace-pre-wrap text-muted-foreground">

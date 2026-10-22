@@ -2,6 +2,18 @@ import type { MemberRole } from '#/type'
 
 // Mirrors RequiredRoles in the server routes.
 export const permissions = {
+  'project:create': ['owner', 'admin'],
+  'project:update': ['owner', 'admin', 'member'],
+  'project:delete': ['owner', 'admin'],
+  'project:members:update': ['owner', 'admin'],
+  'project:milestone:create': ['owner', 'admin'],
+  'project:milestone:update': ['owner', 'admin', 'member'],
+  'project:comment:delete': ['owner', 'admin'],
+  'team:create': ['owner', 'admin'],
+  'team:delete': ['owner', 'admin'],
+  'team:members:update': ['owner', 'admin'],
+  'team:resources:update': ['owner', 'admin', 'member'],
+  'team:update': ['owner', 'admin'],
   'task:create': ['owner', 'admin', 'member'],
   'task:update': ['owner', 'admin', 'member'],
   'task:complete': ['owner', 'admin', 'member'],

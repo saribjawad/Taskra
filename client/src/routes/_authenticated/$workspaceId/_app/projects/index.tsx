@@ -20,6 +20,7 @@ import {
   formatProjectDate as formatDate,
 } from '#/components/projects/project-presentation'
 import { cn } from '#/lib/utils'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 const pageSizes = [10, 20, 50]
 
@@ -47,30 +48,33 @@ function ProjectsPage() {
     limit,
   )
   const { data: members } = useGetWorkspaceUsers(workspaceId)
+  const { can } = useWorkspacePermissions()
 
   return (
     <PageLayout
       title="Projects"
       actions={
-        <CreateProjectDialog
-          key={workspaceId}
-          workspaceId={workspaceId}
-          isDialogOpen={isDialogOpen}
-          setIsDialogOpen={setIsDialogOpen}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <Plus className="size-4" />
-              New project
-            </Button>
-          }
-          onCreated={() => {
-            void navigate({ search: { page: 1, limit } })
-          }}
-        />
+        can('project:create') && (
+          <CreateProjectDialog
+            key={workspaceId}
+            workspaceId={workspaceId}
+            isDialogOpen={isDialogOpen}
+            setIsDialogOpen={setIsDialogOpen}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDialogOpen(true)}
+              >
+                <Plus className="size-4" />
+                New project
+              </Button>
+            }
+            onCreated={() => {
+              void navigate({ search: { page: 1, limit } })
+            }}
+          />
+        )
       }
     >
       <p className="mb-6 text-sm text-muted-foreground">

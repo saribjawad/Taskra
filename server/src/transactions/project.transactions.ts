@@ -110,6 +110,7 @@ interface UpdateProjectWorkflowInput {
     description?: string;
     priority?: ProjectPriorityType;
     status?: ProjectStatusType;
+    team_id?: string;
     lead_id?: string;
     start_date?: Date;
     target_date?: Date;
@@ -136,7 +137,9 @@ export const updateProjectWorkflow = async (
     await updateProject({ id: project.id, ...payload }, txClient);
 
     // Create project activities
-    const activityMap: Record<keyof typeof payload, ProjectActivityType> = {
+    const activityMap: Partial<
+      Record<keyof typeof payload, ProjectActivityType>
+    > = {
       name: 'project_updated',
       short_summary: 'project_updated',
       description: 'project_updated',
@@ -151,6 +154,7 @@ export const updateProjectWorkflow = async (
     for (const [field, activityType] of Object.entries(activityMap)) {
       const key = field as keyof typeof payload;
       if (
+        activityType &&
         payload[key] !== undefined &&
         payload[key] !== project[field as keyof Project]
       ) {

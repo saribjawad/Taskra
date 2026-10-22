@@ -8,6 +8,7 @@ import { getInitials } from '#/lib/utils'
 import type { Team } from '#/type/team'
 import { DeleteTeamDialog } from './DeleteTeamDialog'
 import { AddTeamLinkDialog } from './TeamResourceDialogs'
+import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
 
 export function TeamOverview({
   team,
@@ -22,6 +23,7 @@ export function TeamOverview({
 }) {
   const { data: links, isPending, isError, refetch } = useGetTeamLinks(team.id)
   const { data: members = [] } = useGetTeamMembers(team.id)
+  const { can } = useWorkspacePermissions()
 
   return (
     <div className="mx-auto grid w-full max-w-5xl gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_220px] lg:gap-16">
@@ -34,12 +36,14 @@ export function TeamOverview({
               </div>
               <h1 className="truncate text-xl font-semibold">{team.name}</h1>
             </div>
-            <DeleteTeamDialog
-              team={team}
-              workspaceId={workspaceId}
-              isLastTeam={isLastTeam}
-              onDeleted={onDeleted}
-            />
+            {can('team:delete') && (
+              <DeleteTeamDialog
+                team={team}
+                workspaceId={workspaceId}
+                isLastTeam={isLastTeam}
+                onDeleted={onDeleted}
+              />
+            )}
           </div>
           <p className="mt-4 whitespace-pre-wrap text-sm text-muted-foreground">
             {team.description || 'Add a description…'}
@@ -48,7 +52,9 @@ export function TeamOverview({
 
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-medium">Team resources</h2>
-          <AddTeamLinkDialog teamId={team.id} />
+          {can('team:resources:update') && (
+            <AddTeamLinkDialog teamId={team.id} />
+          )}
         </div>
         <div className="mt-3 divide-y divide-border/50">
           {isPending ? (

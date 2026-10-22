@@ -15,11 +15,11 @@ import {
 import { toast } from 'sonner'
 import { isAxiosError } from 'axios'
 
-export function useGetTeams(workspaceId: string) {
+export function useGetTeams(workspaceId: string, enabled = true) {
   return useQuery({
     queryKey: ['teams', workspaceId],
     queryFn: getTeams,
-    enabled: Boolean(workspaceId),
+    enabled: enabled && Boolean(workspaceId),
   })
 }
 

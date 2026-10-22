@@ -16,8 +16,10 @@ import type { ProjectDetail } from '#/type/project'
 
 export default function ProjectMemberPicker({
   project,
+  disabled = false,
 }: {
   project: ProjectDetail
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -113,6 +115,7 @@ export default function ProjectMemberPicker({
         <Button
           variant="ghost"
           size="sm"
+          disabled={disabled}
           className="-ml-2 h-auto max-w-full justify-start gap-2 px-2 py-0.5 text-xs font-normal"
           aria-label="Change project members"
         >
