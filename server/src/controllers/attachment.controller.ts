@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import z from 'zod';
 import { ApiResponse } from '../utils/ApiResponse';
-import { getAttachmentById } from '../services/attachment.service';
+import {
+  getAttachmentById,
+  getAttachmentOwnerWorkspaceId,
+} from '../services/attachment.service';
 import { ApiError } from '../utils/ApiErrors';
 import { generatePresignedUrl } from '../config/s3';
-import { findTaskByIdAndWorkspaceId } from '../services/task.service';
 
 // ==================================================================================
 // Attachment Controllers
@@ -25,12 +27,8 @@ export const GetPresignedUrlOfAttachment = async (
     throw ApiError.notFound('Unable to found the attachment');
   }
 
-  const task = await findTaskByIdAndWorkspaceId(
-    attachment.task_id,
-    activeWorkspaceId,
-  );
-
-  if (!task) {
+  const ownerWorkspaceId = await getAttachmentOwnerWorkspaceId(attachment);
+  if (ownerWorkspaceId !== activeWorkspaceId) {
     throw ApiError.unauthorized('You are not member of this workspace');
   }
 

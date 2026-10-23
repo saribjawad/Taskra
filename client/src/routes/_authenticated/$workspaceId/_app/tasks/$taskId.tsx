@@ -6,6 +6,7 @@ import TaskDescriptionViewer from '#/components/tasks/TaskDescriptionViewer'
 import TaskProjectPicker from '#/components/tasks/TaskProjectPicker'
 import EditTaskDialog from '#/components/tasks/UpdateTaskDialog'
 import TaskProperties from '#/components/tasks/TaskProperties'
+import SubTasksSection from '#/components/tasks/SubTasksSection'
 import {
   ActivityEventRow,
   ActivityEventSkeleton,
@@ -61,7 +62,13 @@ import {
 } from '#/lib/utils'
 import type { TaskEventActivity } from '#/type'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createFileRoute, useNavigate, useParams } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Outlet,
+  useMatches,
+  useNavigate,
+  useParams,
+} from '@tanstack/react-router'
 import {
   CheckCircle2,
   Circle,
@@ -151,6 +158,15 @@ const CreateCommentSchema = z.object({
 })
 
 function RouteComponent() {
+  const isSubTaskRoute = useMatches({
+    select: (matches) =>
+      matches.some((match) => match.routeId.endsWith('/sub-tasks/$subTaskId')),
+  })
+
+  return isSubTaskRoute ? <Outlet /> : <TaskDetailPage />
+}
+
+function TaskDetailPage() {
   const { can } = useWorkspacePermissions()
   // Hooks
   const { user } = useAuth()
@@ -545,6 +561,11 @@ function RouteComponent() {
                     </div>
                   </section>
                 )}
+
+                <SubTasksSection
+                  taskId={task.id}
+                  workspaceId={task.workspace_id}
+                />
 
                 <section className="space-y-5">
                   <div className="flex items-center justify-between border-b pb-3">

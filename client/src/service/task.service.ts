@@ -94,6 +94,112 @@ export interface GetTaskResponse {
   attachments: Attachments[]
 }
 
+export type SubTaskAttachment = {
+  id: string
+  name: string
+  size: number
+  mime_type: AttachmentsMimeTypes
+  storage_id: string
+  created_at: string
+}
+
+export type SubTask = {
+  id: string
+  title: string
+  description: string | null
+  status: TaskStatusType
+  priority: TaskPriorityType
+  label: TaskLabelType | null
+  assignee: string | null
+  task_id?: string
+  created_at?: string
+  updated_at?: string
+  attachments?: SubTaskAttachment[]
+}
+
+export type SubTaskSummary = Pick<
+  SubTask,
+  'id' | 'title' | 'status' | 'priority' | 'label' | 'assignee'
+>
+
+export type CreateSubTaskPayload = {
+  title: string
+  description?: string
+  status?: TaskStatusType
+  priority?: TaskPriorityType
+  label?: TaskLabelType
+  assignee?: string
+  attachments?: File[]
+}
+
+export type UpdateSubTaskPayload = Partial<
+  Pick<SubTask, 'title' | 'description' | 'status' | 'priority' | 'label'>
+> & {
+  assignee?: string
+  clearFields?: 'assignee'[]
+  attachments?: File[]
+  removedAttachmentIds?: string[]
+}
+
+export async function getSubTasks(taskId: string): Promise<SubTaskSummary[]> {
+  const response = await api.get(`/tasks/${taskId}/sub-tasks`)
+  return response.data.data
+}
+
+export async function getSubTask(
+  taskId: string,
+  subTaskId: string,
+): Promise<SubTask> {
+  const response = await api.get(`/tasks/${taskId}/sub-tasks/${subTaskId}`)
+  return response.data.data
+}
+
+function appendSubTaskFiles(formData: FormData, attachments?: File[]) {
+  attachments?.forEach((file) => {
+    const field = ACCEPTED_IMAGE_TYPES.includes(file.type)
+      ? 'images'
+      : file.type === 'application/pdf'
+        ? 'pdf'
+        : 'document'
+    formData.append(field, file)
+  })
+}
+
+export async function createSubTask(
+  taskId: string,
+  payload: CreateSubTaskPayload,
+) {
+  const { attachments, ...fields } = payload
+  const formData = new FormData()
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) formData.append(key, value)
+  })
+  appendSubTaskFiles(formData, attachments)
+  await api.post(`/tasks/${taskId}/sub-tasks`, formData)
+}
+
+export async function updateSubTask(
+  taskId: string,
+  subTaskId: string,
+  payload: UpdateSubTaskPayload,
+) {
+  const { attachments, clearFields, removedAttachmentIds, ...fields } = payload
+  const formData = new FormData()
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value !== undefined) formData.append(key, value === null ? '' : value)
+  })
+  clearFields?.forEach((field) => formData.append('clearFields', field))
+  removedAttachmentIds?.forEach((id) =>
+    formData.append('removedAttachmentIds[]', id),
+  )
+  appendSubTaskFiles(formData, attachments)
+  await api.patch(`/tasks/${taskId}/sub-tasks/${subTaskId}`, formData)
+}
+
+export async function deleteSubTask(taskId: string, subTaskId: string) {
+  await api.delete(`/tasks/${taskId}/sub-tasks/${subTaskId}`)
+}
+
 export async function connectTaskToProject(
   taskId: string,
   payload: { projectId: string | null; milestoneId?: string },

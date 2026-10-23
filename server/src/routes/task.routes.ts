@@ -20,6 +20,14 @@ import {
   DeleteComment,
   UpdateComment,
 } from '../controllers/taskComments.controller';
+import {
+  CreateSubTask,
+  DeleteSubTask,
+  GetSubTask,
+  GetSubTaskAttachmentUrl,
+  GetSubTasks,
+  UpdateSubTask,
+} from '../controllers/subTasks.controller';
 
 const taskRouter = Router();
 taskRouter.use(AuthMiddleware);
@@ -101,6 +109,49 @@ taskRouter
   .post(
     RequiredRoles(['owner', 'admin', 'member']),
     asyncHandler(ConnectTaskToProject),
+  );
+
+taskRouter
+  .route('/:taskId/sub-tasks')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetSubTasks),
+  )
+  .post(
+    upload.fields([
+      { name: 'images', maxCount: 3 },
+      { name: 'pdf', maxCount: 1 },
+      { name: 'document', maxCount: 1 },
+    ]),
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(CreateSubTask),
+  );
+
+taskRouter
+  .route('/:taskId/sub-tasks/:subTaskId')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetSubTask),
+  )
+  .patch(
+    upload.fields([
+      { name: 'images', maxCount: 3 },
+      { name: 'pdf', maxCount: 1 },
+      { name: 'document', maxCount: 1 },
+    ]),
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(UpdateSubTask),
+  )
+  .delete(
+    RequiredRoles(['owner', 'admin', 'member']),
+    asyncHandler(DeleteSubTask),
+  );
+
+taskRouter
+  .route('/:taskId/sub-tasks/:subTaskId/attachments/:attachmentId')
+  .get(
+    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
+    asyncHandler(GetSubTaskAttachmentUrl),
   );
 
 taskRouter

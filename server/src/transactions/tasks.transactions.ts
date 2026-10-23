@@ -139,6 +139,7 @@ export const createTaskWorkflow = async (data: CreateTaskWorkflowInput) => {
           // Save the attachment in DB
           await createAttachment(
             {
+              type: 'task',
               taskId: task.id,
               name: f.originalname,
               size: f.size,
@@ -278,6 +279,7 @@ export const updateTaskWorkflow = async (data: UpdateTaskWorkflowInput) => {
         const file = files[i];
         await createAttachment(
           {
+            type: 'task',
             taskId: task.id,
             name: file.originalname,
             size: file.size,

@@ -4,16 +4,23 @@ import {
   createTask,
   connectTaskToProject,
   deleteTask,
+  createSubTask,
+  deleteSubTask,
   getTaskActivities,
   getTaskById,
+  getSubTask,
+  getSubTasks,
   getTasks,
   markTaskAsCompleted,
   updateTask,
+  updateSubTask,
 } from '#/service/task.service'
 import type {
   CreateTaskParams,
   GetTasksParams,
   UpdateTaskPayload,
+  CreateSubTaskPayload,
+  UpdateSubTaskPayload,
 } from '#/service/task.service'
 import {
   useInfiniteQuery,
@@ -75,6 +82,62 @@ export const useGetTaskById = ({ taskId }: { taskId: string }) => {
   return useQuery({
     queryKey: [`task-${taskId}`],
     queryFn: () => getTaskById(taskId),
+  })
+}
+
+export const useGetSubTasks = (taskId: string) =>
+  useQuery({
+    queryKey: ['task-subtasks', taskId],
+    queryFn: () => getSubTasks(taskId),
+    enabled: Boolean(taskId),
+  })
+
+export const useGetSubTask = (taskId: string, subTaskId: string) =>
+  useQuery({
+    queryKey: ['subtask', taskId, subTaskId],
+    queryFn: () => getSubTask(taskId, subTaskId),
+    enabled: Boolean(taskId && subTaskId),
+  })
+
+export const useCreateSubTask = (taskId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: CreateSubTaskPayload) =>
+      createSubTask(taskId, payload),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['task-subtasks', taskId] }),
+        queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
+      ]),
+  })
+}
+
+export const useUpdateSubTask = (taskId: string, subTaskId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (payload: UpdateSubTaskPayload) =>
+      updateSubTask(taskId, subTaskId, payload),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['task-subtasks', taskId] }),
+        queryClient.invalidateQueries({
+          queryKey: ['subtask', taskId, subTaskId],
+        }),
+        queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
+      ]),
+  })
+}
+
+export const useDeleteSubTask = (taskId: string) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (subTaskId: string) => deleteSubTask(taskId, subTaskId),
+    onSuccess: (_, subTaskId) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['task-subtasks', taskId] }),
+        queryClient.removeQueries({ queryKey: ['subtask', taskId, subTaskId] }),
+        queryClient.invalidateQueries({ queryKey: [`task-${taskId}`] }),
+      ]),
   })
 }
 
