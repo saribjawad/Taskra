@@ -33,5 +33,5 @@ export function hasPermission(
   action: PermissionAction,
 ): boolean {
   const allowedRoles: readonly MemberRole[] = permissions[action]
-  return role != null && allowedRoles.includes(role)
+  return role != null && allowedRoles?.includes(role)
 }
