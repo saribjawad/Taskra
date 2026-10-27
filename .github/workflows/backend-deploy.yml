@@ -30,7 +30,7 @@ jobs:
         working-directory: ./server
 
       - name: Building docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest ./server
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest ./server
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
@@ -39,7 +39,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Push Image to Docker Hub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
@@ -48,11 +48,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
             docker run -rm \
               --network taskra \
-              ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest \
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest \
               npm run migrate:up
 
             docker stop taskra-backend-app || true
@@ -63,6 +63,6 @@ jobs:
               --network taskra-network \
               --name taskra-backend-app \
               --restart unless-stopped \
-              ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
             docker image prune -f
