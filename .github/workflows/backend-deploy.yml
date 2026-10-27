@@ -55,6 +55,7 @@ jobs:
 
             docker run --rm \
               --network taskra \
+              --env-file /home/ubuntu/.env \
               ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest \
               npm run migrate:up
 
@@ -65,6 +66,7 @@ jobs:
               -p 3000:3000 \
               --network taskra-network \
               --name taskra-backend-app \
+              --env-file /home/ubuntu/.env \
               --restart unless-stopped \
               ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
