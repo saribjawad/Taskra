@@ -1,0 +1,13 @@
+FROM node:24 AS base
+
+WORKDIR /app
+
+COPY package*.json ./
+
+EXPOSE 8081
+
+RUN npm install
+
+COPY . .
+
+CMD ["node", "dist/server.js"]
