@@ -28,7 +28,7 @@ jobs:
         run: |
           npm ci
           npm test
-        working-directory: ./server 
+        working-directory: ./server
 
       - name: Building docker image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest ./server
@@ -43,7 +43,7 @@ jobs:
         run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@1.2.0
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -55,15 +55,15 @@ jobs:
               --network taskra \
               ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest \
               npm run migrate:up
-            
+
             docker stop taskra-backend-app || true
             docker rm taskra-backend-app || true
-            
+
             docker run -d \
               -p 3000:3000 \
               --network taskra-network \
               --name taskra-backend-app \
               --restart unless-stopped \
               ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
-            
+
             docker image prune -f
