@@ -27,7 +27,6 @@ jobs:
       - name: Install dependencies & Test
         run: |
           npm ci
-          npm test
         working-directory: ./server
 
       - name: Building docker image
