@@ -1,0 +1,69 @@
+name: backend-build-and-deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "server/**"
+      - ".github/workflows/backend-deploy.yml"
+
+env:
+  BACKEND_IMAGE_NAME: taskra-backend-app
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v7
+
+      - name: Setting up Node JS
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24.20"
+
+      - name: Install dependencies & Test
+        run: |
+          npm ci
+          npm test
+        working-directory: ./server 
+
+      - name: Building docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest ./server
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+
+            docker run -rm \
+              --network taskra \
+              ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest \
+              npm run migrate:up
+            
+            docker stop taskra-backend-app || true
+            docker rm taskra-backend-app || true
+            
+            docker run -d \
+              -p 3000:3000 \
+              --network taskra-network \
+              --name taskra-backend-app \
+              --restart unless-stopped \
+              ${{ secrets.DOCKER_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+            
+            docker image prune -f
