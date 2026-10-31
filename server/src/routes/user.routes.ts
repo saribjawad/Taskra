@@ -9,10 +9,7 @@ userRouter.use(AuthMiddleware);
 
 userRouter
   .route('/me')
-  .get(
-    RequiredRoles(['owner', 'admin', 'member', 'viewer']),
-    asyncHandler(GetCurrentUser),
-  )
+  .get(asyncHandler(GetCurrentUser))
   .patch(
     RequiredRoles(['owner', 'admin', 'member', 'viewer']),
     asyncHandler(UpdateUser),
