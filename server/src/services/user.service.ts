@@ -54,7 +54,7 @@ const createUser = async (
   username: string,
   email: string,
   hashedPassword: string,
-) => {
+): Promise<User> => {
   const result = await dbPool.query(
     `
     INSERT INTO users(full_name, username, email, hashed_password)

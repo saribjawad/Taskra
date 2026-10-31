@@ -406,6 +406,7 @@ export const InviteToWorkspace = async (req: Request, res: Response) => {
         user.username,
         workspace.name,
         invitationLink,
+        email,
       );
 
       response.invited.push(`Invitation has been sent to ${email}`);
@@ -673,7 +674,12 @@ export const ResendWorkspaceInvite = async (req: Request, res: Response) => {
   // Send the email to the user
   try {
     const invitationLink = `${env.APP_URL}/invite?token=${token}`;
-    await sendInviteToWorkspace(user.username, workspace.name, invitationLink);
+    await sendInviteToWorkspace(
+      user.username,
+      workspace.name,
+      invitationLink,
+      user.email,
+    );
   } catch (error) {
     throw ApiError.internal(
       'Something went wrong while sending invitation email',

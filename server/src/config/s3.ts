@@ -11,7 +11,7 @@ import logger from '../utils/logger';
 
 // AWS s3 Client
 const s3 = new S3Client({
-  region: 'us-east-1',
+  region: env.AWS_REGION,
   credentials: {
     accessKeyId: env.AWS_ACCESS_KEY_ID,
     secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
@@ -43,6 +43,7 @@ export async function uploadFileToS3(
       error instanceof S3ServiceException &&
       error.name === 'EntityTooLarge'
     ) {
+      console.log(env);
       logger.error(
         `Error from S3 while uploading object to ${env.AWS_BUCKET_NAME}. \
         The object was too large. To upload objects larger than 5GB, use the S3 console (160GB max) \

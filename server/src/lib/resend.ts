@@ -4,10 +4,10 @@ import { env } from '../config/env';
 // Init resend
 const resend = new Resend(env.RESEND_SECRET);
 
-export async function sendVerificationEmail(code: string) {
+export async function sendVerificationEmail(code: string, email: string) {
   const { error } = await resend.emails.send({
-    from: 'Acme <onboarding@resend.dev>',
-    to: ['msssarib12@gmail.com'],
+    from: env.RESEND_EMAIL_FROM,
+    to: [email],
     template: {
       id: 'verification-template',
       variables: {
@@ -22,10 +22,10 @@ export async function sendVerificationEmail(code: string) {
   }
 }
 
-export async function sendResetPasswordLinkEmail(link: string) {
+export async function sendResetPasswordLinkEmail(link: string, email: string) {
   const { error } = await resend.emails.send({
-    from: 'Acme <onboarding@resend.dev>',
-    to: ['msssarib12@gmail.com'],
+    from: env.RESEND_EMAIL_FROM,
+    to: [email],
     template: {
       id: 'reset-password-link-template',
       variables: {
@@ -44,10 +44,11 @@ export async function sendInviteToWorkspace(
   inviterName: string,
   workspaceName: string,
   link: string,
+  email: string,
 ) {
   const { error } = await resend.emails.send({
-    from: 'Acme <onboarding@resend.dev>',
-    to: ['msssarib12@gmail.com'],
+    from: env.RESEND_EMAIL_FROM,
+    to: [email],
     template: {
       id: 'workspace-invitation',
       variables: {

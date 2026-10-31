@@ -70,7 +70,7 @@ export const LoginUser = async (req: Request, res: Response) => {
     // Delete the previous verfication codes of the user
     await deleteUserVerificationsCode(user.id);
     // Send and create verification code
-    await sendVerificationCode(user.id);
+    await sendVerificationCode(user.id, user.email);
 
     throw new ApiError(403, 'Please verify the user to get started');
   }
@@ -144,7 +144,7 @@ export const SignUpUser = async (req: Request, res: Response) => {
     // Delete the previous verfication codes of the user
     await deleteUserVerificationsCode(userWithEmailExist.id);
     // Send and create verification code
-    await sendVerificationCode(userWithEmailExist.id);
+    await sendVerificationCode(userWithEmailExist.id, email);
 
     return res
       .status(200)
@@ -168,7 +168,7 @@ export const SignUpUser = async (req: Request, res: Response) => {
   );
 
   // Send and create verification code
-  await sendVerificationCode(createdUser.id);
+  await sendVerificationCode(createdUser.id, createdUser.email);
 
   res
     .status(201)
@@ -322,7 +322,7 @@ export const ResendCode = async (req: Request, res: Response) => {
   await deleteUserVerificationsCode(user.id);
 
   // Send and create verification code
-  await sendVerificationCode(user.id);
+  await sendVerificationCode(user.id, user.email);
 
   // TODO: add rate limiting
   res
@@ -366,6 +366,7 @@ export const ForgotPassword = async (req: Request, res: Response) => {
 
   await sendResetPasswordLinkEmail(
     `${env.APP_URL}/reset-password?token=${rawToken}`,
+    user.email,
   );
 
   return res
@@ -444,11 +445,11 @@ function generateCode() {
  * @param userIb - Interal user UUID
  * @returns Promise<Void>
  */
-async function sendVerificationCode(userId: string) {
+async function sendVerificationCode(userId: string, userEmail: string) {
   const verificationCode = generateCode();
 
   const expiryDate = moment().add(10, 'm').toDate();
 
   await createVerification(verificationCode, userId, expiryDate);
-  await sendVerificationEmail(verificationCode);
+  await sendVerificationEmail(verificationCode, userEmail);
 }

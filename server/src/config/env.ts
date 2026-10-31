@@ -15,6 +15,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   REFRESH_SECRET: z.string(),
   RESEND_SECRET: z.string(),
+  RESEND_EMAIL_FROM: z.string(),
   VERIFY_TOKEN_SECRET: z.string(),
   AWS_ACCESS_KEY_ID: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
