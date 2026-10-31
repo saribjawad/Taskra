@@ -31,6 +31,8 @@ workspaceRouter.get(
 );
 
 workspaceRouter.use(AuthMiddleware);
+workspaceRouter.post('/', asyncHandler(CreateWorkspace));
+
 workspaceRouter.use(RequrieActiveWorkspace);
 
 workspaceRouter
@@ -38,8 +40,7 @@ workspaceRouter
   .get(
     RequiredRoles(['owner', 'admin', 'member', 'viewer']),
     asyncHandler(GetUserWorkspaces),
-  )
-  .post(asyncHandler(CreateWorkspace));
+  );
 
 workspaceRouter
   .route('/:workspaceId')
