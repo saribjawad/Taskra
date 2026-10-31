@@ -6,7 +6,7 @@ const resend = new Resend(env.RESEND_SECRET);
 
 export async function sendVerificationEmail(code: string, email: string) {
   const { error } = await resend.emails.send({
-    from: env.RESEND_EMAIL_FROM,
+    from: `${env.RESEND_EMAIL_NAME} <${env.RESEND_EMAIL_ADDRESS}>`,
     to: [email],
     template: {
       id: 'verification-template',
@@ -24,7 +24,7 @@ export async function sendVerificationEmail(code: string, email: string) {
 
 export async function sendResetPasswordLinkEmail(link: string, email: string) {
   const { error } = await resend.emails.send({
-    from: env.RESEND_EMAIL_FROM,
+    from: `${env.RESEND_EMAIL_NAME} <${env.RESEND_EMAIL_ADDRESS}>`,
     to: [email],
     template: {
       id: 'reset-password-link-template',
@@ -47,7 +47,7 @@ export async function sendInviteToWorkspace(
   email: string,
 ) {
   const { error } = await resend.emails.send({
-    from: env.RESEND_EMAIL_FROM,
+    from: `${env.RESEND_EMAIL_NAME} <${env.RESEND_EMAIL_ADDRESS}>`,
     to: [email],
     template: {
       id: 'workspace-invitation',
