@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import AuthLogo from '#/components/auth/AuthLogo'
 import {
   Field,
   FieldError,
@@ -70,7 +71,9 @@ function RouteComponent() {
             <CardDescription>
               Choose a new password for your account.
             </CardDescription>
-            <CardAction>Logo</CardAction>
+            <CardAction>
+              <AuthLogo />
+            </CardAction>
           </CardHeader>
 
           <CardContent>

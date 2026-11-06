@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '#/components/ui/card'
+import AuthLogo from '#/components/auth/AuthLogo'
 import {
   Field,
   FieldError,
@@ -66,7 +67,9 @@ function RouteComponent() {
           <CardHeader>
             <CardTitle>Sign Up</CardTitle>
             <CardDescription>Create an account to get started.</CardDescription>
-            <CardAction>Logo</CardAction>
+            <CardAction>
+              <AuthLogo />
+            </CardAction>
           </CardHeader>
 
           <CardContent>
