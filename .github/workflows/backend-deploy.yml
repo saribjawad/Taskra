@@ -51,6 +51,9 @@ jobs:
             # make the script stop on any error
             set -e
 
+            # Ensure taskra network exists
+            docker network inspect taskra >/dev/null 2>&1 || docker network create taskra
+
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
             docker run --rm \
