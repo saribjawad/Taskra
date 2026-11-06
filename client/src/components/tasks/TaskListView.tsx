@@ -72,7 +72,7 @@ export function parseTaskListSearch(
   return {
     // Keep URL params defensive so bad/shared links fall back to usable values.
     page: Number.isFinite(page) && page > 0 ? page : 1,
-    limit: pageSizeItems.includes(limit) ? limit : 10,
+    limit: pageSizeItems?.includes(limit) ? limit : 10,
     search:
       typeof searchText === 'string'
         ? normalizeSearchValue(searchText)

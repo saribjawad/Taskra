@@ -21,7 +21,9 @@ import type { DashboardTaskSummary } from '#/type/dashboard'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/dashboard',
-)({ component: DashboardPage })
+)({
+  component: DashboardPage,
+})
 
 type TrendRange = 7 | 30 | 90
 

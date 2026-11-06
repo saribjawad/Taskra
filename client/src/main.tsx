@@ -6,6 +6,8 @@ import { Toaster } from './components/ui/sonner'
 import { useAuth } from './context/auth/auth-hook'
 import { AuthContextProvider } from './context/auth/auth-provider'
 import { WebsocketProvider } from './context/websocket/websocket-provider'
+import { TooltipProvider } from './components/ui/tooltip'
+import { useEffect } from 'react'
 
 export const router = createRouter({
   routeTree,
@@ -18,6 +20,12 @@ export const router = createRouter({
 
 function App() {
   const auth = useAuth()
+
+  useEffect(() => {
+    router.invalidate()
+  }, [auth.user])
+
+  if (auth.isLoading) return <div>tranqiulooooooooooooo</div>
 
   return <RouterProvider router={router} context={{ auth }} />
 }
@@ -39,8 +47,10 @@ if (!rootElement.innerHTML) {
     <QueryClientProvider client={queryClient}>
       <AuthContextProvider>
         <WebsocketProvider>
-          <Toaster position="top-right" />
-          <App />
+          <TooltipProvider>
+            <Toaster position="top-right" />
+            <App />
+          </TooltipProvider>
         </WebsocketProvider>
       </AuthContextProvider>
     </QueryClientProvider>,
