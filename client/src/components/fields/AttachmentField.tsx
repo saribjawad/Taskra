@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import { FileText, Image as ImageIcon, Paperclip, X } from 'lucide-react'
 import { cn } from '#/lib/utils'
@@ -54,6 +54,8 @@ interface AttachmentFieldProps {
   existingAttachments?: ExistingAttachment[]
   /** Called with the attachment id when the user removes an existing one. */
   onRemoveExisting?: (id: string, mimeType: string) => void
+  validateSelection?: (selected: File[], current: File[]) => string | undefined
+  helperText?: string
 }
 
 function AttachmentField({
@@ -63,8 +65,11 @@ function AttachmentField({
   error,
   existingAttachments = [],
   onRemoveExisting,
+  validateSelection,
+  helperText,
 }: AttachmentFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const [selectionError, setSelectionError] = useState('')
 
   // Revoke object URLs on unmount to avoid leaking memory
   useEffect(() => {
@@ -83,6 +88,14 @@ function AttachmentField({
     const selected = Array.from(e.target.files ?? [])
     if (selected.length === 0) return
 
+    const error = validateSelection?.(selected, value)
+    if (error) {
+      setSelectionError(error)
+      e.target.value = ''
+      return
+    }
+
+    setSelectionError('')
     onChange([...value, ...selected])
     // reset so selecting the same file twice still fires onChange
     e.target.value = ''
@@ -202,11 +215,13 @@ function AttachmentField({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Up to {MAX_IMAGES} images (JPEG, PNG, WEBP) and {MAX_DOCUMENTS} document
-        (PDF, DOC, DOCX). 5MB max per file.
+        {helperText ??
+          `Up to ${MAX_IMAGES} images (JPEG, PNG, WEBP) and ${MAX_DOCUMENTS} documents (PDF, DOC, DOCX). 5MB max per file.`}
       </p>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {(error || selectionError) && (
+        <p className="text-xs text-destructive">{error || selectionError}</p>
+      )}
     </div>
   )
 }

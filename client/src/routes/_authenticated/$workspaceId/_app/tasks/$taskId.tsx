@@ -21,6 +21,14 @@ import {
 } from '#/components/ui/breadcrumb'
 import { Button } from '#/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '#/components/ui/dialog'
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -62,6 +70,7 @@ import {
 } from '#/lib/utils'
 import type { TaskEventActivity } from '#/type'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import {
   createFileRoute,
   Outlet,
@@ -187,6 +196,8 @@ function TaskDetailPage() {
     return () => desktop.removeEventListener('change', closeOnDesktop)
   }, [])
   const [taskDeleteOpen, setTaskDeleteOpen] = useState(false)
+  const [incompleteSubTasksOpen, setIncompleteSubTasksOpen] = useState(false)
+  const [incompleteSubTaskCount, setIncompleteSubTaskCount] = useState(0)
   const [commentDeleteOpen, setCommentDeleteOpen] = useState(false)
   const [commentUpdateOpen, setCommentUpdateOpen] = useState(false)
   const [selectedCommment, setSelectedComment] = useState<{
@@ -224,8 +235,10 @@ function TaskDetailPage() {
     refetch: refetchTaskActivity,
   } = useGetTaskActivity(params.taskId!!)
   const { mutate: createComment, isPending: isCommenting } = useCreateComment()
-  const { mutate: markTaskAsComplete, isPending: isMarkingTaskAsComplete } =
-    useMarkTaskAsComplete()
+  const {
+    mutateAsync: markTaskAsComplete,
+    isPending: isMarkingTaskAsComplete,
+  } = useMarkTaskAsComplete()
   const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask()
   const { mutate: deleteComment, isPending: isDeletingComment } =
     useDeleteComment()
@@ -345,8 +358,29 @@ function TaskDetailPage() {
     )
   }
 
-  function onMarkAsComplete() {
-    if (task && task.id) markTaskAsComplete(task.id)
+  async function onMarkAsComplete(completeSubTasks = false) {
+    if (!task?.id) return
+
+    try {
+      await markTaskAsComplete({ taskId: task.id, completeSubTasks })
+      setIncompleteSubTasksOpen(false)
+    } catch (error) {
+      const response = (
+        error as {
+          response?: {
+            data?: { code?: string; errors?: { incompleteCount?: number } }
+          }
+        }
+      ).response
+
+      if (response?.data?.code === 'INCOMPLETE_SUBTASKS') {
+        setIncompleteSubTaskCount(response.data.errors?.incompleteCount ?? 0)
+        setIncompleteSubTasksOpen(true)
+        return
+      }
+
+      toast.error('Could not mark the task as done. Please try again.')
+    }
   }
 
   // The desktop sidebar and mobile sheet share the same property sections.
@@ -399,7 +433,7 @@ function TaskDetailPage() {
             <div className="flex shrink-0 items-center gap-2">
               {can('task:complete') && task.status !== 'done' ? (
                 <Button
-                  onClick={onMarkAsComplete}
+                  onClick={() => void onMarkAsComplete()}
                   size="sm"
                   variant="green"
                   className="shrink-0"
@@ -753,6 +787,39 @@ function TaskDetailPage() {
         onDelete={onTaskDelete}
         isDeleting={isDeletingTask}
       />
+      <Dialog
+        open={incompleteSubTasksOpen}
+        onOpenChange={setIncompleteSubTasksOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Some subtasks are still open</DialogTitle>
+            <DialogDescription>
+              {incompleteSubTaskCount > 0
+                ? `${incompleteSubTaskCount} ${incompleteSubTaskCount === 1 ? 'subtask is' : 'subtasks are'} not completed.`
+                : 'This task has subtasks that are not completed.'}{' '}
+              You can complete them together with this task.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIncompleteSubTasksOpen(false)}
+              disabled={isMarkingTaskAsComplete}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="green"
+              onClick={() => void onMarkAsComplete(true)}
+              disabled={isMarkingTaskAsComplete}
+            >
+              {isMarkingTaskAsComplete ? <Spinner /> : null}
+              Complete all and mark task done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <DeleteCommentDialog
         open={can('comment:delete') && commentDeleteOpen}
         onOpenChange={setCommentDeleteOpen}

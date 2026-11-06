@@ -18,6 +18,9 @@ export const TaskParamsSchema = z.object({
   taskId: z.uuid('Invalid task UUID'),
 });
 export const MarkTaskAsCompletedParamsSchema = TaskParamsSchema;
+export const MarkTaskAsCompletedBodySchema = z.object({
+  completeSubTasks: z.boolean().optional().default(false),
+});
 export const GetTaskActivityParamsSchema = TaskParamsSchema;
 export const ConnectTaskToProjectParamsSchema = TaskParamsSchema;
 

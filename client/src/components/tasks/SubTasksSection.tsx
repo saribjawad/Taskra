@@ -1,4 +1,7 @@
-import AttachmentField from '#/components/fields/AttachmentField'
+import AttachmentField, {
+  ACCEPTED_IMAGE_TYPES,
+  MAX_FILE_SIZE,
+} from '#/components/fields/AttachmentField'
 import TaskDescriptionEditor from '#/components/tasks/TaskDescriptionEditor'
 import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
@@ -96,6 +99,35 @@ function SubTaskRow({
       )}
     </div>
   )
+}
+
+function validateSubTaskFiles(selected: File[], current: File[]) {
+  const allFiles = [...current, ...selected]
+  const images = allFiles.filter((file) =>
+    ACCEPTED_IMAGE_TYPES.includes(file.type),
+  )
+  const pdfs = allFiles.filter((file) => file.type === 'application/pdf')
+  const documents = allFiles.filter(
+    (file) =>
+      file.type ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  )
+  const unsupported = allFiles.find(
+    (file) =>
+      !ACCEPTED_IMAGE_TYPES.includes(file.type) &&
+      file.type !== 'application/pdf' &&
+      file.type !==
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  )
+
+  if (allFiles.some((file) => file.size > MAX_FILE_SIZE)) {
+    return 'Each attachment must be 5 MB or smaller.'
+  }
+  if (unsupported) return 'Use JPEG, PNG, WebP, PDF, or DOCX files.'
+  if (images.length > 3) return 'Add no more than 3 images.'
+  if (pdfs.length > 1) return 'Add no more than 1 PDF.'
+  if (documents.length > 1) return 'Add no more than 1 DOCX document.'
+  return undefined
 }
 
 export default function SubTasksSection({
@@ -246,7 +278,7 @@ export default function SubTasksSection({
           {isComposing && (
             <form
               onSubmit={submitSubTask}
-              className="space-y-3 rounded-lg border bg-card/50 p-3"
+              className="space-y-3 rounded-lg border bg-card/30 p-3"
             >
               <Input
                 autoFocus
@@ -256,19 +288,23 @@ export default function SubTasksSection({
                 maxLength={250}
                 disabled={isCreating}
                 aria-label="Subtask title"
+                className="h-9 border-transparent bg-transparent px-1 text-sm font-medium shadow-none focus-visible:border-input focus-visible:bg-background"
               />
               <TaskDescriptionEditor
                 value={description}
                 onChange={setDescription}
                 disabled={isCreating}
-                className="min-h-28 rounded-md border px-3 py-2"
+                className="min-h-20 rounded-md border-0 bg-transparent px-1 py-1"
               />
               <div className="flex flex-wrap items-center gap-2">
                 <Select
                   value={status}
                   onValueChange={(value) => setStatus(value as TaskStatusType)}
                 >
-                  <SelectTrigger size="sm" className="w-auto">
+                  <SelectTrigger
+                    size="sm"
+                    className="h-7 w-auto border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-muted/60"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -285,7 +321,10 @@ export default function SubTasksSection({
                     setPriority(value as TaskPriorityType)
                   }
                 >
-                  <SelectTrigger size="sm" className="w-auto">
+                  <SelectTrigger
+                    size="sm"
+                    className="h-7 w-auto border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-muted/60"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -304,7 +343,10 @@ export default function SubTasksSection({
                     )
                   }
                 >
-                  <SelectTrigger size="sm" className="w-auto">
+                  <SelectTrigger
+                    size="sm"
+                    className="h-7 w-auto border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-muted/60"
+                  >
                     <SelectValue placeholder="Label" />
                   </SelectTrigger>
                   <SelectContent>
@@ -322,7 +364,10 @@ export default function SubTasksSection({
                     setAssignee(value === 'unassigned' ? '' : value)
                   }
                 >
-                  <SelectTrigger size="sm" className="w-auto">
+                  <SelectTrigger
+                    size="sm"
+                    className="h-7 w-auto border-transparent bg-transparent px-2 text-xs shadow-none hover:bg-muted/60"
+                  >
                     <SelectValue placeholder="Assignee" />
                   </SelectTrigger>
                   <SelectContent>
@@ -339,30 +384,37 @@ export default function SubTasksSection({
                 value={attachments}
                 onChange={setAttachments}
                 disabled={isCreating}
+                validateSelection={validateSubTaskFiles}
+                helperText="Up to 3 images, 1 PDF, and 1 DOCX. 5 MB max per file."
               />
-              <div className="flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={isCreating}
-                  onClick={resetComposer}
-                >
-                  <X /> Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!title.trim() || isCreating}
-                >
-                  {isCreating ? (
-                    'Creating…'
-                  ) : (
-                    <>
-                      <Check /> Create subtask
-                    </>
-                  )}
-                </Button>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-xs text-muted-foreground">
+                  Add a title, details, and optional files
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isCreating}
+                    onClick={resetComposer}
+                  >
+                    <X /> Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!title.trim() || isCreating}
+                  >
+                    {isCreating ? (
+                      'Creating…'
+                    ) : (
+                      <>
+                        <Check /> Create subtask
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           )}

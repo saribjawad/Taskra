@@ -7,6 +7,7 @@ import {
   GetTaskActivityQuerySchema,
   GetTaskQuerySchema,
   MarkTaskAsCompletedParamsSchema,
+  MarkTaskAsCompletedBodySchema,
   TaskParamsSchema,
   UpdateTaskSchema,
 } from '../schemas/task.schema';
@@ -326,6 +327,9 @@ export const UpdateTask = async (req: Request, res: Response) => {
 export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
   const user = req.user;
   const { taskId } = MarkTaskAsCompletedParamsSchema.parse(req.params);
+  const { completeSubTasks } = MarkTaskAsCompletedBodySchema.parse(
+    req.body ?? {},
+  );
 
   const task = await requireTask(taskId, user.activeWorkspace);
 
@@ -333,6 +337,7 @@ export const MarkTaskAsCompleted = async (req: Request, res: Response) => {
     task,
     user,
     completedDate: new Date(),
+    completeSubTasks,
   });
 
   // Notify the assignee and the reporter - Don't notify if the assignee or reporter himself is the actor

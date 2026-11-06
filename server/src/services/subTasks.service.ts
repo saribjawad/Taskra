@@ -21,6 +21,29 @@ export const getSubTasksByTaskId = async (
   return result.rows;
 };
 
+export const getIncompleteSubTaskCountByTaskId = async (
+  taskId: string,
+  txClient?: PoolClient,
+): Promise<number> => {
+  const db = txClient || dbPool;
+  const result = await db.query(
+    "SELECT COUNT(*)::int AS count FROM sub_tasks WHERE task_id = $1 AND status <> 'done'",
+    [taskId],
+  );
+  return result.rows[0].count;
+};
+
+export const markSubTasksAsComplete = async (
+  taskId: string,
+  txClient?: PoolClient,
+): Promise<void> => {
+  const db = txClient || dbPool;
+  await db.query(
+    "UPDATE sub_tasks SET status = 'done' WHERE task_id = $1 AND status <> 'done'",
+    [taskId],
+  );
+};
+
 export const getSubTaskDetailsByIdAndTaskId = async (
   subTaskId: string,
   taskId: string,

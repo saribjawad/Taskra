@@ -160,9 +160,6 @@ export const useCreateTask = () => {
       })
       queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
       queryClient.invalidateQueries({ queryKey: ['team-tasks'] })
-
-      // TODO: show the toast
-      console.log('Successfully created the task')
     },
   })
 }
@@ -171,18 +168,17 @@ export const useMarkTaskAsComplete = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (taskId: string) => markTaskAsCompleted(taskId),
-    onSuccess: (_, taskId) => {
+    mutationFn: (params: { taskId: string; completeSubTasks?: boolean }) =>
+      markTaskAsCompleted(params.taskId, params.completeSubTasks),
+    onSuccess: (_, { taskId }) => {
       queryClient.invalidateQueries({
         queryKey: [`task-${taskId}`],
       })
       queryClient.invalidateQueries({
         queryKey: [`task-activity-${taskId}`],
       })
+      queryClient.invalidateQueries({ queryKey: ['task-subtasks', taskId] })
       queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
-
-      // TODO: show the toast
-      console.log('Successfully marked task as completed')
     },
   })
 }
@@ -205,9 +201,6 @@ export const useDeleteTask = () => {
         },
       })
       queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
-
-      // TODO: show the toast
-      console.log('Successfully deleted the task')
     },
   })
 }
@@ -234,9 +227,6 @@ export const useUpdateTask = () => {
         queryKey: ['tasks'],
       })
       queryClient.invalidateQueries({ queryKey: ['project-task-progress'] })
-
-      // TODO: show the toast
-      console.log('Successfully updated the task')
     },
   })
 }

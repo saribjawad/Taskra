@@ -17,6 +17,10 @@ import logger from '../utils/logger';
 import { Task } from '../models/task.model';
 import { TaskActivityType } from '../models/taskActivity.model';
 import { ApiError } from '../utils/ApiErrors';
+import {
+  getIncompleteSubTaskCountByTaskId,
+  markSubTasksAsComplete,
+} from '../services/subTasks.service';
 import { Attachment, AttachmentsMimeTypes } from '../models/attachments.model';
 import { User } from '../models/user.model';
 
@@ -380,11 +384,30 @@ export const markTaskAsCompletedWorkflow = async (data: {
   task: Task;
   user: { id: string; fullName: string };
   completedDate: Date;
+  completeSubTasks: boolean;
 }) => {
-  const { task, user, completedDate } = data;
+  const { task, user, completedDate, completeSubTasks } = data;
   const recipients = new Set([task.assignee, task.reporter]);
 
   return executeTranscation(async (txClient) => {
+    const incompleteCount = await getIncompleteSubTaskCountByTaskId(
+      task.id,
+      txClient,
+    );
+    if (incompleteCount > 0 && !completeSubTasks) {
+      throw new ApiError(
+        409,
+        'Complete the subtasks before marking this task as done.',
+        { incompleteCount },
+        true,
+        'INCOMPLETE_SUBTASKS',
+      );
+    }
+
+    if (incompleteCount > 0) {
+      await markSubTasksAsComplete(task.id, txClient);
+    }
+
     await markTaskAsComplete({ id: task.id, completedDate }, txClient);
 
     await createTaskActivity(

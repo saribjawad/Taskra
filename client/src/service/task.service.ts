@@ -334,8 +334,11 @@ export async function deleteTask(taskId: string): Promise<void> {
   await api.delete(`/tasks/${taskId}`)
 }
 
-export async function markTaskAsCompleted(taskId: string): Promise<void> {
-  await api.patch(`/tasks/${taskId}/completed`)
+export async function markTaskAsCompleted(
+  taskId: string,
+  completeSubTasks = false,
+): Promise<void> {
+  await api.patch(`/tasks/${taskId}/completed`, { completeSubTasks })
 }
 
 export interface GetTaskActivitiesResponse {
