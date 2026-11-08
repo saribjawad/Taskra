@@ -8,6 +8,7 @@ import { AuthContextProvider } from './context/auth/auth-provider'
 import { WebsocketProvider } from './context/websocket/websocket-provider'
 import { TooltipProvider } from './components/ui/tooltip'
 import { useEffect } from 'react'
+import { Spinner } from './components/ui/spinner'
 
 export const router = createRouter({
   routeTree,
@@ -25,7 +26,12 @@ function App() {
     router.invalidate()
   }, [auth.user])
 
-  if (auth.isLoading) return <div>tranqiulooooooooooooo</div>
+  if (auth.isLoading)
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <Spinner className="size-8" />
+      </div>
+    )
 
   return <RouterProvider router={router} context={{ auth }} />
 }
