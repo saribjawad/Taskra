@@ -11,6 +11,7 @@ export type Attachment = {
   task_id: string | null;
   sub_task_id: string | null;
   project_id: string | null;
+  comment_id: string | null;
   name: string;
   size: number;
   mime_type: AttachmentsMimeTypes;
