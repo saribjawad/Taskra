@@ -7,8 +7,9 @@ import { useAuth } from './context/auth/auth-hook'
 import { AuthContextProvider } from './context/auth/auth-provider'
 import { WebsocketProvider } from './context/websocket/websocket-provider'
 import { TooltipProvider } from './components/ui/tooltip'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Spinner } from './components/ui/spinner'
+import type { IAuthContext } from './context/auth/auth-context'
 
 export const router = createRouter({
   routeTree,
@@ -22,16 +23,27 @@ export const router = createRouter({
 function App() {
   const auth = useAuth()
 
-  useEffect(() => {
-    router.invalidate()
-  }, [auth.user])
-
-  if (auth.isLoading)
+  if (auth.isLoading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
         <Spinner className="size-8" />
       </div>
     )
+  }
+
+  return <InnerRouter auth={auth} />
+}
+
+function InnerRouter({ auth }: { auth: IAuthContext }) {
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    router.invalidate() // only on login/logout after the app has loaded
+  }, [auth.user])
 
   return <RouterProvider router={router} context={{ auth }} />
 }
