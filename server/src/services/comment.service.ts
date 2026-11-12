@@ -56,19 +56,20 @@ export const createComment = async (
     taskId: string;
     userId: string;
     content: string;
+    workspace_id: string;
   },
   txClient?: PoolClient,
 ): Promise<Comment> => {
-  const { content, taskId, userId } = payload;
+  const { content, taskId, userId, workspace_id } = payload;
   const db = txClient || dbPool;
 
   const result = await db.query(
     `
-    INSERT INTO comments (task_id, user_id, content)
-    VALUES ($1, $2, $3)
+    INSERT INTO comments (task_id, user_id, content, workspace_id)
+    VALUES ($1, $2, $3, $4)
     RETURNING *
      `,
-    [taskId, userId, content],
+    [taskId, userId, content, workspace_id],
   );
 
   return result.rows[0];

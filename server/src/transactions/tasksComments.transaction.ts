@@ -9,6 +9,7 @@ import logger from '../utils/logger';
 interface CreateCommentTransactionParams {
   user: {
     id: string;
+    activeWorkspace: string;
   };
   task: {
     id: string;
@@ -33,6 +34,7 @@ export const createCommentTransaction = async (
           taskId: task.id,
           userId: user.id,
           content,
+          workspace_id: user.activeWorkspace,
         },
         txClient,
       );

@@ -149,6 +149,13 @@ export const getAttachmentOwnerWorkspaceId = async (
     );
     return result.rows[0]?.workspace_id;
   }
+  if (attachment.type === 'comment' && attachment.comment_id) {
+    const result = await dbPool.query(
+      'SELECT workspace_id FROM comments WHERE id = $1',
+      [attachment.comment_id],
+    );
+    return result.rows[0]?.workspace_id;
+  }
   return undefined;
 };
 

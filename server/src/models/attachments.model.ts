@@ -7,7 +7,7 @@ export type AttachmentsMimeTypes =
 
 export type Attachment = {
   id: string;
-  type: 'task' | 'sub-task' | 'project';
+  type: 'task' | 'sub-task' | 'project' | 'comment';
   task_id: string | null;
   sub_task_id: string | null;
   project_id: string | null;

@@ -28,6 +28,7 @@ export const GetPresignedUrlOfAttachment = async (
   }
 
   const ownerWorkspaceId = await getAttachmentOwnerWorkspaceId(attachment);
+
   if (ownerWorkspaceId !== activeWorkspaceId) {
     throw ApiError.unauthorized('You are not member of this workspace');
   }
