@@ -22,4 +22,5 @@ export type Attachment = {
 export type AttachmentOwner =
   | { type: 'task'; taskId: string }
   | { type: 'sub-task'; subTaskId: string }
-  | { type: 'project'; projectId: string };
+  | { type: 'project'; projectId: string }
+  | { type: 'comment'; commentId: string };

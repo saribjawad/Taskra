@@ -15,6 +15,12 @@ import {
   updateComment,
 } from '../services/comment.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
+import { deleteFileFromS3, FILE_TYPE, uploadFileToS3 } from '../config/s3';
+import { createAttachment } from '../services/attachment.service';
+import { executeTranscation } from '../db/transaction';
+import logger from '../utils/logger';
+import { createNotification } from '../services/notifications.service';
+import { createCommentTransaction } from '../transactions/tasksComments.transaction';
 
 // ==================================================================================
 // Helpers
@@ -38,21 +44,26 @@ export const CreateComment = async (req: Request, res: Response) => {
   const user = req.user;
 
   const { taskId } = CommentParamSchema.parse(req.params);
+  const { body } = CreateCommentSchema.parse({
+    body: req.body,
+    files: req.files,
+  });
 
-  const { content } = CreateCommentSchema.parse(req.body);
+  const { content } = body;
 
   const task = await requireTask(taskId, user.activeWorkspace);
+  const notificationRecipents = new Set<string>([task.assignee, task.reporter]);
+  const files = Object.values(req.files ?? {}).flat();
 
-  // Create the comment
-  const comment = await createComment(task.id, user.id, content);
-
-  if (!comment) {
-    throw ApiError.internal('Something went wrong while creating comment');
-  }
+  await createCommentTransaction({
+    user,
+    task,
+    notificationRecipents,
+    files,
+    content,
+  });
 
   // Notfiy the assignee and reporter if they are not the actor
-  const notificationRecipents = new Set<string>([task.assignee, task.reporter]);
-
   for (const recipent of notificationRecipents) {
     if (recipent && recipent !== user.id) {
       notifyMemberInWorkspace(recipent, task.workspace_id, {
@@ -75,8 +86,8 @@ export const UpdateComment = async (req: Request, res: Response) => {
   const parsedParams = UpdateCommentParamSchema.parse(req.params);
   const { taskId, commentId } = parsedParams;
 
-  const parsedBody = UpdateCommentSchema.parse(req.body);
-  const { content } = parsedBody;
+  const { body, files } = UpdateCommentSchema.parse(req.body);
+  const { content } = body;
 
   await requireTask(taskId, workspaceId);
 

@@ -154,12 +154,24 @@ taskRouter
     asyncHandler(GetSubTaskAttachmentUrl),
   );
 
-taskRouter
-  .route('/:taskId/comments')
-  .post(
-    RequiredRoles(['owner', 'admin', 'member']),
-    asyncHandler(CreateComment),
-  );
+taskRouter.route('/:taskId/comments').post(
+  RequiredRoles(['owner', 'admin', 'member']),
+  upload.fields([
+    {
+      name: 'images',
+      maxCount: 3,
+    },
+    {
+      name: 'pdf',
+      maxCount: 1,
+    },
+    {
+      name: 'document',
+      maxCount: 1,
+    },
+  ]),
+  asyncHandler(CreateComment),
+);
 
 taskRouter
   .route('/:taskId/comments/:commentId')

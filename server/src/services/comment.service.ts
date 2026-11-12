@@ -1,3 +1,4 @@
+import { PoolClient } from 'pg';
 import { dbPool } from '../db';
 import { Comment, CommentWithAuthor } from '../models/comment.model';
 
@@ -51,11 +52,17 @@ export const findCommentById = async (id: string): Promise<Comment> => {
  * @returns The created comment
  */
 export const createComment = async (
-  taskId: string,
-  userId: string,
-  content: string,
+  payload: {
+    taskId: string;
+    userId: string;
+    content: string;
+  },
+  txClient?: PoolClient,
 ): Promise<Comment> => {
-  const result = await dbPool.query(
+  const { content, taskId, userId } = payload;
+  const db = txClient || dbPool;
+
+  const result = await db.query(
     `
     INSERT INTO comments (task_id, user_id, content)
     VALUES ($1, $2, $3)

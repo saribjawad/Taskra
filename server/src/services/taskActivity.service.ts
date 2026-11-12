@@ -72,6 +72,14 @@ export const getTaskActivitiesByTaskId = async (
           null::jsonb AS metadata,
           null::text AS description,
           'comment'::text AS activity_type,
+          COALESCE (
+            (
+              SELECT jsonb_agg(jsonb_build_object('id', a.id, 'name', a.name, 'size', a.size, 'mime_type', a.mime_type))
+              FROM attachments a
+              WHERE a.comment_id = c.id
+            ),
+            '[]'::jsonb
+          ) AS attachments,
           c.updated_at,
           c.created_at
         FROM comments AS c
@@ -89,6 +97,7 @@ export const getTaskActivitiesByTaskId = async (
           a.metadata,
           a.description,
           'activity'::text AS activity_type,
+          NULL::jsonb,
           null::timestamptz AS updated_at,
           a.created_at
         FROM task_activity AS a

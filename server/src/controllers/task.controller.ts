@@ -509,6 +509,7 @@ export const GetTaskActivity = async (req: Request, res: Response) => {
         username: a.username,
         content: a.content,
         activityType: a.activity_type,
+        attachments: a.attachments,
         updatedAt: a.updated_at,
         createdAt: a.created_at,
       };

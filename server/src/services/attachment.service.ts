@@ -29,6 +29,7 @@ export const createAttachment = async (
   const taskId = payload.type === 'task' ? payload.taskId : null;
   const subTaskId = payload.type === 'sub-task' ? payload.subTaskId : null;
   const projectId = payload.type === 'project' ? payload.projectId : null;
+  const commentId = payload.type === 'comment' ? payload.commentId : null;
 
   const db = txClient || dbPool;
   const result = await db.query(
@@ -38,12 +39,13 @@ export const createAttachment = async (
       task_id,
       sub_task_id,
       project_id,
+      comment_id,
       name,
       size,
       mime_type,
       storage_id
     )
-    VALUES($1, $2, $3, $4, $5, $6, $7, $8)
+    VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *
     `,
     [
@@ -51,6 +53,7 @@ export const createAttachment = async (
       taskId,
       subTaskId,
       projectId,
+      commentId,
       name,
       size,
       mimeType,

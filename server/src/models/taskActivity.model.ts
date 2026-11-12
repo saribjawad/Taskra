@@ -26,6 +26,13 @@ export interface TaskActivity {
   created_at: Date;
 }
 
+interface CommentAttachment {
+  id: string;
+  name: string;
+  size: number;
+  mime_type: string;
+}
+
 export interface TaskActivityWithComments {
   id: string;
   task_id: string;
@@ -36,6 +43,7 @@ export interface TaskActivityWithComments {
   metadata: { field: string; from: string; to: string } | null;
   description: string | null;
   activity_type: 'comment' | 'activity';
+  attachments: CommentAttachment[] | null;
   updated_at: Date | null;
   created_at: Date;
   created_at_cursor: '2026-09-26T10:24:30.655987Z';

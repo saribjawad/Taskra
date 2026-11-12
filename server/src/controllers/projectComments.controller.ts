@@ -37,7 +37,8 @@ export const CreateProjectComment = async (req: Request, res: Response) => {
 
   const project = await requireProject(projectId, user.activeWorkspace);
 
-  const { content } = CreateCommentSchema.parse(req.body);
+  const { body, files } = CreateCommentSchema.parse(req.body);
+  const { content } = body;
 
   const comment = await createProjectComment(project.id, user.id, content);
 
@@ -57,7 +58,8 @@ export const UpdateProjectComment = async (req: Request, res: Response) => {
 
   const project = await requireProject(projectId, user.activeWorkspace);
 
-  const { content } = UpdateCommentSchema.parse(req.body);
+  const { body, files } = UpdateCommentSchema.parse(req.body);
+  const { content } = body;
 
   const comment = await findProjectCommentById(commentId, project.id);
 
