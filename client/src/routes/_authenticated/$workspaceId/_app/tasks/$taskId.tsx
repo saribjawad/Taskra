@@ -1,4 +1,5 @@
 import { useWorkspacePermissions } from '#/hooks/use-workspace-permissions'
+import AttachmentField from '#/components/fields/AttachmentField'
 import DeleteCommentDialog from '#/components/comments/DeleteCommentDialog'
 import UpdateCommentDialog from '#/components/comments/UpdateCommentDialog'
 import DeleteTaskDialog from '#/components/tasks/DeleteTaskDialog'
@@ -105,6 +106,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import z from 'zod'
+import { attachmentsSchema } from '#/schema/attachment.schema'
 
 export const Route = createFileRoute(
   '/_authenticated/$workspaceId/_app/tasks/$taskId',
@@ -164,6 +166,7 @@ function ActivityIcon({ type }: { type: TaskEventActivity['type'] }) {
 
 const CreateCommentSchema = z.object({
   content: z.string('Invalid comment').trim().min(1),
+  attachments: attachmentsSchema,
 })
 
 function RouteComponent() {
@@ -210,10 +213,11 @@ function TaskDetailPage() {
   const isRequestingNextActivityPage = useRef(false)
 
   // Use Form
-  const { handleSubmit, reset, control } = useForm({
+  const { handleSubmit, reset, control, trigger } = useForm({
     resolver: zodResolver(CreateCommentSchema),
     defaultValues: {
       content: '',
+      attachments: [] as File[],
     },
   })
 
@@ -317,9 +321,15 @@ function TaskDetailPage() {
 
   function onComment(data: z.infer<typeof CreateCommentSchema>) {
     createComment(
-      { taskId: params.taskId!!, comment: data.content },
       {
-        onSuccess: () => reset(),
+        taskId: params.taskId!!,
+        comment: data.content,
+        attachments: data.attachments?.length ? data.attachments : undefined,
+      },
+      {
+        onSuccess: () => {
+          reset({ content: '', attachments: [] })
+        },
       },
     )
   }
@@ -664,6 +674,34 @@ function TaskDetailPage() {
                                 <p className="whitespace-pre-wrap text-sm leading-6 text-muted-foreground wrap-anywhere">
                                   {comment.content}
                                 </p>
+                                {comment.attachments &&
+                                  comment.attachments.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {comment.attachments.map((file) => (
+                                        <button
+                                          key={file.id}
+                                          type="button"
+                                          disabled={isGettingPresignedUrl}
+                                          onClick={() =>
+                                            onClickingAttachment(file.id)
+                                          }
+                                          className="flex min-w-0 items-center gap-2 rounded-md border bg-background px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted/50 disabled:cursor-wait disabled:opacity-70"
+                                        >
+                                          <div className="flex size-6 shrink-0 items-center justify-center rounded bg-muted">
+                                            <AttachmentTypeIcon
+                                              mimeType={file.mime_type}
+                                            />
+                                          </div>
+                                          <span className="max-w-32 truncate font-medium">
+                                            {file.name}
+                                          </span>
+                                          <span className="shrink-0 text-muted-foreground">
+                                            {formatBytes(file.size)}
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  )}
                               </div>
                             </div>
 
@@ -752,7 +790,7 @@ function TaskDetailPage() {
           <div className="shrink-0 border-t bg-background px-4 py-3 sm:px-6">
             <form
               onSubmit={handleSubmit(onComment)}
-              className="mx-auto flex max-w-6xl flex-col gap-3 sm:flex-row sm:items-center"
+              className="mx-auto flex max-w-6xl flex-col gap-2"
             >
               <Controller
                 control={control}
@@ -773,9 +811,29 @@ function TaskDetailPage() {
                   </Field>
                 )}
               />
-              <Button size="sm" disabled={isCommenting}>
-                {isCommenting ? 'Commenting...' : 'Add comment'}
-              </Button>
+              <div className="flex items-start justify-between gap-3">
+                <Controller
+                  control={control}
+                  name="attachments"
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid} className="flex-1">
+                      <AttachmentField
+                        disabled={isCommenting}
+                        value={field.value ?? []}
+                        onChange={(files) => {
+                          field.onChange(files)
+                          trigger('attachments')
+                        }}
+                        error={fieldState.error?.message}
+                        helperText=""
+                      />
+                    </Field>
+                  )}
+                />
+                <Button size="sm" disabled={isCommenting} className="shrink-0">
+                  {isCommenting ? 'Commenting...' : 'Add comment'}
+                </Button>
+              </div>
             </form>
           </div>
         )}

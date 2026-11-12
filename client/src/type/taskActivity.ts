@@ -20,10 +20,18 @@ interface TaskTimelineEntryBase {
   createdAt: string
 }
 
+export interface CommentAttachment {
+  id: string
+  name: string
+  size: number
+  mime_type: string
+}
+
 export interface TaskCommentActivity extends TaskTimelineEntryBase {
   activityType: 'comment'
   content: string
   updatedAt: string | null
+  attachments: CommentAttachment[]
 }
 
 export interface TaskEventActivity extends TaskTimelineEntryBase {

@@ -12,10 +12,12 @@ export function useCreateComment() {
     mutationFn: async ({
       taskId,
       comment,
+      attachments,
     }: {
       taskId: string
       comment: string
-    }) => createComment(taskId, comment),
+      attachments?: File[]
+    }) => createComment(taskId, comment, attachments),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: [`task-activity-${variables.taskId}`],
