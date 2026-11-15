@@ -117,10 +117,16 @@ export const SwitchWorkspace = async (req: Request, res: Response) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res
@@ -154,10 +160,16 @@ export const CreateWorkspace = async (req: Request, res: Response) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(201).json(
@@ -203,10 +215,16 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
+      sameSite: env.APP_ENV === 'PROD' && 'none',
+      secure: env.APP_ENV === 'PROD',
+      maxAge: 10 * 60 * 1000,
     });
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
+      sameSite: env.APP_ENV === 'PROD' && 'none',
+      secure: env.APP_ENV === 'PROD',
       path: '/api/v1/refresh-access-token',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
     return res.status(200).json(
@@ -255,10 +273,16 @@ export const DeleteWorkspace = async (req: Request, res: Response) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(200).json(
@@ -499,10 +523,16 @@ export const AcceptWorkspaceInvite = async (req: Request, res: Response) => {
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   // Send the real-time notification after the transaction commits.

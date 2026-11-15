@@ -100,12 +100,14 @@ export const LoginUser = async (req: Request, res: Response) => {
     httpOnly: true,
     sameSite: env.APP_ENV === 'PROD' && 'none',
     secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     sameSite: env.APP_ENV === 'PROD' && 'none',
     secure: env.APP_ENV === 'PROD',
     path: '/api/v1/refresh-access-token',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
 
   res.status(200).json(new ApiResponse(200, 'Logged in'));
@@ -238,21 +240,33 @@ export const RefreshAccessToken = async (req: Request, res: Response) => {
     workspaceMember?.role ?? null,
     user.full_name,
   );
-  const newRefreshToken = await generateRefreshToken(
-    user.id,
-    user.email,
-    user.active_workspace,
-    workspaceMember?.role ?? null,
-    user.full_name,
-  );
-
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
+    sameSite: env.APP_ENV === 'PROD' && 'none',
+    secure: env.APP_ENV === 'PROD',
+    maxAge: 10 * 60 * 1000,
   });
-  res.cookie('refreshToken', newRefreshToken, {
-    httpOnly: true,
-    path: '/api/v1/refresh-access-token',
-  });
+
+  const msLeft = (decoded.exp as number) * 1000 - Date.now();
+
+  const ROTATE_WHEN_LESS_THAN_MS = 24 * 60 * 60 * 1000; // 1 day
+  if (msLeft < ROTATE_WHEN_LESS_THAN_MS) {
+    const newRefreshToken = await generateRefreshToken(
+      user.id,
+      user.email,
+      user.active_workspace,
+      workspaceMember?.role ?? null,
+      user.full_name,
+    );
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      sameSite: env.APP_ENV === 'PROD' ? 'none' : 'lax',
+      secure: env.APP_ENV === 'PROD',
+      path: '/api/v1/refresh-access-token',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
 
   res.status(200).json(new ApiResponse(200, 'Token refreshed'));
 };
