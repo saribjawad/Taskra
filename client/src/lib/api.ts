@@ -104,18 +104,24 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError)
 
-        // Use router.navigate to change routes cleanly
-        const currentPath = window.location.pathname
-        const isPublicRoute = PUBLIC_ROUTES.some(
-          (route) =>
-            currentPath === route || currentPath.startsWith(route + '/'),
-        )
+        const status = (refreshError as AxiosError).response?.status
+        const tokenIsInvalid = status === 401 || 403
 
-        if (!isPublicRoute) {
-          // remove the query data for 'me' to prevent the loop
-          queryClient.setQueryData(['me'], null)
-          router.navigate({ to: '/sign-in' })
+        if (tokenIsInvalid) {
+          const currentPath = window.location.pathname
+          const isPublicRoute = PUBLIC_ROUTES.some(
+            (route) =>
+              currentPath === route || currentPath.startsWith(route + '/'),
+          )
+
+          if (!isPublicRoute) {
+            // remove the query data for 'me' to prevent the loop
+            queryClient.setQueryData(['me'], null)
+            router.navigate({ to: '/sign-in' })
+          }
         }
+
+        // network error / 5xx: keep the user logged in, let the request fail and retry later
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false
