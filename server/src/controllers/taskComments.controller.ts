@@ -9,17 +9,11 @@ import { ApiResponse } from '../utils/ApiResponse';
 import { findTaskByIdAndWorkspaceId } from '../services/task.service';
 import { ApiError } from '../utils/ApiErrors';
 import {
-  createComment,
   deleteComment,
-  findCommentById,
+  findCommentByIdAndTaskId,
   updateComment,
 } from '../services/comment.service';
 import { notifyMemberInWorkspace } from '../websockets/init';
-import { deleteFileFromS3, FILE_TYPE, uploadFileToS3 } from '../config/s3';
-import { createAttachment } from '../services/attachment.service';
-import { executeTranscation } from '../db/transaction';
-import logger from '../utils/logger';
-import { createNotification } from '../services/notifications.service';
 import { createCommentTransaction } from '../transactions/tasksComments.transaction';
 
 // ==================================================================================
@@ -92,7 +86,7 @@ export const UpdateComment = async (req: Request, res: Response) => {
   await requireTask(taskId, workspaceId);
 
   // Check if commentId is valid
-  const comment = await findCommentById(commentId);
+  const comment = await findCommentByIdAndTaskId(commentId, taskId);
 
   // Throw error 404 if not found
   if (!comment) {
@@ -118,7 +112,7 @@ export const DeleteComment = async (req: Request, res: Response) => {
   const task = await requireTask(taskId, user.activeWorkspace);
 
   // Check if commentId is valid
-  const comment = await findCommentById(commentId);
+  const comment = await findCommentByIdAndTaskId(commentId, taskId);
 
   // Throw error 404 if not found
   if (!comment) {

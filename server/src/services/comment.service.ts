@@ -32,12 +32,15 @@ export const findCommentsByTaskId = async (
  * @param id - comment uuid
  * @returns The task row if found, otherwise undefined
  */
-export const findCommentById = async (id: string): Promise<Comment> => {
+export const findCommentByIdAndTaskId = async (
+  id: string,
+  taskId: string,
+): Promise<Comment> => {
   const result = await dbPool.query(
     `
-    SELECT * FROM comments WHERE id = $1
+    SELECT * FROM comments WHERE id = $1 AND task_id = $2
     `,
-    [id],
+    [id, taskId],
   );
 
   return result.rows[0];
